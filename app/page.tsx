@@ -7,6 +7,7 @@ import SkillsApple from '../components/SkillsApple';
 import AboutAppleScroll from '../components/AboutAppleScroll';
 import WorkExperienceApple from '../components/WorkExperienceApple';
 import ContactApple from '../components/ContactApple';
+import ProjectApple from '../components/ProjectApple'; // <-- TU NUEVO COMPONENTE
 
 // --- DATOS ---
 const skills = [
@@ -79,64 +80,10 @@ Aplico pensamiento lógico, matemático y estructurado para desarrollar sistemas
       {/* 3. BENTO GRID (HABILIDADES) */}
 <SkillsApple />
 
+      {/* 4. PROYECTOS CON FÍSICAS DE APPLE TV */}
+<ProjectApple />
 
-      {/* 4. PROYECTOS */}
-      <section id="proyectos" className="py-24 max-w-6xl mx-auto px-6">
-        <motion.header className="mb-16 text-center" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={transitionSettings}>
-          <p className="text-apple-blue font-medium mb-2 text-sm">Portafolio</p>
-          <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">Construido para el mundo real.</h2>
-        </motion.header>
-
-        <div className="flex flex-col gap-12">
-          {projects.map((project) => (
-            <motion.div 
-              key={project.title}
-              initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.3 }} transition={transitionSettings}
-              className="group relative flex flex-col md:flex-row gap-8 items-center p-8 md:p-12 rounded-[2.5rem] bg-apple-gray dark:bg-[#080808] border border-gray-100 dark:border-white/5 overflow-hidden"
-            >
-              <div className="md:w-1/2 z-10">
-                <p className="text-xs font-mono text-apple-blue mb-4 uppercase tracking-widest">{project.category}</p>
-                <h3 className="text-3xl font-bold tracking-tight mb-4">{project.title}</h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-8 text-lg leading-relaxed text-balance">
-                  {project.description}
-                </p>
-                
-                <div className="flex flex-wrap gap-2 mb-8">
-                  {project.techs.map(tech => (
-                    <span key={tech} className="px-3 py-1 text-xs font-medium rounded-md bg-black/5 dark:bg-white/10 text-black dark:text-white">
-                      {tech}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <a href={project.github} className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-black text-white dark:bg-white dark:text-black font-medium hover:scale-105 transition-transform text-sm">
-                    <SiGithub className="w-4 h-4" /> Código
-                  </a>
-                  <a href={project.demo} className="flex items-center gap-2 px-5 py-2.5 rounded-full text-black dark:text-white border border-gray-300 dark:border-white/20 hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-sm font-medium">
-                    <ExternalLink className="w-4 h-4" /> Live Demo
-                  </a>
-                </div>
-              </div>
-
-              <div className="md:w-1/2 w-full h-64 md:h-full min-h-[300px] rounded-2xl bg-gradient-to-br from-gray-200 to-gray-300 dark:from-[#111] dark:to-[#222] relative overflow-hidden group-hover:scale-[1.02] transition-transform duration-700 flex items-center justify-center p-8">
-                 <div className="relative z-10 w-full h-full rounded-xl bg-white/50 dark:bg-black/50 backdrop-blur-sm border border-white/20 dark:border-white/5 p-4 flex flex-col shadow-2xl">
-                    <div className="flex gap-1.5 mb-4">
-                      <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                      <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                      <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                    </div>
-                    <div className="font-mono text-xs text-gray-500 dark:text-gray-400 space-y-1">
-                      <p><span className="text-apple-blue">cesc@macbook</span> ~ % ./deploy</p>
-                      <p>Building secure monolithic app...</p>
-                      <p className="text-green-500">Success. Deployed to production.</p>
-                    </div>
-                 </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </section>
+      
 
       {/* 5. TRAYECTORIA (TIMELINE) */}
       <section id="trayectoria" className="py-24 max-w-6xl mx-auto px-6">
