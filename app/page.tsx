@@ -38,7 +38,7 @@ const projects = [
 const timeline = [
   {
   year: "2024 - Presente",
-  title: "Ingeniería en Ciberseguridad y Gestión de las Tecnologías de Información",
+  title: "Ingeniería en Ciberseguridad y Gestión de las TI",
   role: "Pontificia Universidad Católica del Ecuador",
   description: "Formación enfocada en ciberseguridad aplicada, abarcando análisis de vulnerabilidades, hardening y prácticas en entornos controlados (CTFs, Hack The Box). Complemento mi aprendizaje con contenidos y laboratorios basados en tecnologías de Google Cloud.",
   icon: GraduationCap
