@@ -53,7 +53,10 @@ const timeline = [
 
 const transitionSettings = {
   duration: 0.8,
-ease: [0.43, 0.13, 0.23, 0.96] as any,}
+  ease: [0.43, 0.13, 0.23, 0.96] as any, // <--- Agrega este "as any"
+};
+
+
 export default function Home() {
   return (
     // Quitamos el pt-16 del main global para que la pantalla negra del inicio ocupe el 100% del borde superior
