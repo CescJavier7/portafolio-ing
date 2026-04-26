@@ -172,22 +172,10 @@ Aplico pensamiento lógico, matemático y estructurado para desarrollar sistemas
       {/* 6. EXPERIENCIA LABORAL (ACORDEÓN APPLE) */}
       <WorkExperienceApple />
 
-      {/* FOOTER SIMPLE ESTILO APPLE */}
-      <footer className="py-12 border-t border-zinc-100 dark:border-white/5 text-center">
-        <p className="text-zinc-400 text-xs font-medium">
-          © {new Date().getFullYear()} Cesc Javier. Diseñado bajo estándares de ingeniería y estética Apple.
-        </p>
-      </footer>
-
-      {/* 6. SECCIÓN DE CONTACTO */}
+      {/* 7. SECCIÓN DE CONTACTO */}
       <ContactApple />
 
-      {/* FOOTER SIMPLE ESTILO APPLE */}
-      <footer className="py-12 border-t border-zinc-100 dark:border-white/5 text-center">
-        <p className="text-zinc-400 text-xs font-medium">
-          © {new Date().getFullYear()} Cesc Javier. Diseñado bajo estándares de ingeniería y estética Apple.
-        </p>
-      </footer>
+
 
     </main>
   );

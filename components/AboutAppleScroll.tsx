@@ -201,7 +201,7 @@ const personalPanels = [
   {
     id: 3,
     title: 'Más allá del código.',
-    description: 'Me apasiona estudiar matemáticas, ciencias y filosofía para entender los principios que rigen los sistemas y el mundo, confieso que me apasiona mucho leer. Esta mentalidad analítica la aplico al desarrollo y la ciberseguridad, donde no solo construyo soluciones, sino que busco comprenderlas a profundidad y anticipar sus fallos. También disfruto resolver retos prácticos.',
+    description: 'Me apasiona estudiar matemáticas, ciencias y filosofía para entender los principios que rigen los sistemas y el mundo, confieso que me apasiona mucho leer. Esta mentalidad analítica la aplico al desarrollo y la ciberseguridad.',
     icon: BookOpen,
     Illustration: IllustrationBook,
   },
@@ -225,13 +225,11 @@ export default function AboutAppleScroll() {
     offset: ['start start', 'end end'],
   });
 
-  // MAGIA AQUI: En lugar de matemáticas complejas, le decimos qué panel mostrar 
-  // basándonos en qué parte del scroll estamos. Es 100% exacto siempre.
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
     if (latest < 0.25) setActiveIndex(0);
     else if (latest < 0.50) setActiveIndex(1);
     else if (latest < 0.75) setActiveIndex(2);
-    else setActiveIndex(3); // ¡Si el scroll llega a 1.0, el panel 4 DEBE aparecer!
+    else setActiveIndex(3);
   });
 
   return (
@@ -244,7 +242,7 @@ export default function AboutAppleScroll() {
         <div className="max-w-7xl mx-auto w-full px-6 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
 
           {/* LADO IZQUIERDO: TEXTOS */}
-          <div className="relative h-[60vh] flex items-center">
+          <div className="relative h-[50vh] md:h-[60vh] flex items-center">
             {personalPanels.map((panel, i) => {
               const isActive = activeIndex === i;
               
@@ -254,22 +252,20 @@ export default function AboutAppleScroll() {
                   initial={false}
                   animate={{
                     opacity: isActive ? 1 : 0,
-                    // Si el panel ya pasó, sube (-40). Si aún no llega, baja (40). Si está activo, centro (0).
                     y: isActive ? 0 : (activeIndex > i ? -40 : 40),
-                    // Detalle Apple: desenfoca sutilmente los que no están activos
                     filter: isActive ? 'blur(0px)' : 'blur(4px)',
                   }}
                   transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                  className="absolute inset-0 flex flex-col justify-center pr-10 pointer-events-none"
+                  className="absolute inset-0 flex flex-col justify-center pr-0 md:pr-10 pointer-events-none"
                   style={{ zIndex: isActive ? 10 : 0, pointerEvents: isActive ? 'auto' : 'none' }}
                 >
-                  <div className="p-2 w-fit rounded-xl bg-apple-blue/10 mb-4 border border-apple-blue/20">
-                    <panel.icon className="w-6 h-6 text-apple-blue" />
+                  <div className="p-2 w-fit rounded-xl bg-apple-blue/10 mb-3 md:mb-4 border border-apple-blue/20">
+                    <panel.icon className="w-5 h-5 md:w-6 md:h-6 text-apple-blue" />
                   </div>
-                  <h2 className="text-5xl md:text-7xl font-bold tracking-tighter mb-6 leading-tight text-zinc-900 dark:text-white">
+                  <h2 className="text-3xl md:text-7xl font-bold tracking-tighter mb-3 md:mb-6 leading-tight text-zinc-900 dark:text-white">
                     {panel.title}
                   </h2>
-                  <p className="text-xl text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium">
+                  <p className="text-base md:text-xl text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium">
                     {panel.description}
                   </p>
                 </motion.div>
@@ -278,7 +274,7 @@ export default function AboutAppleScroll() {
           </div>
 
           {/* LADO DERECHO: ILUSTRACIONES SVG */}
-          <div className="relative aspect-square w-full max-w-md mx-auto rounded-[3rem] overflow-hidden
+          <div className="relative aspect-square w-full max-w-[260px] md:max-w-md mx-auto rounded-3xl md:rounded-[3rem] overflow-hidden
                           bg-zinc-50 dark:bg-zinc-900
                           border border-zinc-200 dark:border-white/10
                           shadow-2xl shadow-zinc-200/60 dark:shadow-black/40">
@@ -294,7 +290,7 @@ export default function AboutAppleScroll() {
                     scale: isActive ? 1 : 0.85,
                   }}
                   transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                  className="absolute inset-0 w-full h-full flex items-center justify-center p-8"
+                  className="absolute inset-0 w-full h-full flex items-center justify-center p-6 md:p-8"
                   style={{ zIndex: isActive ? 10 : 0 }}
                 >
                   <panel.Illustration />
