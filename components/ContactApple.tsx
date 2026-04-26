@@ -97,13 +97,13 @@ export default function ContactApple() {
         {/* Cabecera */}
         <div className="mb-16 md:text-center">
           <p className="text-apple-blue font-bold tracking-tight mb-3 uppercase text-xs italic">
-            Próximos Pasos
+            ¿Me invitas un café? ☕️
           </p>
           <h2 className="text-4xl md:text-5xl font-bold tracking-tighter text-zinc-900 dark:text-white mb-4">
-            Iniciemos una conversación.
+            Si gustas, podemos charlar.
           </h2>
           <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto text-balance">
-            ¿Tienes un proyecto en mente, buscas fortalecer la seguridad de tu infraestructura, o simplemente quieres hablar de tecnología? Mis bandejas están abiertas.
+            ¿Tienes alguna idea en mente, buscas fortalecer la seguridad de tu infraestructura, o simplemente quieres hablar de tecnología? Mis bandejas están abiertas.
           </p>
         </div>
 

@@ -195,28 +195,28 @@ const personalPanels = [
   {
     id: 1,
     title: 'Hola, soy CescJavier7.',
-    description: 'Soy un Informático apasionado por el desarrollo de software con enfoque en ciberseguridad. Construyo aplicaciones modernas priorizando la seguridad desde el diseño, aplicando buenas prácticas como validación de entradas, autenticación robusta y protección contra vulnerabilidades.',
+    description: 'Soy un Informático apasionado por el desarrollo de software con enfoque en ciberseguridad.',
     icon: BrainCircuit,
     Illustration: IllustrationBrain,
   },
   {
     id: 2,
-    title: 'Disciplina y mérito académico.',
-    description: 'Fui beneficiario de una beca al mérito académico en la Universidad Central del Ecuador, resultado de constancia y alto rendimiento. Mantengo un enfoque de mejora continua en programación, matemáticas y seguridad informática.',
+    title: 'Un poco sobre mí',
+    description: '📚 🎮 Soy un apasionado de la tecnología y los videojuegos (estrategia y rol 🕹️). Durante mis estudios, obtuve una beca al mérito académico en la Universidad Central del Ecuador. Me gusta innovar y aplicar habilidades como pensamiento crítico y trabajo en equipo 💡.',
     icon: Award,
     Illustration: IllustrationTrophy,
   },
   {
     id: 3,
     title: 'Más allá del código.',
-    description: 'Me apasiona estudiar matemáticas, ciencias y filosofía para entender los principios que rigen los sistemas y el mundo, confieso que me apasiona mucho leer. Esta mentalidad analítica la aplico al desarrollo y la ciberseguridad.',
+    description: 'Me apasiona estudiar temas relacionados con ciencias exactas, tecnología e incluso filosofía para entender los principios que rigen los sistemas y el mundo, confieso que me apasiona mucho leer.',
     icon: BookOpen,
     Illustration: IllustrationBook,
   },
   {
     id: 4,
     title: 'Construir con propósito.',
-    description: 'Mi objetivo es desarrollar herramientas y plataformas que integren desarrollo y ciberseguridad, ayudando a otros a crear software más seguro desde el inicio.',
+    description: 'Mi objetivo es desarrollar herramientas y plataformas que involucren el correcto desarrollo y junto con estándares altos de ciberseguridad, ayudando a otros a crear software más seguro desde el inicio.',
     icon: Target,
     Illustration: IllustrationRocket,
   }
