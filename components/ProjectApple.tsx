@@ -8,7 +8,7 @@ import { ExternalLink, TerminalSquare, ChevronLeft, ChevronRight, X, MousePointe
 // ─── DATOS DE PROYECTOS ──────────────────────────────────────────────────────
 const projects = [
   {
-    title: "SecureVault",
+    title: "NexusTopUp",
     category: "Ciberseguridad / Fullstack",
     description: "Una aplicación web ultra-segura para gestión de contraseñas corporativas. Implementa cifrado AES-256 de extremo a extremo, autenticación multifactor (MFA) y está protegida contra ataques OWASP Top 10.",
     techs: ["Next.js", "TypeScript", "PostgreSQL", "Bcrypt", "Tailwind"],
