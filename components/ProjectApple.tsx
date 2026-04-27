@@ -8,14 +8,14 @@ import { ExternalLink, TerminalSquare, ChevronLeft, ChevronRight, X, MousePointe
 // ─── DATOS DE PROYECTOS ──────────────────────────────────────────────────────
 const projects = [
   {
-    title: "NexusTopUp",
-    category: "Ciberseguridad / Fullstack",
-    description: "Una aplicación web ultra-segura para gestión de contraseñas corporativas. Implementa cifrado AES-256 de extremo a extremo, autenticación multifactor (MFA) y está protegida contra ataques OWASP Top 10.",
-    techs: ["Next.js", "TypeScript", "PostgreSQL", "Bcrypt", "Tailwind"],
-    image: "/proyecto.png", 
-    github: "#",
-    demo: "#"
-  },
+  title: "NexusTopUp",
+  category: "Ciberseguridad / E-commerce Fullstack",
+  description: "Plataforma de recargas digitales de alta seguridad diseñada bajo el modelo 'Mago de Oz'. Implementa protección contra ataques automatizados (Rate Limiting), validación estricta de archivos en servidor (Firewall de carga) y un sistema asíncrono que elimina el intercambio de credenciales del cliente, garantizando la integridad de las cuentas de usuario.",
+  techs: ["Next.js (App Router)", "TypeScript", "Supabase (SSR)", "Zustand", "Tailwind CSS", "Framer Motion"],
+  image: "/nexus-topup-preview.png", // Asegúrate de tomar una captura de tu Dashboard actual
+  github: "https://github.com/CescJavier7/Recargas-Robux", // Actualiza con tu link real
+  demo: "https://recargas-robux-bso7.vercel.app/" // Tu URL de producción en Vercel
+},
   {
     title: "E-Commerce Monolith",
     category: "Desarrollo Web",
