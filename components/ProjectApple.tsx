@@ -22,25 +22,34 @@ const projects = [
     description: "Asesor Experto adaptativo para MetaTrader 4. Utiliza lógica multi-estrategia basada en Ondas de Elliott y Fibonacci, con un motor de decisión que analiza la volatilidad y tendencia en tiempo real para optimizar entradas.",
     techs: ["MQL4", "Algorithmic Trading", "Mathematics", "Risk Management"],
     image: "/trading-bot.jpg", // <--- Pon una captura de MT4 en tu carpeta 'public'
-    github: "https://github.com/tu-usuario/ElliotWaveEA", 
+    github: "https://github.com/CescJavier7/bot_trading", 
   },
   {
-    title: "E-Commerce Monolith",
-    category: "Desarrollo Web",
-    description: "Plataforma de comercio electrónico de alto rendimiento capaz de procesar pagos con Stripe. Incluye un panel de administración (Dashboard) con analíticas en tiempo real.",
-    techs: ["React", "Node.js", "Stripe API", "MongoDB", "Framer Motion"],
-    image: "/proyecto2.png", 
-    github: "#",
-    demo: "#"
+    title: "Agromix",
+    category: "AgriTech / Herramienta de Software",
+    description: "Herramienta técnica desarrollada para la carrera de Ingeniería Agronómica de la UCE. Sistema de verificación de compatibilidad entre ingredientes activos químicos (fungicidas, insecticidas y herbicidas) para optimizar mezclas y prevenir reacciones adversas.",
+    techs: ["HTML5", "CSS3", "JavaScript", "Diseño UX"],
+    image: "/agromix.jpg", // <--- Recuerda subir la captura a la carpeta 'public'
+    github: "https://github.com/CescJavier7/manejo_integrado", // Actualiza con tu link real
+    demo: "https://cescjavier7.github.io/manejo_integrado/" // Actualiza con tu link real
   },
   {
-    title: "E-Commerce Monolith",
-    category: "Desarrollo Web",
-    description: "Plataforma de comercio electrónico de alto rendimiento capaz de procesar pagos con Stripe. Incluye un panel de administración (Dashboard) con analíticas en tiempo real.",
-    techs: ["React", "Node.js", "Stripe API", "MongoDB", "Framer Motion"],
-    image: "/proyecto2.png", 
-    github: "#",
-    demo: "#"
+    title: "Fashion & Beauty Catalog",
+    category: "E-Commerce / Business Tool",
+    description: "Plataforma de catálogo digital personalizada para un emprendimiento de moda y perfumería. Diseñada para maximizar la conversión mediante una navegación intuitiva de productos y una integración directa con WhatsApp Business para el cierre de ventas.",
+    techs: ["HTML5", "CSS3", "JavaScript", "WhatsApp API"],
+    image: "/catalogo-mama.jpg", // <--- Recuerda subir la captura a 'public'
+    github: "https://github.com/CescJavier7/AngieCatalogos", 
+    demo: "https://cescjavier7.github.io/AngieCatalogos/"
+  },
+  {
+    title: "D' Robys Band Official",
+    category: "Entertainment / Music Web",
+    description: "Sitio web oficial para la reconocida agrupación musical D' Robys Band. La plataforma destaca su trayectoria y giras internacionales en Colombia, Perú y Estados Unidos, integrando animaciones fluidas para ofrecer una experiencia inmersiva a sus seguidores.",
+    techs: ["HTML5", "CSS3", "JavaScript", "Scroll Animations"],
+    image: "/drobys-band.jpg", // <--- Sube la captura de la banda a 'public'
+    github: "https://github.com/CescJavier7/drobysband", 
+    demo: "https://cescjavier7.github.io/drobysband/"
   }
 ];
 
