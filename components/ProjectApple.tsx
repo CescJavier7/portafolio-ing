@@ -10,7 +10,7 @@ const projects = [
   {
   title: "NexusTopUp",
   category: "Ciberseguridad / E-commerce Fullstack",
-  description: "Plataforma de recargas digitales de alta seguridad diseñada bajo el modelo 'Mago de Oz'. Implementa protección contra ataques automatizados (Rate Limiting), validación estricta de archivos en servidor (Firewall de carga) y un sistema asíncrono que elimina el intercambio de credenciales del cliente, garantizando la integridad de las cuentas de usuario.",
+  description: "Plataforma de recargas digitales de alta seguridad. Implementa protección contra ataques automatizados (Rate Limiting), validación estricta de archivos en servidor (Firewall de carga) y un sistema asíncrono que elimina el intercambio de credenciales del cliente, garantizando la integridad de las cuentas de usuario.",
   techs: ["Next.js (App Router)", "TypeScript", "Supabase (SSR)", "Zustand", "Tailwind CSS", "Framer Motion"],
   image: "/nexus-topup-preview.png", // Asegúrate de tomar una captura de tu Dashboard actual
   github: "https://github.com/CescJavier7/Recargas-Robux", // Actualiza con tu link real
