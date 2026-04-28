@@ -250,7 +250,7 @@ export default function ProjectsApple() {
       <AnimatePresence>
         {activeProject && (
           <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center">
-            
+              
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setActiveProject(null)}
