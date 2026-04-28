@@ -17,13 +17,12 @@ const projects = [
   demo: "https://recargas-robux-bso7.vercel.app/" // Tu URL de producción en Vercel
 },
   {
-    title: "E-Commerce Monolith",
-    category: "Desarrollo Web",
-    description: "Plataforma de comercio electrónico de alto rendimiento capaz de procesar pagos con Stripe. Incluye un panel de administración (Dashboard) con analíticas en tiempo real.",
-    techs: ["React", "Node.js", "Stripe API", "MongoDB", "Framer Motion"],
-    image: "/proyecto2.png", 
-    github: "#",
-    demo: "#"
+    title: "ElliotWave EA",
+    category: "FinTech / Algorithmic Trading",
+    description: "Asesor Experto adaptativo para MetaTrader 4. Utiliza lógica multi-estrategia basada en Ondas de Elliott y Fibonacci, con un motor de decisión que analiza la volatilidad y tendencia en tiempo real para optimizar entradas.",
+    techs: ["MQL4", "Algorithmic Trading", "Mathematics", "Risk Management"],
+    image: "/trading-bot.jpg", // <--- Pon una captura de MT4 en tu carpeta 'public'
+    github: "https://github.com/tu-usuario/ElliotWaveEA", 
   },
   {
     title: "E-Commerce Monolith",
