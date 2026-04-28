@@ -179,7 +179,7 @@ export default function ProjectsApple() {
               key={`project-${index}`} 
               className="project-card group relative shrink-0 snap-center w-[85vw] md:w-[600px] h-[450px] md:h-[550px] rounded-[2rem] md:rounded-[2.5rem] bg-zinc-200 dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 overflow-hidden shadow-sm transition-all duration-500"
               initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, margin: "-50px" }} transition={{ duration: 0.6, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
-            >
+            >. 
               
               {/* 1. DISEÑO SAFARI INMERSIVO FULL-WIDTH */}
               <div className="absolute inset-0 pt-8 flex items-end">
