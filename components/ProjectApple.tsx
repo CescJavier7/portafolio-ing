@@ -27,7 +27,7 @@ const projects = [
   {
     title: "Defensa Activa y Observabilidad: Laboratorio NIDS/IPS",
     category: "Ciberseguridad / Blue Team-DevSecOps",
-    description: "¿Cómo detectar y detener un ataque en menos de 5 segundos? Implementé un sistema que une detección (Snort), respuesta (Fail2ban) y visualización (Loki/Grafana) para monitorizar infraestructuras críticas. En un escenario simulado, el sistema detectó un ataque de fuerza bruta en tiempo real, bloqueando la IP atacante y generando alertas visuales instantáneas en el dashboard de Grafana.",
+    description: "¿Cómo detectar y detener un ataque en menos de 5 segundos? Implementé un sistema que une detección (Snort), respuesta (Fail2ban) y visualización (Loki/Grafana) para monitorizar infraestructuras críticas.",
     techs: ["Snort (IDS)", "Fail2ban (IPS)", "Grafana, Loki & Promtail", "Kali Linux (Pentesting)", "Ubuntu Server"],
     image: "/dashboardnids.jpg", // <--- Pon una captura de MT4 en tu carpeta 'public'
     github: "https://github.com/CescJavier7/bot_trading", 
