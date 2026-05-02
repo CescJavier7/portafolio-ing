@@ -116,19 +116,15 @@ La etiqueta `job: snort-alerts` permite filtrar en Grafana exclusivamente los ev
 
 El dashboard de Grafana muestra el flujo de alertas con granularidad temporal. Es posible identificar visualmente el momento exacto del ataque, la duración del intento y la caída de eventos tras el bloqueo.
 
-![Telemetría Grafana](/public/grafana_dashboard.png)
-
 ### Defensa dinámica y bloqueo multi-IP
 
 El sistema fue sometido a una prueba de resistencia con múltiples atacantes simultáneos. Snort identificó y Fail2ban baneó de forma independiente varias IPs virtuales (`.10`, `.20`, `.99`), demostrando capacidad de respuesta ante botnets o escaneos distribuidos.
 
-![Bloqueo Fail2ban](/public/fail2ban_bloqueo.png)
 
 ### Mitigación confirmada: perspectiva del atacante
 
 Tras el baneo automático, cualquier escaneo con Nmap desde Kali Linux devuelve estado `filtered` en todos los puertos. El atacante pierde completamente la capacidad de reconocimiento.
 
-![Nmap Filtrado](/public/kali_nmap_filtrado.png)
 
 ## Lecciones aprendidas y posibles mejoras
 
