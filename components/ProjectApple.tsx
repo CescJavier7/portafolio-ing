@@ -23,6 +23,7 @@ const projects = [
     techs: ["MQL4", "Algorithmic Trading", "Mathematics", "Risk Management"],
     image: "/trading-bot.jpg", // <--- Pon una captura de MT4 en tu carpeta 'public'
     github: "https://github.com/CescJavier7/bot_trading", 
+     demo: ""
   },
   {
     title: "Defensa Activa y Observabilidad: Laboratorio NIDS/IPS",
@@ -31,6 +32,7 @@ const projects = [
     techs: ["Snort (IDS)", "Fail2ban (IPS)", "Grafana, Loki & Promtail", "Kali Linux (Pentesting)", "Ubuntu Server"],
     image: "/dashboardnids.jpg", // <--- Pon una captura de MT4 en tu carpeta 'public'
     github: "https://github.com/CescJavier7/NIDS-IPS-Observability", 
+    demo: ""
   },
   {
     title: "Agromix",
@@ -246,12 +248,15 @@ export default function ProjectsApple() {
                    ))}
                  </div>
                  <div className="flex items-center gap-4 mt-auto">
-                   <a href={project.github} className="flex items-center gap-2 px-6 py-3.5 rounded-full bg-white text-black font-semibold hover:scale-105 transition-transform text-sm">
+                   <a href={project.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-6 py-3.5 rounded-full bg-white text-black font-semibold hover:scale-105 transition-transform text-sm">
                      <SiGithub className="w-4 h-4" /> Código
                    </a>
-                   <a href={project.demo} className="flex items-center gap-2 px-6 py-3.5 rounded-full text-white border border-white/20 hover:bg-white/10 transition-colors text-sm font-semibold">
-                     <ExternalLink className="w-4 h-4" /> Live Demo
-                   </a>
+                   {/* CONDICIONAL: Solo muestra el botón si hay URL de demo */}
+                   {project.demo && (
+                     <a href={project.demo} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-6 py-3.5 rounded-full text-white border border-white/20 hover:bg-white/10 transition-all text-sm font-semibold">
+                       <ExternalLink size={16} /> Live Demo
+                     </a>
+                   )}
                  </div>
               </div>
 
@@ -308,12 +313,15 @@ export default function ProjectsApple() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <a href={activeProject.github} className="flex items-center justify-center gap-2 w-full px-6 py-3.5 rounded-full bg-zinc-900 text-white dark:bg-white dark:text-black font-semibold active:scale-95 transition-transform text-sm">
+                  <a href={activeProject.github} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full px-6 py-3.5 rounded-full bg-zinc-900 text-white dark:bg-white dark:text-black font-semibold active:scale-95 transition-transform text-sm">
                      <SiGithub className="w-4 h-4" /> Ver Código
                   </a>
-                  <a href={activeProject.demo} className="flex items-center justify-center gap-2 w-full px-6 py-3.5 rounded-full text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 active:bg-zinc-100 dark:active:bg-zinc-800 transition-colors text-sm font-semibold">
-                    <ExternalLink className="w-4 h-4" /> Live Demo
-                  </a>
+                  {/* CONDICIONAL: También para el modal móvil */}
+                  {activeProject.demo && (
+                    <a href={activeProject.demo} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full px-6 py-3.5 rounded-full text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 active:bg-zinc-100 dark:active:bg-zinc-800 transition-colors text-sm font-semibold">
+                      <ExternalLink className="w-4 h-4" /> Live Demo
+                    </a>
+                  )}
                 </div>
               </div>
 
