@@ -30,7 +30,7 @@ const projects = [
     description: "¿Cómo detectar y detener un ataque en menos de 5 segundos? Implementé un sistema que une detección (Snort), respuesta (Fail2ban) y visualización (Loki/Grafana) para monitorizar infraestructuras críticas.",
     techs: ["Snort (IDS)", "Fail2ban (IPS)", "Grafana, Loki & Promtail", "Kali Linux (Pentesting)", "Ubuntu Server"],
     image: "/dashboardnids.jpg", // <--- Pon una captura de MT4 en tu carpeta 'public'
-    github: "https://github.com/CescJavier7/bot_trading", 
+    github: "https://github.com/CescJavier7/NIDS-IPS-Observability", 
   },
   {
     title: "Agromix",
