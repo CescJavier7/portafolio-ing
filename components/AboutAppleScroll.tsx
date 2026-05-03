@@ -194,29 +194,29 @@ function IllustrationRocket() {
 const personalPanels = [
   {
     id: 1,
-    title: 'Hola, soy CescJavier7.',
-    description: 'Soy un Informático apasionado por el desarrollo de software con enfoque en ciberseguridad.',
+    title: 'Kevin Javier Montatixe.',
+    description: 'Ingeniero en Ciberseguridad y Gestión de Tecnologías de la Información. Diseño arquitecturas resilientes y sistemas de defensa activa (DevSecOps).',
     icon: BrainCircuit,
     Illustration: IllustrationBrain,
-  },
+  }, 
   {
     id: 2,
-    title: 'Un poco sobre mí',
-    description: '📚 🎮 Soy un apasionado de la tecnología y los videojuegos (estrategia y rol 🕹️). Durante mis estudios, obtuve una beca al mérito académico en la Universidad Central del Ecuador. Me gusta innovar y aplicar habilidades como pensamiento crítico y trabajo en equipo 💡.',
+    title: 'Rigor Académico y Técnico.',
+    description: 'Durante mi formación en la Universidad Central del Ecuador, fui galardonado con la beca al mérito académico.',
     icon: Award,
     Illustration: IllustrationTrophy,
   },
   {
     id: 3,
-    title: 'Más allá del código.',
-    description: 'Me apasiona estudiar temas relacionados con ciencias exactas, tecnología e incluso filosofía para entender los principios que rigen los sistemas y el mundo, confieso que me apasiona mucho leer.',
+    title: 'Ingeniería con Fundamento.',
+    description: 'Analizo la seguridad desde su núcleo. Comprendo la tecnología a través de las ciencias exactas y la arquitectura de sistemas, lo que me permite identificar fallos lógicos antes de que se conviertan en brechas.',
     icon: BookOpen,
     Illustration: IllustrationBook,
   },
   {
     id: 4,
-    title: 'Construir con propósito.',
-    description: 'Mi objetivo es desarrollar herramientas y plataformas que involucren el correcto desarrollo y junto con estándares altos de ciberseguridad, ayudando a otros a crear software más seguro desde el inicio.',
+    title: 'Security by Design.',
+    description: 'Construyo software asumiendo que será atacado. Integro estándares rigurosos de ciberseguridad desde la primera línea de código para proteger la integridad de los datos empresariales.',
     icon: Target,
     Illustration: IllustrationRocket,
   }

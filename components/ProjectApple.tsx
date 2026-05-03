@@ -9,27 +9,27 @@ import { ExternalLink, TerminalSquare, ChevronLeft, ChevronRight, X, MousePointe
 const projects = [
   {
   title: "NexusTopUp",
-  category: "Ciberseguridad / E-commerce Fullstack",
-  description: "Plataforma de recargas digitales de alta seguridad. Implementa protección contra ataques automatizados (Rate Limiting), validación estricta de archivos en servidor (Firewall de carga) y un sistema asíncrono que elimina el intercambio de credenciales del cliente, garantizando la integridad de las cuentas de usuario.",
-  techs: ["Next.js (App Router)", "TypeScript", "Supabase (SSR)", "Zustand", "Tailwind CSS", "Framer Motion"],
+  category: "Ingeniería de Software / E-commerce Seguro",  
+  description: "Plataforma de transacciones digitales diseñada con enfoque en Security by Design. Se implementó una arquitectura resistente a ataques automatizados mediante Rate Limiting estricto, validación de carga en servidor y un flujo asíncrono que protege la integridad de las credenciales de usuario.",
+  techs: ["Next.js (App Router)", "TypeScript", "Supabase (SSR - Auth/DB)", "Zustand", "Tailwind CSS", "Framer Motion"],
   image: "/nexus-topup-preview.png", // Asegúrate de tomar una captura de tu Dashboard actual
   github: "https://github.com/CescJavier7/Recargas-Robux", // Actualiza con tu link real
   demo: "https://recargas-robux-bso7.vercel.app/" // Tu URL de producción en Vercel
 },
   {
     title: "ElliotWave EA",
-    category: "FinTech / Algorithmic Trading",
-    description: "Asesor Experto adaptativo para MetaTrader 4. Utiliza lógica multi-estrategia basada en Ondas de Elliott y Fibonacci, con un motor de decisión que analiza la volatilidad y tendencia en tiempo real para optimizar entradas.",
-    techs: ["MQL4", "Algorithmic Trading", "Mathematics", "Risk Management"],
+    category: "Ingeniería Financiera / Algorithmic Trading",
+    description: "Desarrollo de un Asesor Experto (EA) adaptativo para MetaTrader 4. El algoritmo emplea lógica multi-estrategia fundamentada en modelos matemáticos (Ondas de Elliott y retrocesos de Fibonacci), integrando un motor de evaluación de volatilidad en tiempo real para optimizar la gestión de riesgo.",
+    techs: ["MQL4", "Algorithmic Trading", "Modelado Matemático", "Gestión de Riesgo"],
     image: "/trading-bot.jpg", // <--- Pon una captura de MT4 en tu carpeta 'public'
     github: "https://github.com/CescJavier7/bot_trading", 
      demo: ""
   },
   {
     title: "Defensa Activa y Observabilidad: Laboratorio NIDS/IPS",
-    category: "Ciberseguridad / Blue Team-DevSecOps",
-    description: "¿Cómo detectar y detener un ataque en menos de 5 segundos? Implementé un sistema que une detección (Snort), respuesta (Fail2ban) y visualización (Loki/Grafana) para monitorizar infraestructuras críticas.",
-    techs: ["Snort (IDS)", "Fail2ban (IPS)", "Grafana, Loki & Promtail", "Kali Linux (Pentesting)", "Ubuntu Server"],
+    category: "Ciberseguridad / DevSecOps & Blue Team",
+    description: "Implementación de una arquitectura defensiva capaz de identificar y mitigar intrusiones en menos de 5 segundos. El ecosistema correlaciona eventos de detección (Snort) con respuestas de firewall automatizadas (Fail2ban), soportado por un pipeline de observabilidad forense (Promtail, Loki, Grafana).",    
+    techs: ["Snort (IDS)", "Fail2ban (IPS)", "Grafana, Loki & Promtail", "Kali Linux (Pentesting)", "Ubuntu Server", "Análisis de Firmas", "Iptables"],
     image: "/dashboardnids.jpg", // <--- Pon una captura de MT4 en tu carpeta 'public'
     github: "https://github.com/CescJavier7/NIDS-IPS-Observability", 
     demo: ""
@@ -37,26 +37,26 @@ const projects = [
   {
     title: "Agromix",
     category: "AgriTech / Herramienta de Software",
-    description: "Herramienta técnica desarrollada para la carrera de Ingeniería Agronómica de la UCE. Sistema de verificación de compatibilidad entre ingredientes activos químicos (fungicidas, insecticidas y herbicidas) para optimizar mezclas y prevenir reacciones adversas.",
-    techs: ["HTML5", "CSS3", "JavaScript", "Diseño UX"],
+    description: "Software técnico desarrollado para la carrera de Ingeniería Agronómica de la UCE. Incorpora un algoritmo de validación de compatibilidad química para insumos agrícolas, previniendo reacciones adversas y optimizando el manejo integrado de cultivos.",
+    techs: ["Lógica de Validación","HTML5", "CSS3", "JavaScript", "Diseño UX"],
     image: "/agromix.jpg", // <--- Recuerda subir la captura a la carpeta 'public'
     github: "https://github.com/CescJavier7/manejo_integrado", // Actualiza con tu link real
     demo: "https://cescjavier7.github.io/manejo_integrado/" // Actualiza con tu link real
   },
   {
     title: "Fashion & Beauty Catalog",
-    category: "E-Commerce / Business Tool",
-    description: "Plataforma de catálogo digital personalizada para un emprendimiento de moda y perfumería. Diseñada para maximizar la conversión mediante una navegación intuitiva de productos y una integración directa con WhatsApp Business para el cierre de ventas.",
-    techs: ["HTML5", "CSS3", "JavaScript", "WhatsApp API"],
+    category: "E-Commerce / Integración de Negocios",
+    description: "Catálogo digital optimizado para la conversión. El diseño se centra en una experiencia de usuario (UX) fluida y una arquitectura de la información clara, culminando en una integración directa y eficiente con la API de WhatsApp Business para la gestión de ventas.",
+    techs: ["HTML5", "CSS3", "JavaScript", "WhatsApp API", "Optimización UX/UI"],
     image: "/catalogo-mama.jpg", // <--- Recuerda subir la captura a 'public'
     github: "https://github.com/CescJavier7/AngieCatalogos", 
     demo: "https://cescjavier7.github.io/AngieCatalogos/"
   },
   {
     title: "D' Robys Band Official",
-    category: "Entertainment / Music Web",
-    description: "Sitio web oficial para la reconocida agrupación musical D' Robys Band. La plataforma destaca su trayectoria y giras internacionales en Colombia, Perú y Estados Unidos, integrando animaciones fluidas para ofrecer una experiencia inmersiva a sus seguidores.",
-    techs: ["HTML5", "CSS3", "JavaScript", "Scroll Animations"],
+    category: "Web Development / Plataforma de Entretenimiento",
+    description: "Plataforma oficial desarrollada para la agrupación D' Robys Band. El proyecto integra animaciones fluidas basadas en scroll para crear una narrativa visual inmersiva que resalta la trayectoria internacional de la banda, optimizando el rendimiento y la accesibilidad.",
+    techs: ["HTML5", "CSS3", "JavaScript", "Animaciones de Rendimiento"],
     image: "/drobys-band.jpg", // <--- Sube la captura de la banda a 'public'
     github: "https://github.com/CescJavier7/drobysband", 
     demo: "https://cescjavier7.github.io/drobysband/"

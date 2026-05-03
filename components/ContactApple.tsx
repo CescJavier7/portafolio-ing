@@ -71,7 +71,7 @@ const contactMethods = [
     href: '/Javier CV - Harvard Style.pdf', 
     isPrimary: false,
     // 2. Agregamos una propiedad nueva para identificar que es descarga
-    download: 'Javier CV - Harvard Style.pdf' 
+    download: 'Kevin_Javier_Montatixe_CV.pdf', // El nombre que tendrá el archivo al descargarse
   },
 ];
 
