@@ -68,7 +68,7 @@ const contactMethods = [
     description: 'Descarga mi perfil técnico detallado',
     icon: IconCV,
     // 1. La ruta apunta directamente al nombre del archivo en la carpeta public
-    href: '/Javier CV - Harvard Style.pdf', 
+    href: '/Kevin_Javier_Montatixe_CV.pdf', 
     isPrimary: false,
     // 2. Agregamos una propiedad nueva para identificar que es descarga
     download: 'Kevin_Javier_Montatixe_CV.pdf', // El nombre que tendrá el archivo al descargarse
