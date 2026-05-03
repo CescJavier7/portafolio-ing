@@ -1,7 +1,7 @@
 'use client';
 import { motion } from 'framer-motion';
 
-// ─── ICONOS SVG PUROS (Cero dependencias, nunca fallan) ──────────────────────
+// ─── ICONOS SVG PUROS ────────────────────────────────────────────────────────
 
 const IconMail = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -67,27 +67,13 @@ const contactMethods = [
     title: 'Currículum Vitae',
     description: 'Descarga mi perfil técnico detallado',
     icon: IconCV,
-    // 1. La ruta apunta directamente al nombre del archivo en la carpeta public
+    // La ruta apunta al archivo PDF que debe estar en tu carpeta "public"
     href: '/Kevin_Javier_Montatixe_CV.pdf', 
     isPrimary: false,
-    // 2. Agregamos una propiedad nueva para identificar que es descarga
-    download: 'Kevin_Javier_Montatixe_CV.pdf', // El nombre que tendrá el archivo al descargarse
+    // Propiedad clave para forzar la descarga con este nombre exacto
+    download: 'Kevin_Javier_Montatixe_CV.pdf', 
   },
 ];
-
-{contactMethods.map((method, index) => (
-  <motion.a
-    key={method.title}
-    href={method.href}
-    // Si existe la propiedad download, se la asignamos al enlace
-    download={method.download} 
-    target={method.download ? undefined : "_blank"} // No abrimos pestaña nueva si es descarga
-    rel="noopener noreferrer"
-    // ... el resto de tus animaciones y clases
-  >
-    {/* ... contenido de la tarjeta ... */}
-  </motion.a>
-))}
 
 export default function ContactApple() {
   return (
@@ -97,13 +83,13 @@ export default function ContactApple() {
         {/* Cabecera */}
         <div className="mb-16 md:text-center">
           <p className="text-apple-blue font-bold tracking-tight mb-3 uppercase text-xs italic">
-            ¿Me invitas un café? ☕️
+            ¿Buscas un Arquitecto de Software?
           </p>
           <h2 className="text-4xl md:text-5xl font-bold tracking-tighter text-zinc-900 dark:text-white mb-4">
-            Si gustas, podemos charlar.
+            Iniciemos un proyecto seguro.
           </h2>
           <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto text-balance">
-            ¿Tienes alguna idea en mente, buscas fortalecer la seguridad de tu infraestructura, o simplemente quieres hablar de tecnología? Mis bandejas están abiertas.
+            Si tu organización necesita asegurar su infraestructura, desarrollar plataformas de alta disponibilidad o consultoría en DevSecOps, mis bandejas están abiertas.
           </p>
         </div>
 
@@ -113,7 +99,10 @@ export default function ContactApple() {
             <motion.a
               key={method.title}
               href={method.href}
-              target="_blank"
+              // Si tiene propiedad download, se la pasa al tag <a>
+              download={method.download}
+              // Si es descarga no abre pestaña nueva, de lo contrario sí
+              target={method.download ? undefined : "_blank"}
               rel="noopener noreferrer"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
