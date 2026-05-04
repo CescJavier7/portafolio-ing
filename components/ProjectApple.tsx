@@ -39,7 +39,7 @@ const projects = [
   category: "Ciberseguridad / Pentesting Web",  
   description: "Auditoría de seguridad ofensiva sobre una arquitectura web moderna (Node.js/Angular). Se explotaron y documentaron vulnerabilidades críticas del OWASP Top 10, logrando un Authentication Bypass vía Inyección SQL (Lógica Booleana) y ejecución de código del lado del cliente (DOM XSS). Incluye análisis forense de tráfico de APIs REST y propuestas de remediación arquitectónica.",
   techs: ["Burp Suite", "Kali Linux", "OWASP Top 10", "Docker", "SQL Injection", "XSS"],
-  image: "/pentesting-portfolio-preview.png", // Sugerencia: Toma una captura de pantalla de tu README.md finalizado en GitHub para usarla como portada
+  image: "OWASP Juice shop.png", // Sugerencia: Toma una captura de pantalla de tu README.md finalizado en GitHub para usarla como portada
   github: "https://github.com/CescJavier7/Web-Pentesting-Portfolio", 
   demo: "" // Al no ser una app desplegada, el "demo" suele apuntar al mismo repo o a un post de tu blog/LinkedIn
   },
