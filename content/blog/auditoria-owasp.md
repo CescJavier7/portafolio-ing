@@ -52,32 +52,34 @@ Al inyectar la comilla simple ('), se cerró prematuramente la cadena original. 
 Ejecución de Código Arbitrario (DOM XSS)
 Para evadir las protecciones básicas contra secuencias de comandos (scripts) del framework Angular, se utilizó un vector de ataque basado en la inyección de marcos (iframes) que ejecutan JavaScript en su atributo de origen:
 
+```
 <iframe src="javascript:alert(1)">
+```
 
 Dado que la aplicación procesó y reflejó esta cadena sin aplicar HTML Encoding (codificación de entidades), el navegador de la víctima interpretó el texto como un elemento estructural legítimo de la página, ejecutando el código malicioso en el contexto de seguridad del dominio.
 
-##Evidencias de Compromiso (PoC)
-###Captura de Sesión Privilegiada
+## Evidencias de Compromiso (PoC)
+### Captura de Sesión Privilegiada
 A través de la herramienta Repeater de Burp Suite, se comprobó que el servidor respondió con un código HTTP/1.1 200 OK tras recibir el payload SQL. La respuesta incluyó un JSON Web Token (JWT) válido asociado a la cuenta admin@juice-sh.op, otorgando control administrativo total sobre la plataforma.
 
-###Ejecución del lado del cliente
+### Ejecución del lado del cliente
 La inyección en la barra de búsqueda derivó en una alerta emergente generada directamente por el motor V8 del navegador, confirmando la vulnerabilidad de Cross-Site Scripting y demostrando la capacidad de un atacante para secuestrar sesiones de usuarios legítimos.
 ###Auditoría de Evasión de Caché (HTTP 304)
 Al interceptar el tráfico de la API de pagos, el servidor inicialmente devolvió un 304 Not Modified. Al eliminar la cabecera condicional If-None-Match, se forzó al servidor a revelar el payload JSON. Se demostró que la aplicación aplica un Data Masking correcto en el servidor ("cardNum": "************4368"), mitigando la exposición directa de datos (CWE-200).
 
-##Lecciones Aprendidas y Remediación Arquitectónica
+## Lecciones Aprendidas y Remediación Arquitectónica
 La auditoría revela que las vulnerabilidades más críticas derivan de fallos arquitectónicos en el manejo de datos, no de errores criptográficos. Para blindar la infraestructura, se recomiendan las siguientes políticas de Security by Design:
 
 **1. Prevención de Inyecciones (A03:2021-Injection):** Es imperativo erradicar la concatenación de variables en consultas a bases de datos. Se deben implementar Consultas Preparadas (Prepared Statements) o utilizar ORMs de forma segura para garantizar que la base de datos trate la entrada del usuario estrictamente como texto escalar, bloqueando cualquier alteración del Árbol de Sintaxis Abstracta (AST) de la consulta.
 
 **2. Defensa contra XSS:** La mitigación requiere la aplicación de Context-Aware Output Encoding en el Back-end antes de reflejar cualquier dato en el Front-end. Adicionalmente, el servidor debe emitir cabeceras estrictas de Content Security Policy (CSP) que deshabiliten la ejecución de scripts en línea (unsafe-inline).
 
-##Conclusión
+## Conclusión
 El análisis técnico estructurado confirma que la seguridad de una aplicación web es tan fuerte como su punto de entrada más débil. La explotación exitosa del OWASP Top 10 en este entorno demuestra que los controles de red (firewalls, WAFs) son insuficientes si la lógica de la aplicación es intrínsecamente vulnerable.
 
 La verdadera madurez en ciberseguridad se alcanza cuando las remediaciones no son "parches" aplicados tras un incidente, sino decisiones de arquitectura integradas en el ciclo de vida del desarrollo de software (SDLC).
 
-##Referencias Académicas y Estándares
+## Referencias Académicas y Estándares
 
 - OWASP Foundation. (2021). OWASP Top 10: Web Application Security Risks. https://owasp.org/Top10/
 
