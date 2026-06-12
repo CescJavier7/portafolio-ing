@@ -13,7 +13,7 @@ const projects = [
     description: "Plataforma End-to-End de Detección y Respuesta Autónoma (SIEM/SOAR). Arquitectura orientada a eventos que integra análisis de tráfico de red (Suricata NIDS), telemetría de host y un motor de mitigación Zero-Trust asíncrono.",
     techs: ["FastAPI", "ReactFlow (WebSockets)", "Elasticsearch", "Docker", "Suricata (NIDS)", "Zero-Trust SSH", "Redis"],
     image: "/sentinelx-preview.jpeg", // <--- Guarda la captura del Grafo de Red Oscuro en tu carpeta 'public'
-    github: "https://github.com/CescJavier7/SentinelX-Autonomous-SOC",
+    github: "https://github.com/CescJavier7/SentinelX-SOAR",
     demo: "" // Déjalo vacío o pon el link a tu post de LinkedIn con el video/demo
   },
   {
