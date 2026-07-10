@@ -141,7 +141,8 @@ const certs = [
 
 export default function CertificationsApple() {
   return (
-    <section className="py-24 bg-white dark:bg-black transition-colors duration-500">
+    
+    <section id="certificados" className="py-24 bg-white dark:bg-black transition-colors duration-500">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         
         <motion.div 
