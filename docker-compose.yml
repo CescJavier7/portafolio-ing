@@ -1,0 +1,20 @@
+services:
+  portfolio-app:
+    build: .
+    container_name: portfolio-frontend
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - proxy-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy-net"
+      - "traefik.http.routers.portfolio.rule=Host(`cescjavier.dev`) || Host(`www.cescjavier.dev`)"
+      - "traefik.http.routers.portfolio.entrypoints=websecure"
+      - "traefik.http.routers.portfolio.tls.certresolver=letsencrypt"
+      - "traefik.http.services.portfolio.loadbalancer.server.port=3000"
+
+networks:
+  proxy-net:
+    external: true
