@@ -7,7 +7,8 @@ import SkillsApple from '../components/SkillsApple';
 import AboutAppleScroll from '../components/AboutAppleScroll';
 import WorkExperienceApple from '../components/WorkExperienceApple';
 import ContactApple from '../components/ContactApple';
-import ProjectApple from '../components/ProjectApple'; // <-- TU NUEVO COMPONENTE
+import ProjectApple from '../components/ProjectApple'; 
+import CertificationsApple from '../components/CertificationsApple'; // <-- TU NUEVA SECCIÓN DE CERTIFICACIONES
 
 // --- DATOS ---
 const skills = [
@@ -38,35 +39,34 @@ const projects = [
 
 const timeline = [
   {
-  year: "2024 - Presente",
-  title: "Ingeniería en Ciberseguridad y Gestión de las TI",
-  role: "Pontificia Universidad Católica del Ecuador",
-  description: "Formación enfocada en ciberseguridad aplicada, abarcando análisis de vulnerabilidades, hardening y prácticas en entornos controlados (CTFs, Hack The Box). Complemento mi aprendizaje con contenidos y laboratorios basados en tecnologías de Google Cloud.",
-  icon: GraduationCap
-},
-{
-  year: "2018 - 2023",
-  title: "Licenciatura en Informática",
-  role: "Universidad Central del Ecuador",
-  description: "Adquirí fundamentos sólidos en programación, estructuras de datos, algoritmos y arquitectura de sistemas. Esta etapa fortaleció mi pensamiento lógico, análisis de problemas y comprensión del funcionamiento interno del software.",
-  icon: GraduationCap
-}];
+    year: "2024 - Presente",
+    title: "Ingeniería en Ciberseguridad y Gestión de las TI",
+    role: "Pontificia Universidad Católica del Ecuador",
+    description: "Formación enfocada en ciberseguridad aplicada, abarcando análisis de vulnerabilidades, hardening y prácticas en entornos controlados (CTFs, Hack The Box). Complemento mi aprendizaje con contenidos y laboratorios basados en tecnologías de Google Cloud.",
+    icon: GraduationCap
+  },
+  {
+    year: "2018 - 2023",
+    title: "Licenciatura en Informática",
+    role: "Universidad Central del Ecuador",
+    description: "Adquirí fundamentos sólidos en programación, estructuras de datos, algoritmos y arquitectura de sistemas. Esta etapa fortaleció mi pensamiento lógico, análisis de problemas y comprensión del funcionamiento interno del software.",
+    icon: GraduationCap
+  }
+];
 
 const transitionSettings = {
   duration: 0.8,
-  ease: [0.43, 0.13, 0.23, 0.96] as any, // <--- Agrega este "as any"
+  ease: [0.43, 0.13, 0.23, 0.96] as any, 
 };
-
 
 export default function Home() {
   return (
-    // Quitamos el pt-16 del main global para que la pantalla negra del inicio ocupe el 100% del borde superior
-<main className="min-h-screen bg-white text-black dark:bg-black dark:text-white antialiased">
+    <main className="min-h-screen bg-white text-black dark:bg-black dark:text-white antialiased">
       
       {/* 1. AHORA ESTO ES LO PRIMERO QUE VEN (EFECTO APPLE SCROLL) */}
       <AboutAppleScroll />
 
-      {/* 2. HERO TÉCNICO (Ahora aparece justo después de la introducción personal) */}
+      {/* 2. HERO TÉCNICO */}
       <section className="h-[80vh] flex flex-col items-center justify-center text-center px-4 border-b border-gray-100 dark:border-white/5">
         <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={transitionSettings} className="max-w-4xl">
           <p className="text-apple-blue font-semibold tracking-tight mb-3">Ciencia, Software, Informática & Ciberseguridad</p>
@@ -74,18 +74,18 @@ export default function Home() {
             Código limpio. <br /> <span className="text-gray-400 dark:text-gray-500">Seguridad implacable.</span>
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400 mb-10 max-w-2xl mx-auto text-balance">
-Aplico pensamiento lógico, matemático y estructurado para desarrollar sistemas eficientes, seguros y preparados para el mundo real.          </p>
+            Aplico pensamiento lógico, matemático y estructurado para desarrollar sistemas eficientes, seguros y preparados para el mundo real.
+          </p>
         </motion.div>
       </section>
+
       {/* 3. BENTO GRID (HABILIDADES) */}
-<SkillsApple />
+      <SkillsApple />
 
       {/* 4. PROYECTOS CON FÍSICAS DE APPLE TV */}
-<ProjectApple />
+      <ProjectApple />
 
-      
-
-      {/* 5. TRAYECTORIA (TIMELINE) */}
+      {/* 5. TRAYECTORIA EDUCATIVA (TIMELINE) */}
       <section id="trayectoria" className="py-24 max-w-6xl mx-auto px-6">
         <motion.header className="mb-20 text-center" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={transitionSettings}>
           <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">Evolución Continua.</h2>
@@ -103,10 +103,13 @@ Aplico pensamiento lógico, matemático y estructurado para desarrollar sistemas
                   </div>
                   <motion.div className="md:w-2/3 pl-8 md:pl-12 border-l border-transparent md:border-gray-200 md:dark:border-white/10 relative" initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: 0.4 }} transition={transitionSettings}>
                     <div className="hidden md:block absolute w-4 h-4 bg-apple-blue rounded-full -left-[9px] top-2 border-4 border-white dark:border-black transition-transform group-hover:scale-150"></div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <Icon className="w-6 h-6 text-apple-blue" />
+                    
+                    {/* AQUÍ ESTÁ LA MAGIA DEL BIRRETE: items-start, shrink-0 y mt-1 */}
+                    <div className="flex items-start gap-3 mb-2">
+                      <Icon className="w-6 h-6 text-apple-blue shrink-0 mt-1" />
                       <h4 className="text-2xl font-semibold tracking-tight">{item.title}</h4>
                     </div>
+                    
                     <p className="text-apple-blue font-medium text-sm mb-4">{item.role}</p>
                     <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed text-balance">{item.description}</p>
                   </motion.div>
@@ -116,13 +119,15 @@ Aplico pensamiento lógico, matemático y estructurado para desarrollar sistemas
           })}
         </div>
       </section>
-      {/* 6. EXPERIENCIA LABORAL (ACORDEÓN APPLE) */}
+
+      {/* 6. CERTIFICACIONES Y LOGROS (NUEVA SECCIÓN) */}
+      <CertificationsApple />
+
+      {/* 7. EXPERIENCIA LABORAL (ACORDEÓN APPLE) */}
       <WorkExperienceApple />
 
-      {/* 7. SECCIÓN DE CONTACTO */}
+      {/* 8. SECCIÓN DE CONTACTO */}
       <ContactApple />
-
-
 
     </main>
   );
