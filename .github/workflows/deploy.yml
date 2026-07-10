@@ -1,0 +1,30 @@
+name: Deploy Next.js Portfolio to VPS
+
+on:
+  push:
+    branches:
+      - main # O la rama que utilices por defecto
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Conectar al VPS y Desplegar
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          script: |
+            cd /opt/apps/portafolio
+            # Forzamos la sincronización exacta con tu repositorio en GitHub
+            git fetch --all
+            git reset --hard origin/main
+            
+            # Detenemos, reconstruimos y levantamos la nueva versión
+            docker compose down
+            docker compose up -d --build --force-recreate
+            
+            # Limpieza automática de imágenes viejas para no llenar el disco de 50GB
+            docker image prune -f
