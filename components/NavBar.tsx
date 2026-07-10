@@ -20,6 +20,7 @@ export default function NavBar() {
     { name: 'Sobre mí', href: '/#sobre-mi' },
     { name: 'Habilidades', href: '/#habilidades' },
     { name: 'Proyectos', href: '/#proyectos' },
+    { name: 'Certificados', href: '/#certificados' }, // Corregido aquí
     { name: 'Experiencia', href: '/#experiencia' }, // Corregido aquí
     { name: 'Contacto', href: '/#contacto' }, // ¡Nuevo enlace agregado!
     { name: 'Blog & Educación', href: '/blog' }, // ¡Nuevo enlace agregado!
