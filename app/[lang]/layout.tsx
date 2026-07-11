@@ -70,8 +70,7 @@ export default async function RootLayout({
   const { lang } = await params;
   
   // Carga del diccionario en el servidor
-  const dict = await getDictionary(lang);
-  
+const dict = await getDictionary(lang as "es" | "en");  
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Person",

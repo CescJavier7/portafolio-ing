@@ -9,8 +9,7 @@ import ContactApple from '@/components/ContactApple';
 export default async function Home({ params }: { params: Promise<{ lang: string }> }) {
   // 1. Resolvemos parámetros y cargamos el diccionario
   const { lang } = await params;
-  const dict = await getDictionary(lang);
-
+const dict = await getDictionary(lang as "es" | "en");
   return (
     <main className="min-h-screen bg-white text-black dark:bg-black dark:text-white antialiased">
       
