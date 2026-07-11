@@ -6,7 +6,7 @@ import CertificationsApple from '@/components/CertificationsApple';
 import WorkExperienceApple from '@/components/WorkExperienceApple';
 import ContactApple from '@/components/ContactApple';
 
-export default async function Home({ params }: { params: Promise<{ lang: 'es' | 'en' }> }) {
+export default async function Home({ params }: { params: Promise<{ lang: string }> }) {
   // 1. Resolvemos parámetros y cargamos el diccionario
   const { lang } = await params;
   const dict = await getDictionary(lang);

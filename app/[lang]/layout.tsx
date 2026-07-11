@@ -64,7 +64,7 @@ export default async function RootLayout({
   params,
 }: Readonly<{
   children: React.ReactNode;
-  params: Promise<{ lang: 'es' | 'en' }>;
+  params: Promise<{ lang: string }>; // <-- PARCHE APLICADO
 }>) {
   // Desempaquetamos la promesa (Requisito Next.js 15+)
   const { lang } = await params;
