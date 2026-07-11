@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Shield, Moon, Sun, Menu, X } from 'lucide-react';
 import Link from 'next/link';
+import { useTheme } from 'next-themes';
 import LanguageToggle from '@/components/LanguageToggle';
 
+// 1. INTERFAZ ESTRICTA
 interface NavBarProps {
   dict: {
     about: string;
@@ -19,35 +21,19 @@ interface NavBarProps {
 }
 
 export default function NavBar({ dict, lang }: NavBarProps) {
-  // Antes: useState(true) — siempre arrancaba en modo oscuro. Como [lang]
-  // puede remontar este componente al cambiar de idioma, ese `true` fijo
-  // pisaba la preferencia real del usuario cada vez. Ahora arrancamos
-  // leyendo la clase que el script anti-flash de layout.tsx ya dejó puesta
-  // en <html> (que a su vez viene de localStorage) — así el valor inicial
-  // ya es el correcto, sin esperar a un efecto posterior al mount.
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    return document.documentElement.classList.contains('dark');
-  });
+  const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  
+  // 2. EXTRAEMOS LA LÓGICA DE TEMA (Librería nativa)
+  const { theme, setTheme, resolvedTheme } = useTheme();
 
+  // 3. SEGURO CONTRA HYDRATION MISMATCH
   useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    // Persistimos la preferencia para que sobreviva a remounts (cambio de
-    // idioma) y a futuras visitas.
-    try {
-      window.localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    } catch {
-      // Si localStorage no está disponible (modo privado, etc.), no rompemos la UI.
-    }
-  }, [isDark]);
+    setMounted(true);
+  }, []);
 
-  // Construcción dinámica de rutas localizadas
-  const navLinks = [
+  // 4. MEMORIZACIÓN DE ENLACES: Evita re-cálculos si cambia el estado isOpen
+  const navLinks = useMemo(() => [
     { name: dict.about, href: `/${lang}/#sobre-mi` },
     { name: dict.skills, href: `/${lang}/#habilidades` },
     { name: dict.projects, href: `/${lang}/#proyectos` },
@@ -55,7 +41,12 @@ export default function NavBar({ dict, lang }: NavBarProps) {
     { name: dict.experience, href: `/${lang}/#experiencia` },
     { name: dict.contact, href: `/${lang}/#contacto` },
     { name: dict.blog, href: `/${lang}/blog` },
-  ];
+  ], [dict, lang]);
+
+  // 5. ACCIÓN DE CAMBIO DE TEMA
+  const toggleTheme = () => {
+    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
+  };
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-white/70 dark:bg-black/70 backdrop-blur-xl border-b border-black/5 dark:border-white/10 transition-colors duration-300">
@@ -67,7 +58,7 @@ export default function NavBar({ dict, lang }: NavBarProps) {
           <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-white">CescJavier</span>
         </Link>
 
-        {/* ENLACES PC */}
+        {/* ENLACES ESCRITORIO */}
         <div className="hidden md:flex gap-8 items-center">
           {navLinks.map((link) => (
             <Link 
@@ -80,23 +71,28 @@ export default function NavBar({ dict, lang }: NavBarProps) {
           ))}
         </div>
 
-        {/* ACCIONES */}
+        {/* CONTROLES */}
         <div className="flex items-center gap-4 z-50">
           <LanguageToggle />
 
           <button 
-            onClick={() => setIsDark(!isDark)} 
-            className="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
-            aria-label="Toggle Dark Mode"
-            suppressHydrationWarning
+            onClick={toggleTheme} 
+            className="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center w-8 h-8"
+            aria-label="Alternar Modo Oscuro"
           >
-            {isDark ? <Sun className="w-4 h-4 text-yellow-400" /> : <Moon className="w-4 h-4 text-zinc-600" />}
+            {/* TWO-PASS RENDERING: Placeholder vacío hasta que se monta en el cliente */}
+            {mounted ? (
+              resolvedTheme === 'dark' ? <Sun className="w-4 h-4 text-yellow-400" /> : <Moon className="w-4 h-4 text-zinc-600" />
+            ) : (
+              <div className="w-4 h-4" /> 
+            )}
           </button>
 
+          {/* HAMBURGUESA MÓVIL */}
           <button 
             className="md:hidden p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors text-zinc-900 dark:text-white"
             onClick={() => setIsOpen(!isOpen)}
-            aria-label="Toggle Mobile Menu"
+            aria-label="Alternar Menú Móvil"
           >
             {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>

@@ -57,9 +57,12 @@ function getPostMetadata(lang: string): PostMeta[] {
 export default async function BlogIndex({
   params,
 }: {
-  params: Promise<{ lang: 'es' | 'en' }>;
+  // Mismo ajuste que en layout.tsx y blog/[slug]/page.tsx: Next.js 16
+  // espera `string` genérico para segmentos dinámicos.
+  params: Promise<{ lang: string }>;
 }) {
-  const { lang } = await params;
+  const { lang: rawLang } = await params;
+  const lang: 'es' | 'en' = rawLang === 'en' ? 'en' : 'es';
   const posts = getPostMetadata(lang);
 
   // Mismo patrón "mini-diccionario local" que ya usamos en blog/[slug]/page.tsx,

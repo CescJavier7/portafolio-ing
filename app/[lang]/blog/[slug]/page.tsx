@@ -33,9 +33,13 @@ function getPostContent(lang: string, slug: string) {
 export default async function BlogPost({
   params,
 }: {
-  params: Promise<{ lang: 'es' | 'en'; slug: string }>;
+  // Mismo ajuste que en layout.tsx: Next.js 16 espera `string` genérico
+  // para segmentos dinámicos en el tipo auto-generado; declarar la unión
+  // 'es' | 'en' aquí rompe el build ("does not satisfy the constraint").
+  params: Promise<{ lang: string; slug: string }>;
 }) {
-  const { lang, slug } = await params;
+  const { lang: rawLang, slug } = await params;
+  const lang: 'es' | 'en' = rawLang === 'en' ? 'en' : 'es';
   const post = getPostContent(lang, slug);
 
   // Copys de interfaz mínimos (no ameritan traer todo `getDictionary` aquí,
