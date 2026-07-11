@@ -1,0 +1,258 @@
+{
+  "footer": {
+    "tagline": "Engineering & Cybersecurity. Built with Next.js 15."
+  },
+  "navigation": {
+    "about": "About",
+    "skills": "Skills",
+    "projects": "Projects",
+    "certifications": "Certifications",
+    "experience": "Experience",
+    "contact": "Contact",
+    "blog": "Blog"
+  },
+  "skills": {
+    "tag": "Technical Stack",
+    "title": "Engineered with",
+    "subtitle": "relentless security.",
+    "description": "A multidisciplinary stack that combines offensive and defensive cybersecurity, resilient infrastructure, and modern software development.",
+    "cards": {
+      "cyber": {
+        "title": "DevSecOps & Cybersecurity",
+        "desc": "Vulnerability analysis, ethical hacking, and Zero-Trust architectures focused on active threat detection and response."
+      },
+      "infra": {
+        "title": "Infrastructure & DevOps",
+        "desc": "Linux server administration, containers, and deployment automation with a focus on availability and security."
+      },
+      "front": {
+        "title": "Frontend Software Engineering",
+        "desc": "Modern, accessible, high-performance interfaces built with React and the Next.js ecosystem."
+      },
+      "data": {
+        "title": "Data Architecture",
+        "desc": "Design and optimization of relational databases, referential integrity, and high-performance queries."
+      },
+      "auto": {
+        "title": "Python & Automation",
+        "desc": "Automation scripts, scraping, and algorithmic problem-solving with Python."
+      },
+      "core": {
+        "title": "Software Engineering (Core)",
+        "desc": "Solid foundations in programming and data structures with C++."
+      },
+      "uiux": {
+        "title": "Observability & UI/UX",
+        "desc": "Real-time monitoring and data visualization for informed decision-making, with close attention to user experience."
+      },
+      "soft": {
+        "title": "Soft Skills & Mentoring",
+        "desc": "Technical leadership, teaching, and the ability to transfer complex knowledge clearly and effectively.",
+        "tag": "Technical Communication"
+      }
+    }
+  },
+  "about": {
+    "panels": [
+      {
+        "title": "Kevin Javier Montatixe.",
+        "description": "Cybersecurity and IT Management Engineer. I design resilient architectures and active defense systems (DevSecOps)."
+      },
+      {
+        "title": "Academic and Technical Rigor.",
+        "description": "During my studies at Universidad Central del Ecuador, I was awarded the academic merit scholarship."
+      },
+      {
+        "title": "Engineering with Foundations.",
+        "description": "I analyze security from its core. I understand technology through exact sciences and systems architecture, which lets me spot logical flaws before they become breaches."
+      },
+      {
+        "title": "Security by Design.",
+        "description": "I build software assuming it will be attacked. I bake rigorous cybersecurity standards in from the first line of code to protect the integrity of enterprise data."
+      }
+    ]
+  },
+  "projects": {
+    "tag": "Portfolio",
+    "title": "See the highlights.",
+    "mobileCta": "Tap to see details",
+    "codeLabel": "Code",
+    "viewCodeLabel": "View Code",
+    "demoLabel": "Live Demo",
+    "items": [
+      {
+        "title": "SentinelX",
+        "category": "Cybersecurity / DevSecOps & SOAR Architecture",
+        "description": "End-to-end autonomous detection and response platform (SIEM/SOAR). Event-driven architecture that integrates network traffic analysis (Suricata NIDS), host telemetry, and an asynchronous Zero-Trust mitigation engine."
+      },
+      {
+        "title": "NexusTopUp",
+        "category": "Software Engineering / Secure E-commerce",
+        "description": "Digital transaction platform built with a Security by Design mindset. Implements an architecture resistant to automated attacks through strict rate limiting, server-side payload validation, and an asynchronous flow that protects credential integrity."
+      },
+      {
+        "title": "ElliotWave EA",
+        "category": "Financial Engineering / Algorithmic Trading",
+        "description": "Development of an adaptive Expert Advisor (EA) for MetaTrader 4. The algorithm uses multi-strategy logic based on mathematical models (Elliott Waves and Fibonacci retracements), with a real-time volatility engine to optimize risk management."
+      },
+      {
+        "title": "Active Defense & Observability: NIDS/IPS Lab",
+        "category": "Cybersecurity / DevSecOps & Blue Team",
+        "description": "Defensive architecture capable of detecting and mitigating intrusions in under 5 seconds. The ecosystem correlates detection events (Snort) with automated firewall responses (Fail2ban), backed by a forensic observability pipeline (Promtail, Loki, Grafana)."
+      },
+      {
+        "title": "OWASP Web Security Audit",
+        "category": "Cybersecurity / Web Pentesting",
+        "description": "Offensive security audit on a modern web architecture (Node.js/Angular). Exploited and documented critical OWASP Top 10 vulnerabilities, achieving an authentication bypass via SQL injection (boolean logic) and client-side code execution (DOM XSS). Includes REST API traffic forensics and architectural remediation proposals."
+      },
+      {
+        "title": "Agromix",
+        "category": "AgriTech / Software Tool",
+        "description": "Technical software built for UCE's Agronomic Engineering program. Includes a chemical-compatibility validation algorithm for agricultural inputs, preventing adverse reactions and optimizing integrated crop management."
+      },
+      {
+        "title": "Fashion & Beauty Catalog",
+        "category": "E-Commerce / Business Integration",
+        "description": "Digital catalog optimized for conversion. The design focuses on a smooth user experience and clear information architecture, culminating in a direct, efficient integration with the WhatsApp Business API for sales management."
+      },
+      {
+        "title": "D' Robys Band Official",
+        "category": "Web Development / Entertainment Platform",
+        "description": "Official platform built for the band D' Robys Band. The project integrates smooth scroll-based animations to create an immersive visual narrative highlighting the band's international career, while optimizing performance and accessibility."
+      }
+    ]
+  },
+  "certifications": {
+    "tag": "Technical & Academic Validation",
+    "title": "Certifications & Achievements.",
+    "description": "Formal evidence of my continuous track record and multidisciplinary skills in cybersecurity, technology infrastructure, AI-driven development, and educational sciences.",
+    "items": [
+      {
+        "title": "Cisco Cyber Games Americas 2026",
+        "issuer": "Cisco Networking Academy",
+        "date": "June 2026",
+        "description": "Participation in the Cisco Cyber Games Americas 2026 Capture The Flag Challenge by Cisco Networking Academy, a 3-hour competition among students across the Americas based on the Ethical Hacker course."
+      },
+      {
+        "title": "Cybersecurity and Ethical Hacking",
+        "issuer": "BIG school",
+        "date": "April 2026",
+        "description": "Attendance certificate for a 6-hour workshop on vulnerability detection techniques and digital defense."
+      },
+      {
+        "title": "English Certificate (A1, A2, B1)",
+        "issuer": "Instituto Superior Tecnológico Portoviejo (ITSUP)",
+        "date": "2025 - May 2026",
+        "description": "Passed proficiency levels A1, A2, and B1 according to the Common European Framework of Reference."
+      },
+      {
+        "title": "10,000 Prompters: AI Prompt Engineering",
+        "issuer": "Dubai Future Foundation & Government of Ecuador",
+        "date": "2026",
+        "description": "Program led by the Government of Ecuador in partnership with the United Arab Emirates to strengthen prompt engineering skills for AI systems."
+      },
+      {
+        "title": "Ethical Hacker (Verified Badge)",
+        "issuer": "Cisco Networking Academy",
+        "date": "2026",
+        "description": "Verified credential certifying technical knowledge and skills in Ethical Hacking methodologies."
+      },
+      {
+        "title": "Understanding the Brain to Transform Learning",
+        "issuer": "PUCE Virtual",
+        "date": "October 2025",
+        "description": "Webinar organized by the Virtual Master's Program Coordination in Education, with a focus on neuroscience applied to education."
+      },
+      {
+        "title": "Introduction to AI Development",
+        "issuer": "BIG school",
+        "date": "October 2025",
+        "description": "Attendance certificate for a 6-hour AI development training workshop."
+      },
+      {
+        "title": "Personal Data Protection Law",
+        "issuer": "Academia ProGenios",
+        "date": "June 2025",
+        "description": "Free 6-hour training course, having passed the knowledge assessment on privacy regulation and compliance."
+      },
+      {
+        "title": "Introduction to Cybersecurity",
+        "issuer": "Fundación Telefónica Movistar",
+        "date": "March 2025",
+        "description": "Completion certificate for a 20-hour course on cybersecurity fundamentals."
+      },
+      {
+        "title": "Introduction to Cybersecurity (Verified Badge)",
+        "issuer": "Cisco Networking Academy",
+        "date": "2025",
+        "description": "Verified credential demonstrating foundational knowledge of the threat landscape and basic digital defense principles."
+      },
+      {
+        "title": "Project-Based Learning",
+        "issuer": "Ubicua (Conecta Empleo)",
+        "date": "January 2024",
+        "description": "Certificate for a digital training program focused on active methodologies and hands-on learning."
+      }
+    ]
+  },
+  "experience": {
+    "tag": "Professional Track Record",
+    "title": "Work Experience.",
+    "description": "A track record of solving complex problems, technical leadership, and knowledge transfer.",
+    "items": [
+      {
+        "title": "Systems & IT Infrastructure Developer",
+        "company": "Independent",
+        "period": "Jan 2024 - Present",
+        "description": "End-to-end web development and e-commerce solutions. SQL database optimization (40% query improvement) and creation of automated trading bots with low-latency technical analysis.",
+        "tags": ["SQL", "Trading Bots", "Low Latency", "E-commerce", "Fullstack"]
+      },
+      {
+        "title": "Data Engineer & Support Specialist",
+        "company": "Universidad Central del Ecuador",
+        "period": "Jan 2023 - Dec 2023",
+        "description": "Database administration and data governance (RBAC, encryption). Incident management under SLAs and support for critical infrastructure (DMS/LMS/ERP) with Disaster Recovery protocols.",
+        "tags": ["Data Governance", "Disaster Recovery", "RBAC", "SLA", "ERP"]
+      },
+      {
+        "title": "Digital Skills Project",
+        "company": "Fajardo - Sangolquí",
+        "period": "Sep 2022 - Dec 2022",
+        "description": "Deployment of a community public Wi-Fi network with secure traffic segmentation. Led digital literacy and applied productivity workshops for the community.",
+        "tags": ["Secure Networking", "Wi-Fi", "Leadership", "Digital Literacy"]
+      },
+      {
+        "title": "Computer Science & Math Teacher",
+        "company": "Unidad Educativa 13 de Abril",
+        "period": "Sep 2021 - Aug 2022",
+        "description": "Instruction in algorithms, programming logic, and web development (Python, PHP, JavaScript). Supervised student technical projects focused on problem-solving.",
+        "tags": ["Python", "PHP", "JavaScript", "Programming Logic", "Teaching"]
+      },
+      {
+        "title": "Math Teacher (Transformar Project)",
+        "company": "Universidad Central del Ecuador",
+        "period": "Mar 2022 - Aug 2022",
+        "description": "Intensive training in numerical and abstract reasoning for higher education admission. Designed pedagogical strategies to ensure applicants' academic success.",
+        "tags": ["Mathematics", "Abstract Reasoning", "Pedagogy", "Strategy"]
+      },
+      {
+        "title": "Math Teacher",
+        "company": "Universidad Central del Ecuador",
+        "period": "Oct 2020 - Jun 2021",
+        "description": "Taught integral and differential calculus in virtual environments. Used mathematical visualization tools (GeoGebra, Python) and managed content on LMS platforms.",
+        "tags": ["Integral Calculus", "GeoGebra", "Python", "LMS"]
+      }
+    ]
+  },
+  "contact": {
+    "tag": "Looking for a Software Architect?",
+    "title": "Let's start a secure project.",
+    "description": "If your organization needs to secure its infrastructure, build high-availability platforms, or DevSecOps consulting, my inbox is open.",
+    "methods": [
+      { "title": "Email", "description": "javiercaiza220158@gmail.com" },
+      { "title": "LinkedIn", "description": "Let's connect professionally" },
+      { "title": "GitHub", "description": "Explore my repositories and code" },
+      { "title": "Resume / CV", "description": "Download my detailed technical profile" }
+    ]
+  }
+}

@@ -146,18 +146,17 @@ function IllustrationRocket() {
     <svg viewBox="0 0 280 280" className="w-full h-full" fill="none">
       <defs>
         <filter id="glow-rocket" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="4" result="blur"/>
+          <feGaussianBlur stdDeviation="5" result="blur"/>
           <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
         <linearGradient id="grad-engine" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="40%" stopColor="#22d3ee" />
-          <stop offset="100%" stopColor="#818cf8" stopOpacity="0" />
+          <stop offset="0%" stopColor="#67e8f9" />
+          <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0" />
         </linearGradient>
       </defs>
 
-      {/* Estrellas a velocidad Warp (Líneas moviéndose hacia abajo) */}
-      <g stroke="#60a5fa" strokeWidth="2" opacity="0.6">
+      {/* Estelas de velocidad (Hyperspace) */}
+      <g stroke="#38bdf8" strokeWidth="1" opacity="0.4">
         <line x1="40" y1="0" x2="40" y2="30"><animate attributeName="y1" values="-50;300" dur="0.6s" repeatCount="indefinite" /><animate attributeName="y2" values="0;350" dur="0.6s" repeatCount="indefinite" /></line>
         <line x1="240" y1="0" x2="240" y2="40"><animate attributeName="y1" values="-100;300" dur="0.8s" repeatCount="indefinite" /><animate attributeName="y2" values="-50;350" dur="0.8s" repeatCount="indefinite" /></line>
         <line x1="80" y1="0" x2="80" y2="20"><animate attributeName="y1" values="-20;300" dur="0.4s" repeatCount="indefinite" /><animate attributeName="y2" values="10;320" dur="0.4s" repeatCount="indefinite" /></line>
@@ -190,40 +189,28 @@ function IllustrationRocket() {
   );
 }
 
-// ─── DATOS ───────────────────────────────────────────────────────────────────
-const personalPanels = [
-  {
-    id: 1,
-    title: 'Kevin Javier Montatixe.',
-    description: 'Ingeniero en Ciberseguridad y Gestión de Tecnologías de la Información. Diseño arquitecturas resilientes y sistemas de defensa activa (DevSecOps).',
-    icon: BrainCircuit,
-    Illustration: IllustrationBrain,
-  }, 
-  {
-    id: 2,
-    title: 'Rigor Académico y Técnico.',
-    description: 'Durante mi formación en la Universidad Central del Ecuador, fui galardonado con la beca al mérito académico.',
-    icon: Award,
-    Illustration: IllustrationTrophy,
-  },
-  {
-    id: 3,
-    title: 'Ingeniería con Fundamento.',
-    description: 'Analizo la seguridad desde su núcleo. Comprendo la tecnología a través de las ciencias exactas y la arquitectura de sistemas, lo que me permite identificar fallos lógicos antes de que se conviertan en brechas.',
-    icon: BookOpen,
-    Illustration: IllustrationBook,
-  },
-  {
-    id: 4,
-    title: 'Security by Design.',
-    description: 'Construyo software asumiendo que será atacado. Integro estándares rigurosos de ciberseguridad desde la primera línea de código para proteger la integridad de los datos empresariales.',
-    icon: Target,
-    Illustration: IllustrationRocket,
-  }
-];
+// ─── METADATA ESTÁTICA (icono + ilustración, no traducible) ─────────────────
+const panelMeta = [
+  { id: 1, icon: BrainCircuit, Illustration: IllustrationBrain },
+  { id: 2, icon: Award, Illustration: IllustrationTrophy },
+  { id: 3, icon: BookOpen, Illustration: IllustrationBook },
+  { id: 4, icon: Target, Illustration: IllustrationRocket },
+] as const;
+
+// ─── CONTRATO DE DATOS (i18n) ────────────────────────────────────────────────
+interface AboutPanelDict {
+  title: string;
+  description: string;
+}
+
+interface AboutAppleScrollProps {
+  dict: {
+    panels: AboutPanelDict[];
+  };
+}
 
 // ─── COMPONENTE PRINCIPAL ────────────────────────────────────────────────────
-export default function AboutAppleScroll() {
+export default function AboutAppleScroll({ dict }: AboutAppleScrollProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -239,6 +226,18 @@ export default function AboutAppleScroll() {
     else setActiveIndex(3);
   });
 
+  if (!dict?.panels || dict.panels.length === 0) {
+    console.error("Critical: 'dict.panels' is missing or empty in AboutAppleScroll");
+    return null;
+  }
+
+  // Fusionamos metadata estática (icono/ilustración) con el texto traducido, por índice
+  const panels = panelMeta.map((meta, i) => ({
+    ...meta,
+    title: dict.panels[i]?.title ?? '',
+    description: dict.panels[i]?.description ?? '',
+  }));
+
   return (
     <section ref={containerRef} className="relative h-[400vh] bg-white dark:bg-black transition-colors duration-500" id="sobre-mi">
       <div className="sticky top-0 h-screen w-full flex items-center overflow-hidden">
@@ -246,7 +245,7 @@ export default function AboutAppleScroll() {
 
           {/* LADO IZQUIERDO: TEXTOS */}
           <div className="relative h-[50vh] md:h-[60vh] flex items-center">
-            {personalPanels.map((panel, i) => {
+            {panels.map((panel, i) => {
               const isActive = activeIndex === i;
               return (
                 <motion.div
@@ -280,7 +279,7 @@ export default function AboutAppleScroll() {
                           bg-zinc-900 dark:bg-zinc-900
                           border border-white/10
                           shadow-2xl shadow-black/60">
-            {personalPanels.map((panel, i) => {
+            {panels.map((panel, i) => {
               const isActive = activeIndex === i;
               return (
                 <motion.div

@@ -1,0 +1,258 @@
+{
+  "footer": {
+    "tagline": "Ingeniería & Ciberseguridad. Construido con Next.js 15."
+  },
+  "navigation": {
+    "about": "Sobre mí",
+    "skills": "Habilidades",
+    "projects": "Proyectos",
+    "certifications": "Certificados",
+    "experience": "Experiencia",
+    "contact": "Contacto",
+    "blog": "Blog"
+  },
+  "skills": {
+    "tag": "Stack Técnico",
+    "title": "Diseño con",
+    "subtitle": "seguridad implacable.",
+    "description": "Un stack multidisciplinario que combina ciberseguridad ofensiva y defensiva, infraestructura resiliente y desarrollo de software moderno.",
+    "cards": {
+      "cyber": {
+        "title": "DevSecOps & Ciberseguridad",
+        "desc": "Análisis de vulnerabilidades, hacking ético y arquitecturas Zero-Trust orientadas a la detección y respuesta activa de amenazas."
+      },
+      "infra": {
+        "title": "Infraestructura & DevOps",
+        "desc": "Administración de servidores Linux, contenedores y automatización de despliegues con foco en disponibilidad y seguridad."
+      },
+      "front": {
+        "title": "Ingeniería de Software Frontend",
+        "desc": "Interfaces modernas, accesibles y de alto rendimiento construidas con React y el ecosistema de Next.js."
+      },
+      "data": {
+        "title": "Arquitectura de Datos",
+        "desc": "Diseño y optimización de bases de datos relacionales, integridad referencial y consultas de alto rendimiento."
+      },
+      "auto": {
+        "title": "Python & Automatización",
+        "desc": "Scripts de automatización, scraping y resolución algorítmica de problemas con Python."
+      },
+      "core": {
+        "title": "Ingeniería de Software (Core)",
+        "desc": "Fundamentos sólidos de programación y estructuras de datos con C++."
+      },
+      "uiux": {
+        "title": "Observabilidad & UI/UX",
+        "desc": "Monitoreo en tiempo real y visualización de datos para una toma de decisiones informada, con atención al detalle en la experiencia de usuario."
+      },
+      "soft": {
+        "title": "Soft Skills & Mentoría",
+        "desc": "Liderazgo técnico, docencia y capacidad de transferir conocimiento complejo de forma clara y efectiva.",
+        "tag": "Comunicación Técnica"
+      }
+    }
+  },
+  "about": {
+    "panels": [
+      {
+        "title": "Kevin Javier Montatixe.",
+        "description": "Ingeniero en Ciberseguridad y Gestión de Tecnologías de la Información. Diseño arquitecturas resilientes y sistemas de defensa activa (DevSecOps)."
+      },
+      {
+        "title": "Rigor Académico y Técnico.",
+        "description": "Durante mi formación en la Universidad Central del Ecuador, fui galardonado con la beca al mérito académico."
+      },
+      {
+        "title": "Ingeniería con Fundamento.",
+        "description": "Analizo la seguridad desde su núcleo. Comprendo la tecnología a través de las ciencias exactas y la arquitectura de sistemas, lo que me permite identificar fallos lógicos antes de que se conviertan en brechas."
+      },
+      {
+        "title": "Security by Design.",
+        "description": "Construyo software asumiendo que será atacado. Integro estándares rigurosos de ciberseguridad desde la primera línea de código para proteger la integridad de los datos empresariales."
+      }
+    ]
+  },
+  "projects": {
+    "tag": "Portafolio",
+    "title": "Mira lo más destacado.",
+    "mobileCta": "Toca para ver detalles",
+    "codeLabel": "Código",
+    "viewCodeLabel": "Ver Código",
+    "demoLabel": "Live Demo",
+    "items": [
+      {
+        "title": "SentinelX",
+        "category": "Ciberseguridad / DevSecOps & SOAR Architecture",
+        "description": "Plataforma End-to-End de Detección y Respuesta Autónoma (SIEM/SOAR). Arquitectura orientada a eventos que integra análisis de tráfico de red (Suricata NIDS), telemetría de host y un motor de mitigación Zero-Trust asíncrono."
+      },
+      {
+        "title": "NexusTopUp",
+        "category": "Ingeniería de Software / E-commerce Seguro",
+        "description": "Plataforma de transacciones digitales diseñada con enfoque en Security by Design. Se implementó una arquitectura resistente a ataques automatizados mediante Rate Limiting estricto, validación de carga en servidor y un flujo asíncrono que protege la integridad de las credenciales de usuario."
+      },
+      {
+        "title": "ElliotWave EA",
+        "category": "Ingeniería Financiera / Algorithmic Trading",
+        "description": "Desarrollo de un Asesor Experto (EA) adaptativo para MetaTrader 4. El algoritmo emplea lógica multi-estrategia fundamentada en modelos matemáticos (Ondas de Elliott y retrocesos de Fibonacci), integrando un motor de evaluación de volatilidad en tiempo real para optimizar la gestión de riesgo."
+      },
+      {
+        "title": "Defensa Activa y Observabilidad: Laboratorio NIDS/IPS",
+        "category": "Ciberseguridad / DevSecOps & Blue Team",
+        "description": "Implementación de una arquitectura defensiva capaz de identificar y mitigar intrusiones en menos de 5 segundos. El ecosistema correlaciona eventos de detección (Snort) con respuestas de firewall automatizadas (Fail2ban), soportado por un pipeline de observabilidad forense (Promtail, Loki, Grafana)."
+      },
+      {
+        "title": "OWASP Web Security Audit",
+        "category": "Ciberseguridad / Pentesting Web",
+        "description": "Auditoría de seguridad ofensiva sobre una arquitectura web moderna (Node.js/Angular). Se explotaron y documentaron vulnerabilidades críticas del OWASP Top 10, logrando un Authentication Bypass vía Inyección SQL (Lógica Booleana) y ejecución de código del lado del cliente (DOM XSS). Incluye análisis forense de tráfico de APIs REST y propuestas de remediación arquitectónica."
+      },
+      {
+        "title": "Agromix",
+        "category": "AgriTech / Herramienta de Software",
+        "description": "Software técnico desarrollado para la carrera de Ingeniería Agronómica de la UCE. Incorpora un algoritmo de validación de compatibilidad química para insumos agrícolas, previniendo reacciones adversas y optimizando el manejo integrado de cultivos."
+      },
+      {
+        "title": "Fashion & Beauty Catalog",
+        "category": "E-Commerce / Integración de Negocios",
+        "description": "Catálogo digital optimizado para la conversión. El diseño se centra en una experiencia de usuario (UX) fluida y una arquitectura de la información clara, culminando en una integración directa y eficiente con la API de WhatsApp Business para la gestión de ventas."
+      },
+      {
+        "title": "D' Robys Band Official",
+        "category": "Web Development / Plataforma de Entretenimiento",
+        "description": "Plataforma oficial desarrollada para la agrupación D' Robys Band. El proyecto integra animaciones fluidas basadas en scroll para crear una narrativa visual inmersiva que resalta la trayectoria internacional de la banda, optimizando el rendimiento y la accesibilidad."
+      }
+    ]
+  },
+  "certifications": {
+    "tag": "Validación Técnica y Académica",
+    "title": "Certificaciones y Logros.",
+    "description": "Evidencia formal de mi trayectoria continua y competencias multidisciplinarias en ciberseguridad, infraestructura tecnológica, desarrollo con inteligencia artificial y ciencias de la educación.",
+    "items": [
+      {
+        "title": "Cisco Cyber Games Americas 2026",
+        "issuer": "Cisco Networking Academy",
+        "date": "Junio 2026",
+        "description": "Participación en el Desafío Capture The Flag Cisco Cyber Games Américas 2026 de Cisco Networking Academy, una competencia de 3 horas entre estudiantes del Continente Americano sobre el curso de Hacker Ético."
+      },
+      {
+        "title": "Ciberseguridad y Hacking Ético",
+        "issuer": "BIG school",
+        "date": "Abril 2026",
+        "description": "Certificado de asistencia a las jornadas sobre técnicas de detección de vulnerabilidades y defensa digital con una duración de 6 horas."
+      },
+      {
+        "title": "English Certificate (A1, A2, B1)",
+        "issuer": "Instituto Superior Tecnológico Portoviejo (ITSUP)",
+        "date": "2025 - Mayo 2026",
+        "description": "Aprobación de los niveles de suficiencia A1, A2 y B1 de acuerdo con el Marco Común Europeo de Referencia."
+      },
+      {
+        "title": "10,000 Prompters: Ingeniería de Prompts para IA",
+        "issuer": "Dubai Future Foundation & Gobierno del Ecuador",
+        "date": "2026",
+        "description": "Programa impulsado por el Gobierno del Ecuador en alianza con los Emiratos Árabes Unidos para fortalecer competencias en ingeniería de prompts para sistemas de inteligencia artificial."
+      },
+      {
+        "title": "Ethical Hacker (Verified Badge)",
+        "issuer": "Cisco Networking Academy",
+        "date": "2026",
+        "description": "Credencial verificada que avala las competencias y conocimientos técnicos en metodologías de Hacking Ético."
+      },
+      {
+        "title": "Comprendiendo el Cerebro para Transformar el Aprendizaje",
+        "issuer": "PUCE Virtual",
+        "date": "Octubre 2025",
+        "description": "Webinar organizado por la Coordinación de la Maestría Virtual en Educación con mención en Neurociencias aplicadas a la educación."
+      },
+      {
+        "title": "Iniciación al Desarrollo con IA",
+        "issuer": "BIG school",
+        "date": "Octubre 2025",
+        "description": "Certificado de asistencia a las jornadas formativas de Desarrollo con IA, con una duración de 6 horas."
+      },
+      {
+        "title": "Ley de Protección de Datos Personales",
+        "issuer": "Academia ProGenios",
+        "date": "Junio 2025",
+        "description": "Curso gratuito de 6 horas de capacitación, habiendo aprobado la evaluación de conocimientos sobre la normativa y cumplimiento de privacidad."
+      },
+      {
+        "title": "Introducción a Ciberseguridad",
+        "issuer": "Fundación Telefónica Movistar",
+        "date": "Marzo 2025",
+        "description": "Certificado de superación que acredita la culminación del curso de 20 horas en fundamentos de ciberseguridad."
+      },
+      {
+        "title": "Introduction to Cybersecurity (Verified Badge)",
+        "issuer": "Cisco Networking Academy",
+        "date": "2025",
+        "description": "Credencial verificada que demuestra los conocimientos fundamentales sobre el panorama de amenazas y principios básicos de defensa digital."
+      },
+      {
+        "title": "Aprendizaje Basado en Proyectos",
+        "issuer": "Ubicua (Conecta Empleo)",
+        "date": "Enero 2024",
+        "description": "Certificado del programa de formación digital enfocado en metodologías activas y aprendizaje práctico."
+      }
+    ]
+  },
+  "experience": {
+    "tag": "Trayectoria Profesional",
+    "title": "Experiencia Laboral.",
+    "description": "Un historial de resolución de problemas complejos, liderazgo técnico y transferencia de conocimiento.",
+    "items": [
+      {
+        "title": "Desarrollador de Sistemas e Infraestructura IT",
+        "company": "Independiente",
+        "period": "Ene 2024 - Actualidad",
+        "description": "Desarrollo web integral y soluciones ecommerce. Optimización de bases de datos SQL (mejora del 40% en consultas) y creación de bots de trading automatizados con análisis técnico de baja latencia.",
+        "tags": ["SQL", "Trading Bots", "Low Latency", "E-commerce", "Fullstack"]
+      },
+      {
+        "title": "Data Engineer & Support Specialist",
+        "company": "Universidad Central del Ecuador",
+        "period": "Ene 2023 - Dic 2023",
+        "description": "Administración de bases de datos y gobernanza de datos (RBAC, cifrado). Gestión de incidentes bajo SLAs y soporte a infraestructura crítica (DMS/LMS/ERP) con protocolos de Disaster Recovery.",
+        "tags": ["Data Governance", "Disaster Recovery", "RBAC", "SLA", "ERP"]
+      },
+      {
+        "title": "Proyecto de Competencias Digitales",
+        "company": "Fajardo - Sangolquí",
+        "period": "Sep 2022 - Dic 2022",
+        "description": "Implementación de red Wi-Fi pública comunitaria con segmentación de tráfico segura. Liderazgo en talleres de alfabetización digital y productividad aplicada para la comunidad.",
+        "tags": ["Redes Seguras", "Wi-Fi", "Liderazgo", "Alfabetización Digital"]
+      },
+      {
+        "title": "Profesor de Informática y Matemáticas",
+        "company": "Unidad Educativa 13 de Abril",
+        "period": "Sep 2021 - Ago 2022",
+        "description": "Instrucción en algoritmos, lógica de programación y desarrollo web (Python, PHP, JavaScript). Supervisión de proyectos técnicos estudiantiles orientados a la resolución de problemas.",
+        "tags": ["Python", "PHP", "JavaScript", "Lógica de Programación", "Docencia"]
+      },
+      {
+        "title": "Docente de Matemáticas (Proyecto Transformar)",
+        "company": "Universidad Central del Ecuador",
+        "period": "Mar 2022 - Ago 2022",
+        "description": "Capacitación intensiva en razonamiento numérico y abstracto para ingreso a la educación superior. Diseño de estrategias pedagógicas para asegurar el éxito académico de los aspirantes.",
+        "tags": ["Matemáticas", "Razonamiento Abstracto", "Pedagogía", "Estrategia"]
+      },
+      {
+        "title": "Docente Matemáticas",
+        "company": "Universidad Central del Ecuador",
+        "period": "Oct 2020 - Jun 2021",
+        "description": "Cátedra de cálculo integral y diferencial en entornos virtuales. Uso de herramientas de visualización matemática (GeoGebra, Python) y administración de contenidos en plataformas LMS.",
+        "tags": ["Cálculo Integral", "GeoGebra", "Python", "LMS"]
+      }
+    ]
+  },
+  "contact": {
+    "tag": "¿Buscas un Arquitecto de Software?",
+    "title": "Iniciemos un proyecto seguro.",
+    "description": "Si tu organización necesita asegurar su infraestructura, desarrollar plataformas de alta disponibilidad o consultoría en DevSecOps, mis bandejas están abiertas.",
+    "methods": [
+      { "title": "Correo Electrónico", "description": "javiercaiza220158@gmail.com" },
+      { "title": "LinkedIn", "description": "Conectemos profesionalmente" },
+      { "title": "GitHub", "description": "Explora mis repositorios y código" },
+      { "title": "Currículum Vitae", "description": "Descarga mi perfil técnico detallado" }
+    ]
+  }
+}

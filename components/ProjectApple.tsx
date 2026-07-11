@@ -5,92 +5,147 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { SiGithub } from 'react-icons/si';
 import { ExternalLink, TerminalSquare, ChevronLeft, ChevronRight, X, MousePointerClick } from 'lucide-react';
 
-// ─── DATOS DE PROYECTOS ──────────────────────────────────────────────────────
-const projects = [
+// ─── METADATA DE PROYECTOS (NO TRADUCIBLE) ───────────────────────────────────
+// Assets, links y stack tecnológico no cambian entre idiomas. El orden es
+// fijo y debe coincidir 1:1 con `dict.items`.
+const projectMeta: {
+  techs: string[];
+  image: string;
+  github: string;
+  demo: string;
+}[] = [
   {
-    title: "SentinelX",
-    category: "Ciberseguridad / DevSecOps & SOAR Architecture",
-    description: "Plataforma End-to-End de Detección y Respuesta Autónoma (SIEM/SOAR). Arquitectura orientada a eventos que integra análisis de tráfico de red (Suricata NIDS), telemetría de host y un motor de mitigación Zero-Trust asíncrono.",
     techs: ["FastAPI", "ReactFlow (WebSockets)", "Elasticsearch", "Docker", "Suricata (NIDS)", "Zero-Trust SSH", "Redis"],
-    image: "/sentinelx-preview.jpeg", // <--- Guarda la captura del Grafo de Red Oscuro en tu carpeta 'public'
+    image: "/sentinelx-preview.jpeg",
     github: "https://github.com/CescJavier7/SentinelX-SOAR",
-    demo: "" // Déjalo vacío o pon el link a tu post de LinkedIn con el video/demo
-  },
-  {
-  title: "NexusTopUp",
-  category: "Ingeniería de Software / E-commerce Seguro",  
-  description: "Plataforma de transacciones digitales diseñada con enfoque en Security by Design. Se implementó una arquitectura resistente a ataques automatizados mediante Rate Limiting estricto, validación de carga en servidor y un flujo asíncrono que protege la integridad de las credenciales de usuario.",
-  techs: ["Next.js (App Router)", "TypeScript", "Supabase (SSR - Auth/DB)", "Zustand", "Tailwind CSS", "Framer Motion"],
-  image: "/nexus-topup-preview.png", // Asegúrate de tomar una captura de tu Dashboard actual
-  github: "https://github.com/CescJavier7/Recargas-Robux", // Actualiza con tu link real
-  demo: "https://recargas-robux-bso7.vercel.app/" // Tu URL de producción en Vercel
-},
-  {
-    title: "ElliotWave EA",
-    category: "Ingeniería Financiera / Algorithmic Trading",
-    description: "Desarrollo de un Asesor Experto (EA) adaptativo para MetaTrader 4. El algoritmo emplea lógica multi-estrategia fundamentada en modelos matemáticos (Ondas de Elliott y retrocesos de Fibonacci), integrando un motor de evaluación de volatilidad en tiempo real para optimizar la gestión de riesgo.",
-    techs: ["MQL4", "Algorithmic Trading", "Modelado Matemático", "Gestión de Riesgo"],
-    image: "/trading-bot.jpg", // <--- Pon una captura de MT4 en tu carpeta 'public'
-    github: "https://github.com/CescJavier7/bot_trading", 
-     demo: ""
-  },
-  {
-    title: "Defensa Activa y Observabilidad: Laboratorio NIDS/IPS",
-    category: "Ciberseguridad / DevSecOps & Blue Team",
-    description: "Implementación de una arquitectura defensiva capaz de identificar y mitigar intrusiones en menos de 5 segundos. El ecosistema correlaciona eventos de detección (Snort) con respuestas de firewall automatizadas (Fail2ban), soportado por un pipeline de observabilidad forense (Promtail, Loki, Grafana).",    
-    techs: ["Snort (IDS)", "Fail2ban (IPS)", "Grafana, Loki & Promtail", "Kali Linux (Pentesting)", "Ubuntu Server", "Análisis de Firmas", "Iptables"],
-    image: "/dashboardnids.jpg", // <--- Pon una captura de MT4 en tu carpeta 'public'
-    github: "https://github.com/CescJavier7/NIDS-IPS-Observability", 
     demo: ""
   },
   {
-  title: "OWASP Web Security Audit",
-  category: "Ciberseguridad / Pentesting Web",  
-  description: "Auditoría de seguridad ofensiva sobre una arquitectura web moderna (Node.js/Angular). Se explotaron y documentaron vulnerabilidades críticas del OWASP Top 10, logrando un Authentication Bypass vía Inyección SQL (Lógica Booleana) y ejecución de código del lado del cliente (DOM XSS). Incluye análisis forense de tráfico de APIs REST y propuestas de remediación arquitectónica.",
-  techs: ["Burp Suite", "Kali Linux", "OWASP Top 10", "Docker", "SQL Injection", "XSS"],
-  image: "/owasp_juice_shop.png", // Sugerencia: Toma una captura de pantalla de tu README.md finalizado en GitHub para usarla como portada
-  github: "https://github.com/CescJavier7/Web-Pentesting-Portfolio", 
-  demo: "" // Al no ser una app desplegada, el "demo" suele apuntar al mismo repo o a un post de tu blog/LinkedIn
+    techs: ["Next.js (App Router)", "TypeScript", "Supabase (SSR - Auth/DB)", "Zustand", "Tailwind CSS", "Framer Motion"],
+    image: "/nexus-topup-preview.png",
+    github: "https://github.com/CescJavier7/Recargas-Robux",
+    demo: "https://recargas-robux-bso7.vercel.app/"
   },
   {
-    title: "Agromix",
-    category: "AgriTech / Herramienta de Software",
-    description: "Software técnico desarrollado para la carrera de Ingeniería Agronómica de la UCE. Incorpora un algoritmo de validación de compatibilidad química para insumos agrícolas, previniendo reacciones adversas y optimizando el manejo integrado de cultivos.",
-    techs: ["Lógica de Validación","HTML5", "CSS3", "JavaScript", "Diseño UX"],
-    image: "/agromix.jpg", // <--- Recuerda subir la captura a la carpeta 'public'
-    github: "https://github.com/CescJavier7/manejo_integrado", // Actualiza con tu link real
-    demo: "https://cescjavier7.github.io/manejo_integrado/" // Actualiza con tu link real
+    techs: ["MQL4", "Algorithmic Trading", "Modelado Matemático", "Gestión de Riesgo"],
+    image: "/trading-bot.jpg",
+    github: "https://github.com/CescJavier7/bot_trading",
+    demo: ""
   },
   {
-    title: "Fashion & Beauty Catalog",
-    category: "E-Commerce / Integración de Negocios",
-    description: "Catálogo digital optimizado para la conversión. El diseño se centra en una experiencia de usuario (UX) fluida y una arquitectura de la información clara, culminando en una integración directa y eficiente con la API de WhatsApp Business para la gestión de ventas.",
+    techs: ["Snort (IDS)", "Fail2ban (IPS)", "Grafana, Loki & Promtail", "Kali Linux (Pentesting)", "Ubuntu Server", "Análisis de Firmas", "Iptables"],
+    image: "/dashboardnids.jpg",
+    github: "https://github.com/CescJavier7/NIDS-IPS-Observability",
+    demo: ""
+  },
+  {
+    techs: ["Burp Suite", "Kali Linux", "OWASP Top 10", "Docker", "SQL Injection", "XSS"],
+    image: "/owasp_juice_shop.png",
+    github: "https://github.com/CescJavier7/Web-Pentesting-Portfolio",
+    demo: ""
+  },
+  {
+    techs: ["Lógica de Validación", "HTML5", "CSS3", "JavaScript", "Diseño UX"],
+    image: "/agromix.jpg",
+    github: "https://github.com/CescJavier7/manejo_integrado",
+    demo: "https://cescjavier7.github.io/manejo_integrado/"
+  },
+  {
     techs: ["HTML5", "CSS3", "JavaScript", "WhatsApp API", "Optimización UX/UI"],
-    image: "/catalogo-mama.jpg", // <--- Recuerda subir la captura a 'public'
-    github: "https://github.com/CescJavier7/AngieCatalogos", 
+    image: "/catalogo-mama.jpg",
+    github: "https://github.com/CescJavier7/AngieCatalogos",
     demo: "https://cescjavier7.github.io/AngieCatalogos/"
   },
   {
-    title: "D' Robys Band Official",
-    category: "Web Development / Plataforma de Entretenimiento",
-    description: "Plataforma oficial desarrollada para la agrupación D' Robys Band. El proyecto integra animaciones fluidas basadas en scroll para crear una narrativa visual inmersiva que resalta la trayectoria internacional de la banda, optimizando el rendimiento y la accesibilidad.",
     techs: ["HTML5", "CSS3", "JavaScript", "Animaciones de Rendimiento"],
-    image: "/drobys-band.jpg", // <--- Sube la captura de la banda a 'public'
-    github: "https://github.com/CescJavier7/drobysband", 
+    image: "/drobys-band.jpg",
+    github: "https://github.com/CescJavier7/drobysband",
     demo: "https://cescjavier7.github.io/drobysband/"
   }
 ];
 
-type Project = typeof projects[0];
+// ─── TIPADO DEL DICCIONARIO ───────────────────────────────────────────────────
+interface ProjectItemDictionary {
+  title: string;
+  category: string;
+  description: string;
+}
 
-export default function ProjectsApple() {
+interface ProjectsDictionary {
+  tag: string;
+  title: string;
+  mobileCta: string;
+  codeLabel: string;
+  viewCodeLabel: string;
+  demoLabel: string;
+  items: ProjectItemDictionary[];
+}
+
+interface ProjectsAppleProps {
+  dict?: ProjectsDictionary;
+}
+
+type Project = ProjectItemDictionary & (typeof projectMeta)[number];
+
+// ─── EASING (CURVA PROPIA, MÁS "APPLE" QUE EL scroll-behavior NATIVO) ────────
+const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+// Scroll animado a mano con requestAnimationFrame: nos da control total sobre
+// la duración y la curva, evitando la inconsistencia del "smooth" nativo entre
+// navegadores (Chrome/Safari/Firefox lo interpretan con timings distintos).
+// Recibe un `cancelRef` para poder abortar una animación en curso si el
+// usuario dispara otra transición antes de que termine (evita el "tirón"
+// que se veía al hacer clic rápido en las flechas). También desactiva el
+// scroll-snap nativo del navegador mientras dura la animación: el snap y
+// nuestro rAF competían por el `scrollLeft`, y esa pelea era la causa real
+// del salto brusco al final de cada transición.
+function animateScrollTo(
+  element: HTMLElement,
+  target: number,
+  cancelRef: { current: number | null },
+  duration = 900
+) {
+  if (cancelRef.current !== null) cancelAnimationFrame(cancelRef.current);
+
+  const start = element.scrollLeft;
+  const change = target - start;
+  const startTime = performance.now();
+
+  element.style.scrollSnapType = 'none';
+
+  const step = (now: number) => {
+    const progress = Math.min((now - startTime) / duration, 1);
+    element.scrollLeft = start + change * easeInOutCubic(progress);
+
+    if (progress < 1) {
+      cancelRef.current = requestAnimationFrame(step);
+    } else {
+      cancelRef.current = null;
+      // Restauramos el snap nativo una vez asentada la tarjeta, para que
+      // los gestos táctiles del usuario (swipe manual) lo sigan aprovechando.
+      element.style.scrollSnapType = '';
+    }
+  };
+
+  cancelRef.current = requestAnimationFrame(step);
+}
+
+export default function ProjectsApple({ dict }: ProjectsAppleProps) {
   const carouselRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const scrollAnimationFrame = useRef<number | null>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
 
   // ─── NUEVO MOTOR DE SCROLL FLUIDO (ESTILO APPLE TV) ───────────────────────
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollDirection = useRef<'forward' | 'backward'>('forward');
+
+  // Combinamos texto (dict) con metadata estática (techs/image/links) por índice.
+  // Se calcula en cada render pero es una operación barata (8 elementos).
+  const projects: Project[] = (dict?.items ?? [])
+    .slice(0, projectMeta.length)
+    .map((item, i) => ({ ...item, ...projectMeta[i] }));
 
   // Función para deslizarse al centro matemático exacto de una tarjeta
   const scrollToIndex = (index: number) => {
@@ -105,15 +160,60 @@ export default function ProjectsApple() {
       
       // Cálculo para centrar la tarjeta perfectamente
       const targetLeft = cardLeft - (carouselWidth / 2) + (cardWidth / 2);
-      
-      carousel.scrollTo({ left: targetLeft, behavior: 'smooth' });
+
+      animateScrollTo(carousel, targetLeft, scrollAnimationFrame, 900);
       setCurrentIndex(index);
     }
   };
 
+  // ─── EFECTO "COVERFLOW": escala y atenúa las tarjetas según su distancia
+  // al centro del carrusel. Se actualiza en cada frame de scroll (rAF-throttled)
+  // manipulando el DOM directamente vía refs, para no disparar un re-render de
+  // React 60 veces por segundo mientras el usuario desliza.
+  useEffect(() => {
+    const carousel = carouselRef.current;
+    if (!carousel) return;
+
+    let frame: number | null = null;
+
+    const updateCardTransforms = () => {
+      const carouselRect = carousel.getBoundingClientRect();
+      const carouselCenter = carouselRect.left + carouselRect.width / 2;
+
+      cardRefs.current.forEach((card) => {
+        if (!card) return;
+        const cardRect = card.getBoundingClientRect();
+        const cardCenter = cardRect.left + cardRect.width / 2;
+        const distance = Math.abs(carouselCenter - cardCenter);
+        const normalized = Math.min(distance / (carouselRect.width / 2), 1);
+
+        const scale = 1 - normalized * 0.12;
+        const opacity = 1 - normalized * 0.45;
+
+        card.style.transform = `scale(${scale})`;
+        card.style.opacity = `${opacity}`;
+      });
+    };
+
+    const handleScroll = () => {
+      if (frame !== null) cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(updateCardTransforms);
+    };
+
+    updateCardTransforms(); // estado inicial
+    carousel.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleScroll);
+
+    return () => {
+      carousel.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+      if (frame !== null) cancelAnimationFrame(frame);
+    };
+  }, [projects.length]);
+
   // Auto-Play Ping-Pong Fluido
   useEffect(() => {
-    if (isHovered || activeProject) return;
+    if (isHovered || activeProject || projects.length === 0) return;
 
     const interval = setInterval(() => {
       let nextIndex = currentIndex;
@@ -135,10 +235,10 @@ export default function ProjectsApple() {
       }
 
       scrollToIndex(nextIndex);
-    }, 1500); // 4.5 segundos para apreciar bien la transición
+    }, 3200); // Deja ~2.3s de "reposo" tras la transición de 900ms para apreciar la card
 
     return () => clearInterval(interval);
-  }, [currentIndex, isHovered, activeProject]);
+  }, [currentIndex, isHovered, activeProject, projects.length]);
 
   // Controles Manuales
   const scrollManual = (direction: 'left' | 'right') => {
@@ -158,6 +258,12 @@ export default function ProjectsApple() {
     return () => { document.body.style.overflow = 'unset'; };
   }, [activeProject]);
 
+  // Programación defensiva: sin diccionario válido, no renderizamos nada roto.
+  if (!dict?.items?.length) {
+    console.error("Critical: 'dict.items' is missing in ProjectsApple");
+    return null;
+  }
+
   return (
     <section id="proyectos" className="py-24 w-full bg-white dark:bg-black transition-colors duration-500 relative">
       <style dangerouslySetInnerHTML={{__html: `
@@ -173,9 +279,9 @@ export default function ProjectsApple() {
           viewport={{ once: true }} 
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
-          <p className="text-apple-blue font-semibold mb-3 text-sm uppercase tracking-widest">Portafolio</p>
+          <p className="text-apple-blue font-semibold mb-3 text-sm uppercase tracking-widest">{dict.tag}</p>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-zinc-900 dark:text-white">
-            Mira lo más destacado.
+            {dict.title}
           </h2>
         </motion.header>
 
@@ -213,9 +319,10 @@ export default function ProjectsApple() {
           {projects.map((project, index) => (
             <motion.div 
               key={`project-${index}`} 
-              className="project-card group relative shrink-0 snap-center w-[85vw] md:w-[600px] h-[450px] md:h-[550px] rounded-[2rem] md:rounded-[2.5rem] bg-zinc-200 dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 overflow-hidden shadow-sm transition-all duration-500"
+              ref={(el) => { cardRefs.current[index] = el; }}
+              className="project-card group relative shrink-0 snap-center w-[85vw] md:w-[600px] h-[450px] md:h-[550px] rounded-[2rem] md:rounded-[2.5rem] bg-zinc-200 dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 overflow-hidden shadow-sm origin-center transition-[transform,opacity,box-shadow] duration-300 ease-out will-change-transform"
               initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, margin: "-50px" }} transition={{ duration: 0.6, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
-            >. 
+            >
               
               {/* 1. DISEÑO SAFARI INMERSIVO FULL-WIDTH */}
               <div className="absolute inset-0 pt-8 flex items-end">
@@ -247,7 +354,7 @@ export default function ProjectsApple() {
                    onClick={() => setActiveProject(project)}
                    className="mt-6 flex md:hidden items-center justify-center gap-2 w-full py-3.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/20 text-white font-medium active:scale-95 transition-transform"
                  >
-                   <MousePointerClick size={18} /> Toca para ver detalles
+                   <MousePointerClick size={18} /> {dict.mobileCta}
                  </button>
               </div>
 
@@ -267,12 +374,12 @@ export default function ProjectsApple() {
                  </div>
                  <div className="flex items-center gap-4 mt-auto">
                    <a href={project.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-6 py-3.5 rounded-full bg-white text-black font-semibold hover:scale-105 transition-transform text-sm">
-                     <SiGithub className="w-4 h-4" /> Código
+                     <SiGithub className="w-4 h-4" /> {dict.codeLabel}
                    </a>
                    {/* CONDICIONAL: Solo muestra el botón si hay URL de demo */}
                    {project.demo && (
                      <a href={project.demo} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-6 py-3.5 rounded-full text-white border border-white/20 hover:bg-white/10 transition-all text-sm font-semibold">
-                       <ExternalLink size={16} /> Live Demo
+                       <ExternalLink size={16} /> {dict.demoLabel}
                      </a>
                    )}
                  </div>
@@ -332,12 +439,12 @@ export default function ProjectsApple() {
 
                 <div className="flex flex-col sm:flex-row gap-4">
                   <a href={activeProject.github} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full px-6 py-3.5 rounded-full bg-zinc-900 text-white dark:bg-white dark:text-black font-semibold active:scale-95 transition-transform text-sm">
-                     <SiGithub className="w-4 h-4" /> Ver Código
+                     <SiGithub className="w-4 h-4" /> {dict.viewCodeLabel}
                   </a>
                   {/* CONDICIONAL: También para el modal móvil */}
                   {activeProject.demo && (
                     <a href={activeProject.demo} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full px-6 py-3.5 rounded-full text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 active:bg-zinc-100 dark:active:bg-zinc-800 transition-colors text-sm font-semibold">
-                      <ExternalLink className="w-4 h-4" /> Live Demo
+                      <ExternalLink className="w-4 h-4" /> {dict.demoLabel}
                     </a>
                   )}
                 </div>

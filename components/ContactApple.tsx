@@ -39,43 +39,76 @@ const IconArrowRight = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// ─── DATOS ───────────────────────────────────────────────────────────────────
-
-const contactMethods = [
+// ─── METADATA DE CONTACTO (NO TRADUCIBLE) ────────────────────────────────────
+// El orden es fijo y debe coincidir 1:1 con `dict.methods`. `value`, cuando
+// existe, es un dato crudo (ej. el correo) que se muestra en vez del texto
+// traducido de `description`, porque no tiene sentido "traducir" un email.
+const contactMeta: {
+  icon: (props: { className?: string }) => JSX.Element;
+  href: string;
+  isPrimary: boolean;
+  download?: string;
+  value?: string;
+}[] = [
   {
-    title: 'Correo Electrónico',
-    description: 'javiercaiza220158@gmail.com',
     icon: IconMail,
     href: 'mailto:javiercaiza220158@gmail.com',
-    isPrimary: true, 
+    isPrimary: true,
+    value: 'javiercaiza220158@gmail.com',
   },
   {
-    title: 'LinkedIn',
-    description: 'Conectemos profesionalmente',
     icon: IconLinkedIn,
     href: 'https://www.linkedin.com/in/kevin-javier-montatixe-2a08b6295/',
     isPrimary: false,
   },
   {
-    title: 'GitHub',
-    description: 'Explora mis repositorios y código',
-    icon: IconGitHub, 
+    icon: IconGitHub,
     href: 'https://github.com/CescJavier7',
     isPrimary: false,
   },
   {
-    title: 'Currículum Vitae',
-    description: 'Descarga mi perfil técnico detallado',
     icon: IconCV,
-    // La ruta apunta al archivo PDF que debe estar en tu carpeta "public"
-    href: '/Kevin_Javier_Montatixe_CV.pdf', 
+    href: '/Kevin_Javier_Montatixe_CV.pdf',
     isPrimary: false,
-    // Propiedad clave para forzar la descarga con este nombre exacto
-    download: 'Kevin_Javier_Montatixe_CV.pdf', 
+    download: 'Kevin_Javier_Montatixe_CV.pdf',
   },
 ];
 
-export default function ContactApple() {
+// ─── TIPADO DEL DICCIONARIO ───────────────────────────────────────────────────
+interface ContactMethodDictionary {
+  title: string;
+  description: string;
+}
+
+interface ContactDictionary {
+  tag: string;
+  title: string;
+  description: string;
+  methods: ContactMethodDictionary[];
+}
+
+interface ContactAppleProps {
+  dict?: ContactDictionary;
+}
+
+export default function ContactApple({ dict }: ContactAppleProps) {
+  // Programación defensiva: sin diccionario válido, no renderizamos nada roto.
+  if (!dict?.methods?.length) {
+    console.error("Critical: 'dict.methods' is missing in ContactApple");
+    return null;
+  }
+
+  const contactMethods = dict.methods
+    .slice(0, contactMeta.length)
+    .map((method, i) => {
+      const meta = contactMeta[i];
+      return {
+        ...method,
+        ...meta,
+        description: meta.value ?? method.description,
+      };
+    });
+
   return (
     <section id="contacto" className="py-24 bg-white dark:bg-black transition-colors duration-500">
       <div className="max-w-4xl mx-auto px-4 md:px-6">
@@ -83,13 +116,13 @@ export default function ContactApple() {
         {/* Cabecera */}
         <div className="mb-16 md:text-center">
           <p className="text-apple-blue font-bold tracking-tight mb-3 uppercase text-xs italic">
-            ¿Buscas un Arquitecto de Software?
+            {dict.tag}
           </p>
           <h2 className="text-4xl md:text-5xl font-bold tracking-tighter text-zinc-900 dark:text-white mb-4">
-            Iniciemos un proyecto seguro.
+            {dict.title}
           </h2>
           <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto text-balance">
-            Si tu organización necesita asegurar su infraestructura, desarrollar plataformas de alta disponibilidad o consultoría en DevSecOps, mis bandejas están abiertas.
+            {dict.description}
           </p>
         </div>
 
@@ -97,7 +130,7 @@ export default function ContactApple() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {contactMethods.map((method, index) => (
             <motion.a
-              key={method.title}
+              key={index}
               href={method.href}
               // Si tiene propiedad download, se la pasa al tag <a>
               download={method.download}

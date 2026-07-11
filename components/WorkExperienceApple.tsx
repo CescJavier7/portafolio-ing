@@ -1,68 +1,51 @@
 'use client';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Code2, Database, Network, Server, GraduationCap, Briefcase, Calendar, Building2 } from 'lucide-react';
+import { ChevronDown, Code2, Database, Network, Server, GraduationCap, Briefcase, Calendar, Building2, type LucideIcon } from 'lucide-react';
 
-// ─── DATOS ENRIQUECIDOS (Con Tech Tags) ──────────────────────────────────────
-const experiencesData = [
-  {
-    id: 1,
-    title: 'Desarrollador de Sistemas e Infraestructura IT',
-    company: 'Independiente',
-    period: 'Ene 2024 - Actualidad',
-    description: 'Desarrollo web integral y soluciones ecommerce. Optimización de bases de datos SQL (mejora del 40% en consultas) y creación de bots de trading automatizados con análisis técnico de baja latencia.',
-    icon: Code2, 
-    tags: ['SQL', 'Trading Bots', 'Low Latency', 'E-commerce', 'Fullstack']
-  },
-  {
-    id: 2,
-    title: 'Data Engineer & Support Specialist',
-    company: 'Universidad Central del Ecuador',
-    period: 'Ene 2023 - Dic 2023',
-    description: 'Administración de bases de datos y gobernanza de datos (RBAC, cifrado). Gestión de incidentes bajo SLAs y soporte a infraestructura crítica (DMS/LMS/ERP) con protocolos de Disaster Recovery.',
-    icon: Database, 
-    tags: ['Data Governance', 'Disaster Recovery', 'RBAC', 'SLA', 'ERP']
-  },
-  {
-    id: 3,
-    title: 'Proyecto de Competencias Digitales',
-    company: 'Fajardo - Sangolquí',
-    period: 'Sep 2022 - Dic 2022',
-    description: 'Implementación de red Wi-Fi pública comunitaria con segmentación de tráfico segura. Liderazgo en talleres de alfabetización digital y productividad aplicada para la comunidad.',
-    icon: Network, 
-    tags: ['Redes Seguras', 'Wi-Fi', 'Liderazgo', 'Alfabetización Digital']
-  },
-  {
-    id: 4,
-    title: 'Profesor de Informática y Matemáticas',
-    company: 'Unidad Educativa 13 de Abril',
-    period: 'Sep 2021 - Ago 2022',
-    description: 'Instrucción en algoritmos, lógica de programación y desarrollo web (Python, PHP, JavaScript). Supervisión de proyectos técnicos estudiantiles orientados a la resolución de problemas.',
-    icon: Server, 
-    tags: ['Python', 'PHP', 'JavaScript', 'Lógica de Programación', 'Docencia']
-  },
-  {
-    id: 5,
-    title: 'Docente de Matemáticas (Proyecto Transformar)',
-    company: 'Universidad Central del Ecuador',
-    period: 'Mar 2022 - Ago 2022',
-    description: 'Capacitación intensiva en razonamiento numérico y abstracto para ingreso a la educación superior. Diseño de estrategias pedagógicas para asegurar el éxito académico de los aspirantes.',
-    icon: GraduationCap, 
-    tags: ['Matemáticas', 'Razonamiento Abstracto', 'Pedagogía', 'Estrategia']
-  },
-  {
-    id: 6,
-    title: 'Docente Matemáticas',
-    company: 'Universidad Central del Ecuador',
-    period: 'Oct 2020 - Jun 2021',
-    description: 'Cátedra de cálculo integral y diferencial en entornos virtuales. Uso de herramientas de visualización matemática (GeoGebra, Python) y administración de contenidos en plataformas LMS.',
-    icon: Briefcase, 
-    tags: ['Cálculo Integral', 'GeoGebra', 'Python', 'LMS']
-  }
+// ─── METADATA VISUAL (NO TRADUCIBLE) ─────────────────────────────────────────
+// El orden de este array debe coincidir 1:1 con `dict.items`.
+const experienceIcons: LucideIcon[] = [
+  Code2,
+  Database,
+  Network,
+  Server,
+  GraduationCap,
+  Briefcase,
 ];
 
-export default function WorkExperienceApple() {
+// ─── TIPADO DEL DICCIONARIO ───────────────────────────────────────────────────
+interface WorkExperienceItemDictionary {
+  title: string;
+  company: string;
+  period: string;
+  description: string;
+  tags: string[];
+}
+
+interface WorkExperienceDictionary {
+  tag: string;
+  title: string;
+  description: string;
+  items: WorkExperienceItemDictionary[];
+}
+
+interface WorkExperienceAppleProps {
+  dict?: WorkExperienceDictionary;
+}
+
+export default function WorkExperienceApple({ dict }: WorkExperienceAppleProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(0);
+
+  // Programación defensiva: sin diccionario válido, no renderizamos nada roto.
+  if (!dict?.items?.length) {
+    console.error("Critical: 'dict.items' is missing in WorkExperienceApple");
+    return null;
+  }
+
+  const experiences = dict.items
+    .slice(0, experienceIcons.length)
+    .map((item, i) => ({ ...item, icon: experienceIcons[i] }));
 
   return (
     <section id="experiencia" className="py-24 bg-zinc-50 dark:bg-black transition-colors duration-500 overflow-hidden">
@@ -75,12 +58,12 @@ export default function WorkExperienceApple() {
           viewport={{ once: true }}
           className="mb-16 md:mb-24"
         >
-          <p className="text-blue-500 font-bold tracking-tight mb-3 uppercase text-xs italic">Trayectoria Profesional</p>
+          <p className="text-blue-500 font-bold tracking-tight mb-3 uppercase text-xs italic">{dict.tag}</p>
           <h2 className="text-4xl md:text-6xl font-bold tracking-tighter text-zinc-900 dark:text-white mb-4">
-            Experiencia Laboral.
+            {dict.title}
           </h2>
           <p className="text-xl text-zinc-500 dark:text-zinc-400 max-w-2xl text-balance">
-            Un historial de resolución de problemas complejos, liderazgo técnico y transferencia de conocimiento.
+            {dict.description}
           </p>
         </motion.div>
         
@@ -91,11 +74,11 @@ export default function WorkExperienceApple() {
           <div className="absolute left-[19px] md:left-[27px] top-8 bottom-8 w-[2px] bg-gradient-to-b from-blue-500/50 via-zinc-200 dark:via-zinc-800 to-transparent" />
 
           <div className="flex flex-col gap-6 md:gap-8">
-            {experiencesData.map((exp, index) => {
+            {experiences.map((exp, index) => {
               const isActive = activeIndex === index;
 
               return (
-                <div key={exp.id} className="flex gap-4 md:gap-8 relative z-10">
+                <div key={index} className="flex gap-4 md:gap-8 relative z-10">
                   
                   {/* Columna del Nodo (Punto en la línea) */}
                   <div className="flex flex-col items-center pt-8 shrink-0">

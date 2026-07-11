@@ -1,4 +1,4 @@
-// Archivo: app/blog/[slug]/page.tsx
+// Archivo: app/[lang]/blog/[slug]/page.tsx
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
@@ -7,16 +7,51 @@ import remarkGfm from 'remark-gfm'; // <--- Importante para que funcionen las ta
 import Link from 'next/link';
 import { ArrowLeft, Share2, Bookmark } from 'lucide-react';
 
-function getPostContent(slug: string) {
-  const folder = path.join(process.cwd(), 'content/blog');
-  const file = path.join(folder, `${slug}.md`);
+// ─── TIPADO DEL DICCIONARIO (mínimo necesario para esta página) ──────────────
+interface BlogPostDictionary {
+  back: string;
+  writtenBy: string;
+  authorBio: string;
+}
+
+// Lee el markdown del artículo desde la carpeta específica del idioma.
+// content/blog/es/{slug}.md  |  content/blog/en/{slug}.md
+// Si el artículo no existe traducido en ese idioma, hacemos fallback a
+// español para no romper la página (mejor mostrar el original que un 404).
+function getPostContent(lang: string, slug: string) {
+  const folder = path.join(process.cwd(), 'content/blog', lang);
+  let file = path.join(folder, `${slug}.md`);
+
+  if (!fs.existsSync(file)) {
+    file = path.join(process.cwd(), 'content/blog', 'es', `${slug}.md`);
+  }
+
   const content = fs.readFileSync(file, 'utf8');
   return matter(content);
 }
 
-export default async function BlogPost({ params }: { params: Promise<{ slug: string }> }) {
-  const resolvedParams = await params;
-  const post = getPostContent(resolvedParams.slug);
+export default async function BlogPost({
+  params,
+}: {
+  params: Promise<{ lang: 'es' | 'en'; slug: string }>;
+}) {
+  const { lang, slug } = await params;
+  const post = getPostContent(lang, slug);
+
+  // Copys de interfaz mínimos (no ameritan traer todo `getDictionary` aquí,
+  // pero siguen el mismo patrón: texto fijo por locale, con fallback seguro).
+  const ui: BlogPostDictionary =
+    lang === 'en'
+      ? {
+          back: 'Back',
+          writtenBy: 'Written by Kevin Montatixe',
+          authorBio: 'Cybersecurity Engineer & Educator. Focused on technical rigor and active infrastructure defense.',
+        }
+      : {
+          back: 'Volver',
+          writtenBy: 'Escrito por Kevin Montatixe',
+          authorBio: 'Ingeniero en Ciberseguridad y Docente. Enfocado en la rigurosidad técnica y la defensa activa de infraestructuras.',
+        };
 
   return (
     <main className="min-h-screen bg-white dark:bg-black transition-colors duration-500 antialiased">
@@ -24,9 +59,9 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
       {/* NAVEGACIÓN SUPERIOR */}
       <nav className="sticky top-0 z-40 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-zinc-100 dark:border-white/10">
         <div className="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href="/blog" className="flex items-center gap-2 text-zinc-500 hover:text-apple-blue transition-colors text-sm font-medium">
+          <Link href={`/${lang}/blog`} className="flex items-center gap-2 text-zinc-500 hover:text-apple-blue transition-colors text-sm font-medium">
             <ArrowLeft size={16} />
-            <span>Volver</span>
+            <span>{ui.back}</span>
           </Link>
           <div className="flex gap-4 text-zinc-400">
             <Share2 size={18} className="cursor-pointer hover:text-zinc-900 dark:hover:text-white" />
@@ -116,8 +151,8 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
               CJ
             </div>
             <div>
-              <h4 className="text-lg font-bold text-zinc-900 dark:text-white">Escrito por Kevin Montatixe</h4>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">Ingeniero en Ciberseguridad y Docente. Enfocado en la rigurosidad técnica y la defensa activa de infraestructuras.</p>
+              <h4 className="text-lg font-bold text-zinc-900 dark:text-white">{ui.writtenBy}</h4>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">{ui.authorBio}</p>
             </div>
           </div>
         </footer>
