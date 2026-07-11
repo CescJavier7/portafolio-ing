@@ -32,3 +32,13 @@
 .glass {
   @apply bg-white/70 dark:bg-black/70 backdrop-blur-md;
 }
+
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.4s;
+  animation-timing-function: cubic-bezier(0.43, 0.13, 0.23, 0.96);
+}
