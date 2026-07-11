@@ -109,8 +109,25 @@ export default async function BlogPost({
               td: ({ ...props }) => <td className="px-6 py-4 text-zinc-600 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-800" {...props} />,
               
               // ─── BLOQUES DE CÓDIGO (TERMINAL STYLE) ─────────────────────────
-              code: ({ inline, className, children, ...props }: any) => {
-                return !inline ? (
+              // IMPORTANTE: la prop `inline` que solía distinguir código en
+              // línea de bloques de código fue removida en versiones
+              // recientes de react-markdown. Usarla (`!inline`) hace que
+              // SIEMPRE sea `true` — así, hasta un simple `snort` mencionado
+              // dentro de un párrafo terminaba envuelto en <div><pre>,
+              // produciendo HTML inválido (<div>/<pre> dentro de <p>) y el
+              // consiguiente error de hidratación.
+              // En su lugar, usamos `node.position`: un bloque de código
+              // (fenced, ```) siempre ocupa más de una línea en el markdown
+              // fuente (la línea de apertura ``` y la de cierre ```, como
+              // mínimo), mientras que el código en línea (`como este`)
+              // siempre vive en una sola línea. Es una señal fiable e
+              // independiente de la versión de la librería.
+              code: ({ node, className, children, ...props }: any) => {
+                const isBlock = node?.position
+                  ? node.position.start.line !== node.position.end.line
+                  : String(children).includes('\n');
+
+                return isBlock ? (
                   <div className="my-10 rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-[#0d0d0d]">
                     <div className="flex items-center gap-1.5 px-4 py-3 bg-zinc-100 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
                       <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />

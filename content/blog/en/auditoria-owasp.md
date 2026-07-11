@@ -49,7 +49,8 @@ The login form concatenated text strings directly into the SQL statement. The fo
 
 Injecting the single quote (') prematurely closed the original string. Injecting the boolean clause `OR 1=1` forced the conditional evaluation of the query to always be true. Finally, the double dash (--) nullified the subsequent password check. This instantly compromised the system's Integrity and Confidentiality principles.
 
-Arbitrary Code Execution (DOM XSS)
+### Arbitrary Code Execution (DOM XSS)
+
 To bypass Angular's basic script-injection protections, an attack vector based on injecting iframes that execute JavaScript through their origin attribute was used:
 
 ```
@@ -59,12 +60,17 @@ To bypass Angular's basic script-injection protections, an attack vector based o
 Because the application processed and reflected this string without applying HTML Encoding, the victim's browser interpreted the text as a legitimate structural element of the page, executing the malicious code within the domain's security context.
 
 ## Proof of Compromise (PoC)
+
 ### Capturing a Privileged Session
+
 Using Burp Suite's Repeater tool, it was confirmed that the server responded with an HTTP/1.1 200 OK after receiving the SQL payload. The response included a valid JSON Web Token associated with the `admin@juice-sh.op` account, granting full administrative control over the platform.
 
 ### Client-Side Execution
+
 The injection in the search bar triggered a popup alert generated directly by the browser's V8 engine, confirming the Cross-Site Scripting vulnerability and demonstrating an attacker's ability to hijack legitimate user sessions.
+
 ### HTTP Cache Evasion Audit (HTTP 304)
+
 While intercepting traffic to the payments API, the server initially returned a `304 Not Modified`. Removing the `If-None-Match` conditional header forced the server to reveal the JSON payload. It was confirmed that the application applies correct server-side Data Masking (`"cardNum": "************4368"`), mitigating direct data exposure (CWE-200).
 
 ## Lessons Learned and Architectural Remediation

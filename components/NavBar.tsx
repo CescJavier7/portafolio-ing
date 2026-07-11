@@ -19,7 +19,16 @@ interface NavBarProps {
 }
 
 export default function NavBar({ dict, lang }: NavBarProps) {
-  const [isDark, setIsDark] = useState(true);
+  // Antes: useState(true) — siempre arrancaba en modo oscuro. Como [lang]
+  // puede remontar este componente al cambiar de idioma, ese `true` fijo
+  // pisaba la preferencia real del usuario cada vez. Ahora arrancamos
+  // leyendo la clase que el script anti-flash de layout.tsx ya dejó puesta
+  // en <html> (que a su vez viene de localStorage) — así el valor inicial
+  // ya es el correcto, sin esperar a un efecto posterior al mount.
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return document.documentElement.classList.contains('dark');
+  });
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -27,6 +36,13 @@ export default function NavBar({ dict, lang }: NavBarProps) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
+    }
+    // Persistimos la preferencia para que sobreviva a remounts (cambio de
+    // idioma) y a futuras visitas.
+    try {
+      window.localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    } catch {
+      // Si localStorage no está disponible (modo privado, etc.), no rompemos la UI.
     }
   }, [isDark]);
 
@@ -72,6 +88,7 @@ export default function NavBar({ dict, lang }: NavBarProps) {
             onClick={() => setIsDark(!isDark)} 
             className="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
             aria-label="Toggle Dark Mode"
+            suppressHydrationWarning
           >
             {isDark ? <Sun className="w-4 h-4 text-yellow-400" /> : <Moon className="w-4 h-4 text-zinc-600" />}
           </button>

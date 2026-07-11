@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import Script from 'next/script';
 import '@/app/globals.css';
 
 import SmoothScroll from '@/components/SmoothScroll';
@@ -64,13 +65,14 @@ export default async function RootLayout({
   params,
 }: Readonly<{
   children: React.ReactNode;
-  params: Promise<{ lang: string }>; // <-- PARCHE APLICADO
+  params: Promise<{ lang: 'es' | 'en' }>;
 }>) {
   // Desempaquetamos la promesa (Requisito Next.js 15+)
   const { lang } = await params;
   
   // Carga del diccionario en el servidor
-const dict = await getDictionary(lang as "es" | "en");  
+  const dict = await getDictionary(lang);
+  
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Person",
@@ -89,8 +91,29 @@ const dict = await getDictionary(lang as "es" | "en");
   };
 
   return (
-    <html lang={lang}>
+    <html lang={lang} suppressHydrationWarning>
       <body className={`${inter.className} antialiased transition-colors duration-500 flex flex-col min-h-screen`}>
+        {/*
+          Script anti-flash de tema, vía next/script con strategy="beforeInteractive":
+          esta es la forma soportada por Next.js para inyectar un script que se
+          ejecuta ANTES de la hidratación (un <script> crudo en JSX genera el
+          warning "Encountered a script tag while rendering React component",
+          porque React no lo re-ejecuta en navegaciones cliente-cliente).
+          Aplica la clase 'dark' (o la quita) sobre <html> según lo que el
+          usuario eligió la última vez (localStorage), así el tema sobrevive
+          a cambios de idioma sin parpadeo y sin reiniciarse.
+        */}
+        <Script id="theme-init" strategy="beforeInteractive">
+          {`
+            (function () {
+              try {
+                var stored = localStorage.getItem('theme');
+                var isDark = stored ? stored === 'dark' : true; // dark por defecto
+                document.documentElement.classList.toggle('dark', isDark);
+              } catch (e) {}
+            })();
+          `}
+        </Script>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
