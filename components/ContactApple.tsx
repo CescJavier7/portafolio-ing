@@ -44,7 +44,7 @@ const IconArrowRight = ({ className }: { className?: string }) => (
 // existe, es un dato crudo (ej. el correo) que se muestra en vez del texto
 // traducido de `description`, porque no tiene sentido "traducir" un email.
 const contactMeta: {
-  icon: (props: { className?: string }) => JSX.Element;
+  icon: (props: { className?: string }) => React.ReactNode; // <-- PARCHE APLICADO
   href: string;
   isPrimary: boolean;
   download?: string;
