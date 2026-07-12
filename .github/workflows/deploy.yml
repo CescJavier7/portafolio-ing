@@ -18,13 +18,24 @@ jobs:
           port: 22
           script: |
             cd /opt/apps/portafolio
-            # Forzamos la sincronización exacta con tu repositorio en GitHub
+
+            # Forzamos la sincronización exacta con tu repositorio en GitHub.
+            # `--hard` solo toca archivos rastreados por git: tu .env
+            # (nunca commiteado) queda intacto.
             git fetch --all
             git reset --hard origin/main
-            
-            # Detenemos, reconstruimos y levantamos la nueva versión
-            docker compose down
-            docker compose up -d --build --force-recreate
-            
+
+            # Reconstruimos y recreamos SOLO el contenedor de la app.
+            # Antes: `docker compose down` (mataba TODO, incluyendo Postgres,
+            # antes de confirmar que el build nuevo funciona — si el build
+            # fallaba, el sitio quedaba caído sin red de seguridad).
+            # Ahora: `up --build --force-recreate` reconstruye y reemplaza
+            # el contenedor viejo por el nuevo directamente, sin apagar nada
+            # primero. Si el build falla, el contenedor viejo (que sí
+            # funciona) sigue sirviendo tráfico mientras se investiga.
+            # Además, no reiniciamos portfolio-db en cada deploy — no hay
+            # motivo, no cambió nada ahí.
+            docker compose up -d --build --force-recreate portfolio-app
+
             # Limpieza automática de imágenes viejas para no llenar el disco de 50GB
             docker image prune -f
