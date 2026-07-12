@@ -7,6 +7,7 @@ import SmoothScroll from '@/components/SmoothScroll';
 import NavBar from '@/components/NavBar';
 import Footer from '@/components/Footer';
 import { getDictionary } from '@/get-dictionary';
+import MekaSenkuChat from '@/components/MekaSenkuChat'; // Importación en layout
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -113,6 +114,8 @@ export default async function RootLayout({
             <Footer dict={dict.footer} />
           </SmoothScroll>
         </ThemeProvider>
+        
+        <MekaSenkuChat lang={lang} dict={dict.chat} />
       </body>
     </html>
   );

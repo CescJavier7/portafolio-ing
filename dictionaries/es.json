@@ -254,5 +254,13 @@
       { "title": "GitHub", "description": "Explora mis repositorios y código" },
       { "title": "Currículum Vitae", "description": "Descarga mi perfil técnico detallado" }
     ]
+  }, 
+  "chat": {
+    "title": "MEKA_JAVIER_OS",
+    "ready": "Listo para procesar datos.",
+    "analyzing": "Iniciando protocolo de análisis algorítmico...",
+    "placeholder": "Ingresa tu parámetro de consulta...",
+    "calculating": "Calculando variables...",
+    "error": "Error: Colapso en el núcleo lógico."
   }
 }

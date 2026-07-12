@@ -5,6 +5,7 @@ import ProjectsApple from '@/components/ProjectApple';
 import CertificationsApple from '@/components/CertificationsApple';
 import WorkExperienceApple from '@/components/WorkExperienceApple';
 import ContactApple from '@/components/ContactApple';
+import MekaSenkuChat from '@/components/MekaSenkuChat';
 
 export default async function Home({
   params,
@@ -35,6 +36,7 @@ export default async function Home({
       <WorkExperienceApple dict={dict.experience} />
       
       <ContactApple dict={dict.contact} />
+
 
     </main>
   );

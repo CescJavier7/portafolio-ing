@@ -254,5 +254,13 @@
       { "title": "GitHub", "description": "Explore my repositories and code" },
       { "title": "Resume / CV", "description": "Download my detailed technical profile" }
     ]
+  }, 
+  "chat": {
+    "title": "MEKA_JAVIER_OS",
+    "ready": "Ready to process data.",
+    "analyzing": "Initiating algorithmic analysis protocol...",
+    "placeholder": "Enter your query parameter...",
+    "calculating": "Calculating variables...",
+    "error": "Error: Logical core collapse."
   }
 }
