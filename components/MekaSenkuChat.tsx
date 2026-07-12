@@ -18,15 +18,18 @@ interface ChatProps {
 }
 
 const STORAGE_KEY = 'meka_javier_os_history';
+const SESSION_STORAGE_KEY = 'meka_javier_os_session_id';
 
 export default function MekaSenkuChat({ lang, dict }: ChatProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<{role: 'user' | 'ai', text: string}[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string | undefined>(undefined);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // 1. Cargar historial del localStorage al montar el componente (Evita errores de hidratación en Next.js)
+  // 1. Cargar historial y sessionId del localStorage al montar el componente
+  //    (Evita errores de hidratación en Next.js)
   useEffect(() => {
     const savedHistory = localStorage.getItem(STORAGE_KEY);
     if (savedHistory) {
@@ -35,6 +38,11 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
       } catch (e) {
         console.error("Error parseando el historial de memoria local.");
       }
+    }
+
+    const savedSessionId = localStorage.getItem(SESSION_STORAGE_KEY);
+    if (savedSessionId) {
+      setSessionId(savedSessionId);
     }
   }, []);
 
@@ -59,7 +67,9 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     // INTERCEPTOR DE COMANDOS (Debe ir aquí arriba)
     if (input.trim() === 'sudo rm -rf /' || input.trim() === 'clear') {
       localStorage.removeItem(STORAGE_KEY); // Limpiamos la memoria del navegador
+      localStorage.removeItem(SESSION_STORAGE_KEY); // Limpiamos también la sesión
       setMessages([]); // Limpiamos la pantalla
+      setSessionId(undefined); // Reiniciamos la sesión en memoria
       setInput(''); // Limpiamos el input
       return; // Cortamos la ejecución para no llamar a la API
     }
@@ -89,13 +99,20 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMsg, lang, history: historyForApi }),
+        body: JSON.stringify({ message: userMsg, lang, history: historyForApi, sessionId }),
       });
       
       const data = await res.json();
       
       if (!res.ok || !data.reply) {
         throw new Error(data.error || "Colapso de comunicación");
+      }
+
+      // Guardamos/actualizamos el sessionId para que las próximas peticiones
+      // se asocien a la misma ChatSession en vez de crear una nueva cada vez.
+      if (data.sessionId && data.sessionId !== sessionId) {
+        setSessionId(data.sessionId);
+        localStorage.setItem(SESSION_STORAGE_KEY, data.sessionId);
       }
 
       // 1. Mostramos el mensaje de texto en el chat
