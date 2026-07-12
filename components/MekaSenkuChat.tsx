@@ -82,7 +82,25 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
         throw new Error(data.error || "Colapso de comunicación");
       }
 
+      // 1. Mostramos el mensaje de texto en el chat
       setMessages((prev) => [...prev, { role: 'ai', text: data.reply }]);
+
+      // 2. NUEVO: Procesamos las acciones de UI (Tool Calling)
+      if (data.action) {
+        if (data.action.type === 'download_cv') {
+          // Técnica de inyección de enlace invisible para descargas
+          const link = document.createElement('a');
+          link.href = data.action.url;
+          link.download = 'Kevin_Montatixe_CV.pdf'; // Nombre con el que se guardará el archivo
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else if (data.action.type === 'open_link') {
+          // Abrir repositorios o redes sociales en una nueva pestaña
+          window.open(data.action.url, '_blank');
+        }
+      }
+
     } catch (error) {
       setMessages((prev) => [...prev, { role: 'ai', text: dict.error }]);
     } finally {
