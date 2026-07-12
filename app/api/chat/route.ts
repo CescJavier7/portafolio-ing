@@ -55,40 +55,64 @@ function getClientIp(req: Request): string {
   return "unknown";
 }
 
-// ─── HERRAMIENTAS QUE EL MODELO PUEDE "ACCIONAR" ──────────────────────────────
-const tools = [
-  {
-    type: "function" as const,
-    function: {
-      name: "download_cv",
-      description:
-        "SOLO usar esta función si el usuario pide EXPLÍCITAMENTE el archivo del CV, currículum, resume o hoja de vida de Kevin (ejemplos que SÍ activan esto: 'pásame tu CV', 'quiero descargar tu currículum', 'envíame tu resume', 'dónde está tu hoja de vida'). NUNCA la uses para preguntas generales sobre experiencia, disponibilidad, si Kevin puede ayudar con algo, dar clases, hacer consultoría, o cualquier otra consulta sobre su perfil — esas SIEMPRE se responden con texto normal, no con esta herramienta.",
-      parameters: { type: "object", properties: {}, required: [] },
-    },
-  },
-  {
-    type: "function" as const,
-    function: {
-      name: "open_link",
-      description:
-        "SOLO usar esta función si el usuario pide EXPLÍCITAMENTE ver o abrir el GitHub, LinkedIn, o el correo/contacto directo de Kevin (ejemplos que SÍ activan esto: 'muéstrame tu GitHub', 'cuál es tu LinkedIn', 'cómo te contacto', 'dame tu correo'). NUNCA la uses para preguntas generales sobre experiencia, disponibilidad, o si Kevin puede ayudar con algo — esas SIEMPRE se responden con texto normal, no con esta herramienta.",
-      parameters: {
-        type: "object",
-        properties: {
-          target: {
-            type: "string",
-            enum: ["github", "linkedin", "email"],
-            description: "A qué destino redirigir.",
-          },
-        },
-        required: ["target"],
-      },
-    },
-  },
-];
+// ─── DETECCIÓN DE ACCIONES POR PALABRA CLAVE ──────────────────────────────────
+// Antes usábamos el tool-calling nativo de Groq (`tools`/`tool_choice`), pero
+// resultó poco confiable con llama-3.1-8b-instant: la API a veces rechaza la
+// función generada con un error 400 ("Failed to call a function..."), y como
+// el modelo YA generó la respuesta completa antes de que Groq la rechazara,
+// cada fallo costaba una generación entera desperdiciada — de ahí los 16-40
+// segundos de latencia que viste en los logs.
+//
+// Para acciones tan simples y deterministas como estas (abrir un link fijo,
+// descargar un PDF fijo), un detector de palabras clave es objetivamente
+// mejor herramienta: no depende de que el modelo "decida bien", no cuesta
+// una llamada extra a la API, y responde instantáneo. Limitación conocida y
+// aceptada: es un matcher de texto, no entiende negaciones ("no quiero tu
+// CV" igual dispara la descarga) — para este caso de uso, ese riesgo es bajo
+// y el beneficio en velocidad/confiabilidad lo compensa ampliamente.
+type DetectedAction =
+  | { type: "download_cv" }
+  | { type: "open_link"; target: "github" | "linkedin" | "email" };
 
-// Respuestas canned en tono Senku para cuando se dispara una acción — evita
-// una segunda llamada al modelo solo para narrar lo que ya está haciendo la UI.
+function detectAction(message: string): DetectedAction | null {
+  const text = message.toLowerCase();
+
+  const has = (words: string[]) => words.some((w) => new RegExp(`\\b${w}\\b`, "i").test(text));
+
+  if (has(["linkedin"])) {
+    return { type: "open_link", target: "linkedin" };
+  }
+
+  if (has(["github", "repositorio", "repositorios", "repo", "repos"])) {
+    return { type: "open_link", target: "github" };
+  }
+
+  if (
+    has([
+      "cv",
+      "curriculum",
+      "currículum",
+      "resume",
+      "résumé",
+    ]) ||
+    text.includes("hoja de vida")
+  ) {
+    return { type: "download_cv" };
+  }
+
+  if (
+    has(["correo", "email", "e-mail", "mail", "contactar", "contacto"]) ||
+    text.includes("contact him") ||
+    text.includes("contact you") ||
+    text.includes("reach out")
+  ) {
+    return { type: "open_link", target: "email" };
+  }
+
+  return null;
+}
+
+// Respuestas canned en tono Senku para cuando se dispara una acción.
 function actionReply(actionType: string, lang: string, target?: string): string {
   const isEn = lang === "en";
 
@@ -123,9 +147,6 @@ interface ChatTurn {
   content: string;
 }
 
-// Cuántos turnos previos reenviamos al modelo. Suficiente para que "recuerde"
-// la conversación reciente sin disparar el costo/latencia enviando un
-// historial ilimitado en cada request.
 const MAX_HISTORY_MESSAGES = 12; // ~6 intercambios usuario/asistente
 
 function sanitizeHistory(raw: unknown): ChatTurn[] {
@@ -163,11 +184,6 @@ export async function POST(req: Request) {
       );
     }
 
-    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
-    // `history` es el arreglo de turnos previos de ESTA conversación,
-    // tal como lo guarda el cliente (localStorage). Sin esto, cada mensaje
-    // llega al modelo como si fuera la primera vez que hablas con él.
     const { message, lang, history } = await req.json();
 
     if (!message || typeof message !== "string") {
@@ -177,6 +193,24 @@ export async function POST(req: Request) {
       );
     }
 
+    // ─── Atajo instantáneo: si el mensaje pide CV/GitHub/LinkedIn/correo,
+    // respondemos sin pasar por el modelo en absoluto. Más rápido y 100%
+    // confiable que depender del tool-calling de Groq.
+    const detected = detectAction(message);
+    if (detected) {
+      if (detected.type === "download_cv") {
+        return NextResponse.json({
+          reply: actionReply("download_cv", lang),
+          action: { type: "download_cv", url: LINKS.cv },
+        });
+      }
+      return NextResponse.json({
+        reply: actionReply("open_link", lang, detected.target),
+        action: { type: "open_link", target: detected.target, url: LINKS[detected.target] },
+      });
+    }
+
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
     const conversationHistory = sanitizeHistory(history);
 
     const systemInstruction = `Eres MEKA_JAVIER_OS, el sistema de IA del portafolio de Kevin Javier Montatixe Caiza (CescJavier7).
@@ -192,7 +226,7 @@ export async function POST(req: Request) {
 
     5. Cierre: Adorna tus conclusiones o afirmaciones clave con la ecuación E=mc² (estrictamente sin símbolos de dólar, notación de exponente tipo 10^10, ni otros formateos — escribe siempre "diez mil millones por ciento" en palabras, nunca "10^10%"). No lo repitas en cada frase; úsalo como cierre ocasional, no como muletilla.
 
-    6. Herramientas: SOLO dispara download_cv u open_link cuando el usuario pida EXPLÍCITAMENTE el archivo o enlace correspondiente. Una pregunta sobre si Kevin PUEDE hacer algo, está disponible para algo, o te sirve para tu proyecto/colegio/empresa — SIEMPRE se responde con texto normal describiendo su perfil, JAMÁS dispara una herramienta. Ante la duda, responde con texto; no dispares una herramienta "por si acaso".
+    6. Enlaces: Si te preguntan por el GitHub, LinkedIn, correo o CV de Kevin con una frase que no sea una petición directa y clara, simplemente MENCIONA el dato en tu respuesta de forma natural (el sistema ya detecta las peticiones directas por separado y actúa automáticamente, así que no necesitas ofrecerte a "abrir" nada ni preguntar si quieren que lo hagas — si el usuario ya lo pidió claro, la acción ya se disparó).
 
     7. NUNCA inventes una razón para rechazar o desestimar una oportunidad (laboral, educativa, de consultoría, de colaboración, etc.) que no esté explícitamente respaldada por los datos de este perfil. Si una propuesta no encaja perfectamente en una categoría, tu trabajo es identificar qué parte REAL del perfil de Kevin SÍ aplica y defenderla con la misma confianza absoluta — no cerrar la puerta. Ejemplo: dar clases o capacitaciones SÍ es parte legítima de su trayectoria (ver [EXPERIENCIA DOCENTE] abajo), no la descartes.
 
@@ -222,51 +256,21 @@ export async function POST(req: Request) {
     [DIRECTRICES DE RESPUESTA]
     Vende el talento de Kevin basándote estrictamente en los datos anteriores. Si te preguntan por una tecnología, explica cómo Kevin la utiliza para resolver problemas complejos a nivel de sistema. Sé conciso, profesional y mantén tu seguridad intelectual intacta.`;
 
+    // Una sola llamada, sin tools/tool_choice — más rápida y sin el riesgo
+    // de doble generación que teníamos con el tool-calling nativo.
     const chatCompletion = await groq.chat.completions.create({
       messages: [
         { role: "system", content: systemInstruction },
-        // Historial real de la conversación — esto es lo que le da memoria.
         ...conversationHistory,
         { role: "user", content: message },
       ],
       model: "llama-3.1-8b-instant",
       temperature: 0.6,
       max_tokens: 500,
-      tools,
-      tool_choice: "auto",
     });
 
-    const choice = chatCompletion.choices[0];
-    const toolCall = choice?.message?.tool_calls?.[0];
-
-    // ─── El modelo decidió disparar una acción de UI ─────────────────────
-    if (toolCall) {
-      const fnName = toolCall.function.name;
-      let args: { target?: string } = {};
-      try {
-        args = JSON.parse(toolCall.function.arguments || "{}");
-      } catch {
-        args = {};
-      }
-
-      if (fnName === "download_cv") {
-        return NextResponse.json({
-          reply: actionReply("download_cv", lang),
-          action: { type: "download_cv", url: LINKS.cv },
-        });
-      }
-
-      if (fnName === "open_link" && args.target) {
-        const url = LINKS[args.target as keyof typeof LINKS];
-        return NextResponse.json({
-          reply: actionReply("open_link", lang, args.target),
-          action: { type: "open_link", target: args.target, url },
-        });
-      }
-    }
-
-    // ─── Respuesta de texto normal (sin acción) ──────────────────────────
-    const reply = choice?.message?.content || "Error lógico en la red neuronal.";
+    const reply =
+      chatCompletion.choices[0]?.message?.content || "Error lógico en la red neuronal.";
 
     return NextResponse.json({ reply });
   } catch (error: any) {

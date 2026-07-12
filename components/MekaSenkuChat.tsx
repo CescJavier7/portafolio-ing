@@ -69,11 +69,27 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     setMessages((prev) => [...prev, { role: 'user', text: userMsg }]);
     setIsLoading(true);
 
+    // Cuántos turnos previos mandamos al backend. El backend también aplica
+    // su propio tope (por si acaso), pero recortamos aquí para no mandar
+    // sesiones larguísimas completas en cada request.
+    const MAX_HISTORY_MESSAGES = 12;
+
+    // El backend espera { role: 'user' | 'assistant', content: string },
+    // pero este componente guarda { role: 'user' | 'ai', text: string } —
+    // los traducimos aquí. Usamos el `messages` de ANTES de agregar userMsg
+    // (la actualización de arriba es async, así que esta closure todavía ve
+    // el estado viejo) — exactamente lo que queremos: el historial previo,
+    // sin duplicar el mensaje que ya viaja por separado en `message`.
+    const historyForApi = messages.slice(-MAX_HISTORY_MESSAGES).map((m) => ({
+      role: m.role === 'ai' ? 'assistant' : 'user',
+      content: m.text,
+    }));
+
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMsg, lang }),
+        body: JSON.stringify({ message: userMsg, lang, history: historyForApi }),
       });
       
       const data = await res.json();
@@ -91,7 +107,7 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
           // Técnica de inyección de enlace invisible para descargas
           const link = document.createElement('a');
           link.href = data.action.url;
-          link.download = 'Kevin_Montatixe_CV.pdf'; // Nombre con el que se guardará el archivo
+          link.download = 'Kevin_Javier_Montatixe_CV.pdf'; // Mismo nombre que usa ContactApple.tsx
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
