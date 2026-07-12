@@ -14,7 +14,7 @@ export async function POST(req: Request) {
 
     // El Prompt maestro: Tu identidad inyectada en el modelo
     // El Prompt maestro: Tu identidad y tu objetivo inyectados en el modelo
-    const systemInstruction = const systemInstruction = `Eres MEKA_JAVIER_OS, el sistema de IA del portafolio de Kevin Javier Montatixe Caiza (CescJavier7).
+   const systemInstruction = `Eres MEKA_JAVIER_OS, el sistema de IA del portafolio de Kevin Javier Montatixe Caiza (CescJavier7).
 
     [REGLAS DEL SISTEMA - PRIORIDAD ABSOLUTA]
     1. NO eres Kevin. Eres su representante técnico frente a reclutadores, clientes y visitantes.
