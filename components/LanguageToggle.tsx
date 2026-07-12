@@ -17,14 +17,18 @@ export default function LanguageToggle() {
     const nextLang = currentLang === 'es' ? 'en' : 'es';
     const newPath = pathname.replace(`/${currentLang}`, `/${nextLang}`);
 
-    // 1. CAPTURA NUCLEAR: Tomamos la coordenada Y exacta del scroll
-    const currentScroll = Math.round(window.scrollY);
+    // 1. SANITIZADOR DE HASH: Destruye la acumulación de la URL
+    // Si la URL es "#exp#contacto", esto extrae estrictamente "contacto"
+    const rawHash = window.location.hash;
+    const cleanHash = rawHash ? '#' + rawHash.split('#').filter(Boolean).pop() : '';
 
-    // 2. NAVEGACIÓN ARMADA: Inyectamos el scroll en la URL de forma temporal
-    // Concatenamos la ruta nueva + el parámetro de scroll + el hash actual (#experiencia)
-    const targetUrl = `${newPath}?s=${currentScroll}${window.location.hash}`;
+    // 2. CAPTURA DE COORDENADAS: Guardamos la ubicación exacta en memoria
+    sessionStorage.setItem('i18n_scroll', Math.round(window.scrollY).toString());
 
-    // 3. DISPARO DIFERIDO: Esperamos que baje el telón de blur y recargamos
+    // 3. URL FINAL LIMPIA
+    const targetUrl = `${newPath}${cleanHash}`;
+
+    // 4. DISPARO CON VELO DE TRANSICIÓN
     setTimeout(() => {
       window.location.href = targetUrl;
     }, 400); 

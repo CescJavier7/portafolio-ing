@@ -77,22 +77,21 @@ export default async function RootLayout({
     // suppressHydrationWarning es vital en el tag html cuando usas next-themes
     <html lang={lang} suppressHydrationWarning>
       <head>
+        {/* LA SOLUCIÓN NUCLEAR (V2): Lectura directa desde memoria */}
         <script
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 try {
-                  var params = new URLSearchParams(window.location.search);
-                  var s = params.get('s');
-                  if (s) {
-                    // 1. Apaga el scroll suave por si el OS lo está forzando
+                  var savedScroll = sessionStorage.getItem('i18n_scroll');
+                  if (savedScroll) {
+                    // Congelamos el comportamiento de salto nativo
                     document.documentElement.style.scrollBehavior = 'auto';
-                    // 2. Teletransporta la cámara ANTES de pintar el body
-                    window.scrollTo({ top: parseInt(s, 10), behavior: 'instant' });
-                    // 3. Borra la evidencia de la URL instantáneamente
-                    var cleanUrl = window.location.pathname + window.location.hash;
-                    window.history.replaceState(null, '', cleanUrl);
+                    // Teletransportamos antes de pintar
+                    window.scrollTo({ top: parseInt(savedScroll, 10), behavior: 'instant' });
+                    // Destruimos la memoria para evitar re-saltos en futuras visitas
+                    sessionStorage.removeItem('i18n_scroll');
                   }
                 } catch(e) {}
               })();
