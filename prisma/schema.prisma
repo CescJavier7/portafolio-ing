@@ -7,6 +7,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
+model AdminUser {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
 // 1. Tabla para identificar a cada visitante único del chat
 model ChatSession {
   id             String    @id @default(uuid())
@@ -14,8 +21,11 @@ model ChatSession {
   startedAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   humanOverride  Boolean   @default(false) // El interruptor mágico para que tú tomes el control
-  
+  status         SessionStatus @default(ACTIVE)   // nuevo: ACTIVE, PENDING_REVIEW, CLOSED
   messages       Message[]
+
+  @@index([status, updatedAt])   // para que el panel liste rápido lo pendiente
+
 }
 
 // 2. Tabla para guardar el historial exacto de la conversación
@@ -33,4 +43,9 @@ enum Role {
   USER
   AI
   ADMIN
+  
+}enum SessionStatus {
+  ACTIVE
+  PENDING_REVIEW   // el usuario pidió contacto humano o la IA detectó algo relevante
+  CLOSED
 }
