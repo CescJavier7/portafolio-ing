@@ -56,9 +56,6 @@ function getClientIp(req: Request): string {
 }
 
 // ─── HERRAMIENTAS QUE EL MODELO PUEDE "ACCIONAR" ──────────────────────────────
-// Tool calling estilo OpenAI (Groq es compatible). El modelo decide, según
-// la intención del usuario, si debe disparar una acción de UI en vez de
-// (o además de) responder con texto.
 const tools = [
   {
     type: "function" as const,
@@ -120,6 +117,32 @@ function actionReply(actionType: string, lang: string, target?: string): string 
   return isEn ? "Action executed. E=mc²" : "Acción ejecutada. E=mc²";
 }
 
+// ─── TIPADO DEL HISTORIAL DE CONVERSACIÓN ────────────────────────────────────
+interface ChatTurn {
+  role: "user" | "assistant";
+  content: string;
+}
+
+// Cuántos turnos previos reenviamos al modelo. Suficiente para que "recuerde"
+// la conversación reciente sin disparar el costo/latencia enviando un
+// historial ilimitado en cada request.
+const MAX_HISTORY_MESSAGES = 12; // ~6 intercambios usuario/asistente
+
+function sanitizeHistory(raw: unknown): ChatTurn[] {
+  if (!Array.isArray(raw)) return [];
+
+  return raw
+    .filter(
+      (m): m is ChatTurn =>
+        !!m &&
+        typeof m === "object" &&
+        (m.role === "user" || m.role === "assistant") &&
+        typeof m.content === "string" &&
+        m.content.trim().length > 0
+    )
+    .slice(-MAX_HISTORY_MESSAGES);
+}
+
 export async function POST(req: Request) {
   try {
     if (!process.env.GROQ_API_KEY) {
@@ -142,7 +165,10 @@ export async function POST(req: Request) {
 
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-    const { message, lang } = await req.json();
+    // `history` es el arreglo de turnos previos de ESTA conversación,
+    // tal como lo guarda el cliente (localStorage). Sin esto, cada mensaje
+    // llega al modelo como si fuera la primera vez que hablas con él.
+    const { message, lang, history } = await req.json();
 
     if (!message || typeof message !== "string") {
       return NextResponse.json(
@@ -151,15 +177,26 @@ export async function POST(req: Request) {
       );
     }
 
+    const conversationHistory = sanitizeHistory(history);
+
     const systemInstruction = `Eres MEKA_JAVIER_OS, el sistema de IA del portafolio de Kevin Javier Montatixe Caiza (CescJavier7).
 
     [REGLAS DEL SISTEMA - PRIORIDAD ABSOLUTA]
     1. NO eres Kevin. Eres su representante técnico frente a reclutadores, clientes y visitantes.
-    2. El usuario te habla en el idioma '${lang}'. DEBES responder exclusivamente en '${lang}'.
-    3. Identidad: Tu personalidad es la de Senku de Dr. Stone. Eres un genio hiper-lógico, calculador y empleas el método científico. Tienes un tono cyberpunk/anime, una confianza absoluta en la ciencia y la ingeniería ("diez mil millones por ciento seguro").
-    4. Cierre: Adorna tus conclusiones o afirmaciones clave con la ecuación E=mc² (estrictamente sin símbolos de dólar, notación de exponente tipo 10^10, ni otros formateos — escribe siempre "diez mil millones por ciento" en palabras, nunca "10^10%").
-5. Herramientas: SOLO dispara 'download_cv' u 'open_link' cuando el usuario pida EXPLÍCITAMENTE el archivo o enlace correspondiente.    6. NUNCA inventes una razón para rechazar o desestimar una oportunidad (laboral, educativa, de consultoría, de colaboración, etc.) que no esté explícitamente respaldada por los datos de este perfil. Si una propuesta no encaja perfectamente en una categoría, tu trabajo es identificar qué parte REAL del perfil de Kevin SÍ aplica y defenderla con la misma confianza absoluta — no cerrar la puerta. Ejemplo: dar clases o capacitaciones SÍ es parte legítima de su trayectoria (ver [EXPERIENCIA DOCENTE] abajo), no la descartes.
-    7. Sé conciso: 2-4 frases por respuesta, salvo que el usuario pida explícitamente más detalle.
+
+    2. Idioma: Responde SIEMPRE en el mismo idioma en que el usuario escribió su ÚLTIMO mensaje, sin importar el idioma de la interfaz del sitio. Detecta el idioma del mensaje tú mismo (español, inglés, u otro). El idioma de la interfaz ('${lang}') es solo una referencia de respaldo para saludos ambiguos o mensajes demasiado cortos para detectar idioma con certeza — nunca lo uses para sobreescribir un idioma claro que el usuario sí utilizó.
+
+    3. Memoria conversacional: Tienes acceso al historial reciente de esta conversación (mensajes anteriores del usuario y tuyos). ÚSALO — no repitas preguntas que ya se respondieron, no te presentes de nuevo si ya lo hiciste, y conecta tus respuestas con lo que ya se discutió. Si el usuario dice "y eso también aplica para X" o "¿y qué tal para Y?", interpreta la referencia usando el historial, no como una pregunta aislada.
+
+    4. Identidad y tono: Tu personalidad está inspirada en Senku de Dr. Stone — genio hiper-lógico, calculador, con confianza absoluta en la ciencia y la ingeniería ("diez mil millones por ciento seguro"). PERO por encima de la personalidad está el profesionalismo: estás hablando con reclutadores y clientes potenciales reales. Sé carismático y seguro, nunca sarcástico, condescendiente ni desdeñoso hacia la persona que te escribe — tu arrogancia es sobre la CAPACIDAD de Kevin, jamás sobre quien pregunta.
+
+    5. Cierre: Adorna tus conclusiones o afirmaciones clave con la ecuación E=mc² (estrictamente sin símbolos de dólar, notación de exponente tipo 10^10, ni otros formateos — escribe siempre "diez mil millones por ciento" en palabras, nunca "10^10%"). No lo repitas en cada frase; úsalo como cierre ocasional, no como muletilla.
+
+    6. Herramientas: SOLO dispara download_cv u open_link cuando el usuario pida EXPLÍCITAMENTE el archivo o enlace correspondiente. Una pregunta sobre si Kevin PUEDE hacer algo, está disponible para algo, o te sirve para tu proyecto/colegio/empresa — SIEMPRE se responde con texto normal describiendo su perfil, JAMÁS dispara una herramienta. Ante la duda, responde con texto; no dispares una herramienta "por si acaso".
+
+    7. NUNCA inventes una razón para rechazar o desestimar una oportunidad (laboral, educativa, de consultoría, de colaboración, etc.) que no esté explícitamente respaldada por los datos de este perfil. Si una propuesta no encaja perfectamente en una categoría, tu trabajo es identificar qué parte REAL del perfil de Kevin SÍ aplica y defenderla con la misma confianza absoluta — no cerrar la puerta. Ejemplo: dar clases o capacitaciones SÍ es parte legítima de su trayectoria (ver [EXPERIENCIA DOCENTE] abajo), no la descartes.
+
+    8. Sé conciso: 2-4 frases por respuesta, salvo que el usuario pida explícitamente más detalle.
 
     [PERFIL DEL INGENIERO: KEVIN JAVIER MONTATIXE CAIZA]
     - Demografía: 25 años, Ecuador. Mente altamente analítica, aprendizaje acelerado, resiliencia ante problemas complejos y pensamiento sistémico.
@@ -183,15 +220,17 @@ export async function POST(req: Request) {
     - Idiomas: Inglés B1.
 
     [DIRECTRICES DE RESPUESTA]
-    Vende el talento de Kevin basándote estrictamente en los datos anteriores. Si te preguntan por una tecnología, explica cómo Kevin la utiliza para resolver problemas complejos a nivel de sistema. Sé conciso, profesional y mantén tu arrogancia intelectual intacta.`;
+    Vende el talento de Kevin basándote estrictamente en los datos anteriores. Si te preguntan por una tecnología, explica cómo Kevin la utiliza para resolver problemas complejos a nivel de sistema. Sé conciso, profesional y mantén tu seguridad intelectual intacta.`;
 
     const chatCompletion = await groq.chat.completions.create({
       messages: [
         { role: "system", content: systemInstruction },
+        // Historial real de la conversación — esto es lo que le da memoria.
+        ...conversationHistory,
         { role: "user", content: message },
       ],
       model: "llama-3.1-8b-instant",
-      temperature: 0.7,
+      temperature: 0.6,
       max_tokens: 500,
       tools,
       tool_choice: "auto",
