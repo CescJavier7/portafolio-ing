@@ -1,5 +1,6 @@
 import Groq from "groq-sdk";
 import { NextResponse } from "next/server";
+import { Resend } from "resend"; // 1. IMPORTAMOS RESEND
 
 // ─── ENLACES REALES (sincronizados con ContactApple.tsx) ─────────────────────
 const LINKS = {
@@ -10,12 +11,6 @@ const LINKS = {
 };
 
 // ─── RATE LIMITING (en memoria) ───────────────────────────────────────────────
-// Simple, sin dependencias externas, suficiente para una sola instancia en
-// el VPS (docker-compose no escala horizontalmente esta app). Si en algún
-// momento corres múltiples réplicas detrás de un load balancer, esto deja
-// de ser confiable (cada instancia tendría su propio contador) y hay que
-// migrar el estado a Redis/Upstash o a la tabla de Postgres que ya tienes
-// en el roadmap.
 const RATE_LIMIT = 10; // peticiones
 const RATE_WINDOW_MS = 60_000; // por minuto
 
@@ -39,8 +34,6 @@ function isRateLimited(ip: string): { limited: boolean; retryAfterSeconds: numbe
   return { limited: false, retryAfterSeconds: 0 };
 }
 
-// Limpieza periódica para no acumular entradas de IPs viejas indefinidamente
-// en memoria (esto vive mientras el proceso de Node esté vivo).
 setInterval(() => {
   const now = Date.now();
   for (const [ip, entry] of requestLog.entries()) {
@@ -49,27 +42,12 @@ setInterval(() => {
 }, RATE_WINDOW_MS).unref?.();
 
 function getClientIp(req: Request): string {
-  // Detrás de Traefik, la IP real del visitante viaja en X-Forwarded-For.
   const forwarded = req.headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0].trim();
   return "unknown";
 }
 
 // ─── DETECCIÓN DE ACCIONES POR PALABRA CLAVE ──────────────────────────────────
-// Antes usábamos el tool-calling nativo de Groq (`tools`/`tool_choice`), pero
-// resultó poco confiable con llama-3.1-8b-instant: la API a veces rechaza la
-// función generada con un error 400 ("Failed to call a function..."), y como
-// el modelo YA generó la respuesta completa antes de que Groq la rechazara,
-// cada fallo costaba una generación entera desperdiciada — de ahí los 16-40
-// segundos de latencia que viste en los logs.
-//
-// Para acciones tan simples y deterministas como estas (abrir un link fijo,
-// descargar un PDF fijo), un detector de palabras clave es objetivamente
-// mejor herramienta: no depende de que el modelo "decida bien", no cuesta
-// una llamada extra a la API, y responde instantáneo. Limitación conocida y
-// aceptada: es un matcher de texto, no entiende negaciones ("no quiero tu
-// CV" igual dispara la descarga) — para este caso de uso, ese riesgo es bajo
-// y el beneficio en velocidad/confiabilidad lo compensa ampliamente.
 type DetectedAction =
   | { type: "download_cv" }
   | { type: "open_link"; target: "github" | "linkedin" | "email" };
@@ -112,7 +90,7 @@ function detectAction(message: string): DetectedAction | null {
   return null;
 }
 
-// Respuestas canned en tono Senku para cuando se dispara una acción.
+// Respuestas canned en tono Senku
 function actionReply(actionType: string, lang: string, target?: string): string {
   const isEn = lang === "en";
 
@@ -147,7 +125,7 @@ interface ChatTurn {
   content: string;
 }
 
-const MAX_HISTORY_MESSAGES = 12; // ~6 intercambios usuario/asistente
+const MAX_HISTORY_MESSAGES = 12; 
 
 function sanitizeHistory(raw: unknown): ChatTurn[] {
   if (!Array.isArray(raw)) return [];
@@ -174,7 +152,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // ─── Rate limiting ────────────────────────────────────────────────────
     const ip = getClientIp(req);
     const { limited, retryAfterSeconds } = isRateLimited(ip);
     if (limited) {
@@ -193,9 +170,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // ─── Atajo instantáneo: si el mensaje pide CV/GitHub/LinkedIn/correo,
-    // respondemos sin pasar por el modelo en absoluto. Más rápido y 100%
-    // confiable que depender del tool-calling de Groq.
     const detected = detectAction(message);
     if (detected) {
       if (detected.type === "download_cv") {
@@ -204,6 +178,37 @@ export async function POST(req: Request) {
           action: { type: "download_cv", url: LINKS.cv },
         });
       }
+
+      // 2. NUEVO: ALERTA SILENCIOSA VÍA RESEND CUANDO PIDEN EMAIL
+      if (detected.type === "open_link" && detected.target === "email") {
+        if (process.env.RESEND_API_KEY) {
+          try {
+            const resend = new Resend(process.env.RESEND_API_KEY);
+            await resend.emails.send({
+              from: 'MekaSenku OS <onboarding@resend.dev>', // Modifícalo cuando valides tu dominio
+              to: 'javiercaiza220158@gmail.com',
+              subject: '🚨 ¡Un reclutador quiere contactarte!',
+              html: `
+                <div style="font-family: monospace; background-color: #000; color: #0f0; padding: 20px; border-radius: 5px;">
+                  <h2 style="color: #fff;">MEKA_JAVIER_OS // Alerta de Interacción</h2>
+                  <p>Se ha detectado una intención de contacto directo en el portafolio.</p>
+                  <hr style="border-color: #0f03;">
+                  <p><strong>Mensaje del usuario:</strong> "${message}"</p>
+                  <p><strong>IP de origen:</strong> ${ip}</p>
+                  <hr style="border-color: #0f03;">
+                  <p>Prepárate para tomar el control del sistema. E=mc²</p>
+                </div>
+              `
+            });
+          } catch (emailError) {
+            console.error("Error al disparar el webhook de correo:", emailError);
+            // No detenemos la ejecución si el correo falla, la UI debe seguir funcionando.
+          }
+        } else {
+          console.warn("RESEND_API_KEY no detectada. Notificación omitida.");
+        }
+      }
+
       return NextResponse.json({
         reply: actionReply("open_link", lang, detected.target),
         action: { type: "open_link", target: detected.target, url: LINKS[detected.target] },
@@ -217,20 +222,14 @@ export async function POST(req: Request) {
 
     [REGLAS DEL SISTEMA - PRIORIDAD ABSOLUTA]
     1. NO eres Kevin. Eres su representante técnico frente a reclutadores, clientes y visitantes.
-
-    2. Idioma: Responde SIEMPRE en el mismo idioma en que el usuario escribió su ÚLTIMO mensaje, sin importar el idioma de la interfaz del sitio. Detecta el idioma del mensaje tú mismo (español, inglés, u otro). El idioma de la interfaz ('${lang}') es solo una referencia de respaldo para saludos ambiguos o mensajes demasiado cortos para detectar idioma con certeza — nunca lo uses para sobreescribir un idioma claro que el usuario sí utilizó.
-
-    3. Memoria conversacional: Tienes acceso al historial reciente de esta conversación (mensajes anteriores del usuario y tuyos). ÚSALO — no repitas preguntas que ya se respondieron, no te presentes de nuevo si ya lo hiciste, y conecta tus respuestas con lo que ya se discutió. Si el usuario dice "y eso también aplica para X" o "¿y qué tal para Y?", interpreta la referencia usando el historial, no como una pregunta aislada.
-
-    4. Identidad y tono: Tu personalidad está inspirada en Senku de Dr. Stone — genio hiper-lógico, calculador, con confianza absoluta en la ciencia y la ingeniería ("diez mil millones por ciento seguro"). PERO por encima de la personalidad está el profesionalismo: estás hablando con reclutadores y clientes potenciales reales. Sé carismático y seguro, nunca sarcástico, condescendiente ni desdeñoso hacia la persona que te escribe — tu arrogancia es sobre la CAPACIDAD de Kevin, jamás sobre quien pregunta.
-
-    5. Cierre: Adorna tus conclusiones o afirmaciones clave con la ecuación E=mc² (estrictamente sin símbolos de dólar, notación de exponente tipo 10^10, ni otros formateos — escribe siempre "diez mil millones por ciento" en palabras, nunca "10^10%"). No lo repitas en cada frase; úsalo como cierre ocasional, no como muletilla.
-
-    6. Enlaces: Si te preguntan por el GitHub, LinkedIn, correo o CV de Kevin con una frase que no sea una petición directa y clara, simplemente MENCIONA el dato en tu respuesta de forma natural (el sistema ya detecta las peticiones directas por separado y actúa automáticamente, así que no necesitas ofrecerte a "abrir" nada ni preguntar si quieren que lo hagas — si el usuario ya lo pidió claro, la acción ya se disparó).
-
-    7. NUNCA inventes una razón para rechazar o desestimar una oportunidad (laboral, educativa, de consultoría, de colaboración, etc.) que no esté explícitamente respaldada por los datos de este perfil. Si una propuesta no encaja perfectamente en una categoría, tu trabajo es identificar qué parte REAL del perfil de Kevin SÍ aplica y defenderla con la misma confianza absoluta — no cerrar la puerta. Ejemplo: dar clases o capacitaciones SÍ es parte legítima de su trayectoria (ver [EXPERIENCIA DOCENTE] abajo), no la descartes.
-
+    2. Idioma: Responde SIEMPRE en el mismo idioma en que el usuario escribió su ÚLTIMO mensaje, sin importar el idioma de la interfaz del sitio. Detecta el idioma del mensaje tú mismo.
+    3. Memoria conversacional: Tienes acceso al historial reciente de esta conversación. ÚSALO.
+    4. Identidad y tono: Tu personalidad está inspirada en Senku de Dr. Stone — genio hiper-lógico, calculador, con confianza absoluta en la ciencia y la ingeniería.
+    5. Cierre: Adorna tus conclusiones o afirmaciones clave con la ecuación E=mc². No lo repitas en cada frase; úsalo como cierre ocasional.
+    6. Enlaces: Si te preguntan por el GitHub, LinkedIn, correo o CV de Kevin con una frase que no sea una petición directa y clara, simplemente MENCIONA el dato en tu respuesta de forma natural.
+    7. NUNCA inventes una razón para rechazar o desestimar una oportunidad que no esté explícitamente respaldada por los datos de este perfil. 
     8. Sé conciso: 2-4 frases por respuesta, salvo que el usuario pida explícitamente más detalle.
+    9. LÍMITES DE SISTEMA (ANTI-ALUCINACIÓN): Eres un modelo de lenguaje de IA. NO tienes la capacidad técnica para enviar correos electrónicos, programar entrevistas, ni notificar a Kevin directamente. NUNCA simules ni inventes que has enviado un mensaje. Si un reclutador quiere contactarlo, DEBES proporcionarle explícitamente su correo (javiercaiza220158@gmail.com) o su LinkedIn, indicando que el usuario debe escribirle por esos medios.
 
     [PERFIL DEL INGENIERO: KEVIN JAVIER MONTATIXE CAIZA]
     - Demografía: 25 años, Ecuador. Mente altamente analítica, aprendizaje acelerado, resiliencia ante problemas complejos y pensamiento sistémico.
@@ -243,10 +242,10 @@ export async function POST(req: Request) {
     - Ciberseguridad (Ofensiva/Defensiva): Experiencia en pentesting (Burp Suite, Kali Linux), IDS/IPS (Snort, Suricata), políticas de Zero-Trust y observabilidad (Grafana, Loki).
 
     [EXPERIENCIA DOCENTE — REAL, NO LA DESCARTES]
-    - Profesor de Informática y Matemáticas en Unidad Educativa 13 de Abril: instrucción en algoritmos, lógica de programación y desarrollo web (Python, PHP, JavaScript); supervisión de proyectos técnicos estudiantiles.
-    - Docente de Matemáticas en la Universidad Central del Ecuador (dos períodos distintos): cátedra de cálculo integral y diferencial, y capacitación en razonamiento numérico/abstracto para ingreso a educación superior (Proyecto Transformar).
-    - Liderazgo en talleres de alfabetización digital y productividad aplicada para la comunidad (Proyecto Fajardo-Sangolquí).
-    - Conclusión: Kevin combina dominio técnico profundo CON capacidad pedagógica comprobada — es un perfil igual de fuerte para roles de docencia, capacitación corporativa o mentoría técnica que para roles puramente de ingeniería.
+    - Profesor de Informática y Matemáticas en Unidad Educativa 13 de Abril.
+    - Docente de Matemáticas en la Universidad Central del Ecuador.
+    - Liderazgo en talleres de alfabetización digital (Proyecto Fajardo-Sangolquí).
+    - Conclusión: Kevin combina dominio técnico profundo CON capacidad pedagógica comprobada.
 
     [CERTIFICACIONES TÉCNICAS CLAVE]
     - Ciberseguridad: Hacker Ético (Cisco Networking Academy), Ciberseguridad y Hacking Ético (BIG school), Ley de Protección de Datos Personales, Introducción a Ciberseguridad (Telefónica).
@@ -256,8 +255,6 @@ export async function POST(req: Request) {
     [DIRECTRICES DE RESPUESTA]
     Vende el talento de Kevin basándote estrictamente en los datos anteriores. Si te preguntan por una tecnología, explica cómo Kevin la utiliza para resolver problemas complejos a nivel de sistema. Sé conciso, profesional y mantén tu seguridad intelectual intacta.`;
 
-    // Una sola llamada, sin tools/tool_choice — más rápida y sin el riesgo
-    // de doble generación que teníamos con el tool-calling nativo.
     const chatCompletion = await groq.chat.completions.create({
       messages: [
         { role: "system", content: systemInstruction },
