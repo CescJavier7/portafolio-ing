@@ -1,38 +1,29 @@
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-
-model AdminUser {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  createdAt    DateTime @default(now())
+generator client {
+  provider = "prisma-client-js"
 }
-// 1. Tabla para identificar a cada visitante único del chat
+
 model ChatSession {
-  id             String    @id @default(uuid())
+  id             String        @id @default(uuid())
   ipAddress      String?
-  startedAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  humanOverride  Boolean   @default(false) // El interruptor mágico para que tú tomes el control
-  status         SessionStatus @default(ACTIVE)   // nuevo: ACTIVE, PENDING_REVIEW, CLOSED
+  startedAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  humanOverride  Boolean       @default(false)
+  status         SessionStatus @default(ACTIVE)
+
   messages       Message[]
 
-  @@index([status, updatedAt])   // para que el panel liste rápido lo pendiente
-
+  @@index([status, updatedAt])
 }
 
-// 2. Tabla para guardar el historial exacto de la conversación
 model Message {
   id            String       @id @default(uuid())
   sessionId     String
-  role          Role         // 'user' (reclutador), 'ai' (MekaSenku), o 'admin' (Tú)
+  role          Role         
   content       String
   createdAt     DateTime     @default(now())
 
@@ -43,9 +34,10 @@ enum Role {
   USER
   AI
   ADMIN
-  
-}enum SessionStatus {
+}
+
+enum SessionStatus {
   ACTIVE
-  PENDING_REVIEW   // el usuario pidió contacto humano o la IA detectó algo relevante
+  PENDING_REVIEW
   CLOSED
 }
