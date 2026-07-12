@@ -78,9 +78,28 @@ export default async function RootLayout({
     <html lang={lang} suppressHydrationWarning>
       <head>
         <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var params = new URLSearchParams(window.location.search);
+                  var s = params.get('s');
+                  if (s) {
+                    // 1. Apaga el scroll suave por si el OS lo está forzando
+                    document.documentElement.style.scrollBehavior = 'auto';
+                    // 2. Teletransporta la cámara ANTES de pintar el body
+                    window.scrollTo({ top: parseInt(s, 10), behavior: 'instant' });
+                    // 3. Borra la evidencia de la URL instantáneamente
+                    var cleanUrl = window.location.pathname + window.location.hash;
+                    window.history.replaceState(null, '', cleanUrl);
+                  }
+                } catch(e) {}
+              })();
+            `
+          }}
         />
+        <meta name="view-transition" content="same-origin" />
       </head>
       <body className={`${inter.className} antialiased transition-colors duration-500 flex flex-col min-h-screen bg-white dark:bg-black`}>
         {/* Proveedor de tema: Activa enableSystem para detectar OS del usuario */}

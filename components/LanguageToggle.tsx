@@ -4,52 +4,47 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 
+
 export default function LanguageToggle() {
   const pathname = usePathname();
   const currentLang = pathname.split('/')[1];
-  
-  // 1. Estado para controlar el telón de transición
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const toggleLanguage = () => {
-    // Evita clics múltiples durante la animación
-    if (isTransitioning) return; 
-    
+    if (isTransitioning) return;
     setIsTransitioning(true);
 
-    // 2. Calculamos la nueva base de la ruta
     const nextLang = currentLang === 'es' ? 'en' : 'es';
     const newPath = pathname.replace(`/${currentLang}`, `/${nextLang}`);
-    
-    // 3. Capturamos los anclas (#) y parámetros (?) actuales del cliente
-    const currentHash = window.location.hash;
-    const currentSearch = window.location.search;
-    
-    // 4. Reconstruimos la URL exacta
-    const fullTargetUrl = `${newPath}${currentSearch}${currentHash}`;
 
-    // 5. Retrasamos la recarga dura para permitir que termine la animación visual
+    // 1. CAPTURA NUCLEAR: Tomamos la coordenada Y exacta del scroll
+    const currentScroll = Math.round(window.scrollY);
+
+    // 2. NAVEGACIÓN ARMADA: Inyectamos el scroll en la URL de forma temporal
+    // Concatenamos la ruta nueva + el parámetro de scroll + el hash actual (#experiencia)
+    const targetUrl = `${newPath}?s=${currentScroll}${window.location.hash}`;
+
+    // 3. DISPARO DIFERIDO: Esperamos que baje el telón de blur y recargamos
     setTimeout(() => {
-      window.location.href = fullTargetUrl;
-    }, 400); // 400ms: tiempo suficiente para el fundido a negro/blanco
+      window.location.href = targetUrl;
+    }, 400); 
   };
 
   return (
     <>
-      {/* EL TELÓN DE TRANSICIÓN: Oculta la recarga de la página */}
+      {/* EL VELO DE TRANSICIÓN: Oculta la recarga de la página */}
       <AnimatePresence>
         {isTransitioning && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="fixed inset-0 z-[99999] bg-white dark:bg-black pointer-events-none flex items-center justify-center"
+            initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+            animate={{ opacity: 1, backdropFilter: 'blur(12px)' }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="fixed inset-0 z-[99999] pointer-events-none flex items-center justify-center bg-white/10 dark:bg-black/20"
           >
-            {/* Opcional: Un pequeño indicador de carga premium */}
-            <motion.div 
-              animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-              className="w-8 h-8 border-2 border-zinc-200 dark:border-zinc-800 border-t-apple-blue rounded-full"
+            <motion.div
+              animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+              transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+              className="w-16 h-16 rounded-full border-t-2 border-apple-blue shadow-[0_0_20px_rgba(0,122,255,0.4)]"
             />
           </motion.div>
         )}
@@ -64,9 +59,7 @@ export default function LanguageToggle() {
         <motion.div
           className="absolute top-1 bottom-1 w-[30px] bg-white dark:bg-zinc-600 rounded-full shadow-sm"
           initial={false}
-          animate={{
-            x: currentLang === 'es' ? 0 : 32, 
-          }}
+          animate={{ x: currentLang === 'es' ? 0 : 32 }}
           transition={{ type: 'spring', stiffness: 500, damping: 30 }}
         />
 

@@ -42,16 +42,17 @@ export function middleware(request: NextRequest) {
   return NextResponse.redirect(request.nextUrl);
 }
 
-// Agrega esto al final de tu middleware.ts
 export const config = {
   matcher: [
     /*
-     * Intercepta todas las rutas excepto:
-     * 1. /api/ (rutas de backend)
-     * 2. /_next/ (archivos internos de Next.js)
-     * 3. /_static (archivos estáticos)
-     * 4. Archivos con extensiones (imágenes, favicons, etc.)
+     * EL BYPASS NUCLEAR:
+     * Ignora todas las rutas que comiencen con:
+     * - api (endpoints)
+     * - _next/static (archivos estáticos de JS/CSS)
+     * - _next/image (optimización de imágenes)
+     * - favicon.ico, icon, apple-icon, opengraph-image, twitter-image (Tus assets dinámicos)
+     * - Cualquier ruta que termine en una extensión de archivo (ej. .png, .jpg, .svg)
      */
-    '/((?!api|_next|_static|[\\w-]+\\.\\w+).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|icon|apple-icon|opengraph-image|twitter-image|.*\\.[\\w]+$).*)',
   ],
 };

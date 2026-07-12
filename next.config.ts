@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'images.credly.com', // Ejemplo de dominio autorizado
+        hostname: 'cescjavier.dev', // Ejemplo de dominio autorizado
       },
     ],
   },
