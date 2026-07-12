@@ -5,8 +5,24 @@ services:
     restart: always
     security_opt:
       - no-new-privileges:true
+    # env_file carga TODAS las variables del archivo .env dentro del
+    # contenedor en runtime (GROQ_API_KEY, y las de Postgres de abajo).
+    # Este archivo vive SOLO en el VPS, nunca en el repo (mismo principio
+    # que .env.local en tu Mac: secretos fuera de git).
+    env_file:
+      - .env
+    environment:
+      # Compose interpola ${...} leyendo el mismo .env automáticamente.
+      # `portfolio-db` es resoluble por DNS interno de Docker gracias a
+      # que ambos servicios comparten `internal-net`.
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@portfolio-db:5432/${POSTGRES_DB}
+      - NODE_ENV=production
+    depends_on:
+      portfolio-db:
+        condition: service_healthy
     networks:
-      - proxy-net
+      - proxy-net # Para que Traefik lo enrute desde afuera
+      - internal-net # Para hablar con Postgres, sin exponerlo a internet
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy-net"
@@ -16,6 +32,38 @@ services:
       - "traefik.http.routers.portfolio.tls=true"
       - "traefik.http.services.portfolio.loadbalancer.server.port=3000"
 
+  portfolio-db:
+    image: postgres:16-alpine
+    container_name: portfolio-db
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      # Persistencia real: los datos sobreviven a `docker-compose down` y
+      # a rebuilds del contenedor. Solo se pierden si borras el volumen
+      # explícitamente (`docker volume rm`).
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      # SIN proxy-net a propósito: Postgres nunca debe ser alcanzable
+      # desde Traefik ni desde internet, solo desde portfolio-app.
+      - internal-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 networks:
   proxy-net:
     external: true
+  internal-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
