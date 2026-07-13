@@ -33,26 +33,49 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   
-  // 🔴 FIX: Índice de limpieza visual. No borra la memoria, solo oculta el renderizado.
-  const [visualClearIndex, setVisualClearIndex] = useState<number>(0);
-  
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // 🔴 FIX: Saludo inicial dinámico de MEKA_OS
+  const initialWelcomeMessage: LocalMessage = {
+    role: 'ai',
+    text: lang === 'en' 
+      ? "System Online. I am MEKA_OS, the AI assistant for Cesc Javier (Kevin Montatixe). You can ask me about his tech stack, request his CV, or establish a direct contact line. How can I assist you today? E=mc²"
+      : "Sistema Iniciado. Soy MEKA_OS, la IA asistente de Cesc Javier (Kevin Montatixe). Puedes preguntarme sobre su stack tecnológico, descargar su CV o solicitar una línea de contacto directo. ¿En qué te ayudo hoy? E=mc²"
+  };
 
   useEffect(() => {
     let currentSessionId = localStorage.getItem(SESSION_STORAGE_KEY);
+    let isNewSession = false;
+
     if (!currentSessionId) {
       currentSessionId = typeof crypto !== 'undefined' && crypto.randomUUID 
         ? crypto.randomUUID() 
         : `os-node-${Math.random().toString(36).substring(2, 15)}`;
       localStorage.setItem(SESSION_STORAGE_KEY, currentSessionId);
+      isNewSession = true;
     }
     setSessionId(currentSessionId);
 
     const savedHistory = localStorage.getItem(getStorageKey(currentSessionId));
     if (savedHistory) {
-      try { setMessages(JSON.parse(savedHistory)); } catch (e) {}
+      try { 
+        const parsed = JSON.parse(savedHistory);
+        if (parsed.length > 0) {
+          setMessages(parsed);
+        } else {
+          // Historial vacío, inyectamos bienvenida
+          setMessages([initialWelcomeMessage]);
+          localStorage.setItem(getStorageKey(currentSessionId), JSON.stringify([initialWelcomeMessage]));
+        }
+      } catch (e) {
+        setMessages([initialWelcomeMessage]);
+      }
+    } else {
+      // Sesión completamente nueva
+      setMessages([initialWelcomeMessage]);
+      localStorage.setItem(getStorageKey(currentSessionId), JSON.stringify([initialWelcomeMessage]));
     }
-  }, []);
+  }, [lang]);
 
   useEffect(() => {
     if (!isOpen || !sessionId) return;
@@ -100,20 +123,31 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     if (scrollRef.current && isOpen) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isLoading, isOpen, visualClearIndex]);
+  }, [messages, isLoading, isOpen]);
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || !sessionId) return; 
 
-    // 🔴 FIX UX: Si escriben clear, movemos el índice visual para limpiar la pantalla.
+    // 🔴 FIX: Destrucción criptográfica real (Clear real)
     if (input.trim() === 'clear') {
       setInput('');
-      setVisualClearIndex(messages.length);
+      localStorage.removeItem(getStorageKey(sessionId)); // Destruimos historial viejo
+      
+      const newIdentity = typeof crypto !== 'undefined' && crypto.randomUUID 
+        ? crypto.randomUUID() 
+        : `os-node-${Math.random().toString(36).substring(2, 15)}`;
+      
+      setSessionId(newIdentity);
+      localStorage.setItem(SESSION_STORAGE_KEY, newIdentity);
+      
+      // Reiniciamos la pantalla con el saludo inicial
+      setMessages([initialWelcomeMessage]);
+      localStorage.setItem(getStorageKey(newIdentity), JSON.stringify([initialWelcomeMessage]));
       return;
     }
 
-    // Easter Egg solo para sudo rm -rf /
+    // Easter Egg inmutable
     if (input.trim() === 'sudo rm -rf /') {
       setInput('');
       const adminOverride: LocalMessage = { role: 'admin', text: 'Access Denied: Audit logs are immutable in MEKA_OS. E=mc²' };
@@ -233,15 +267,8 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
               className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-4 scroll-smooth z-10 scrollbar-thin"
               style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(34,197,94,0.3) transparent' }}
             >
-              {messages.length === 0 && (
-                <div className="text-center text-green-500/50 text-sm mt-10 space-y-2">
-                  <p>{dict.ready}</p>
-                  <p>{dict.analyzing}</p>
-                </div>
-              )}
-              
-              {/* 🔴 FIX: Aplicamos el .slice(visualClearIndex) para ocultar mensajes antiguos sin borrarlos */}
-              {messages.slice(visualClearIndex).map((msg, i) => (
+              {/* Eliminamos el .slice() del render para evitar bugs visuales */}
+              {messages.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed ${
                     msg.role === 'user' 
