@@ -43,3 +43,35 @@ export async function toggleHumanOverrideAction(sessionId: string, newOverrideSt
     return { success: false, error: "Fallo de conexión con la base de datos." };
   }
 }
+
+// app/meka-admin/actions.ts (Añadir al final)
+
+export async function sendAdminReply(sessionId: string, content: string) {
+  const session = await auth();
+  if (!session?.user) throw new Error("Acceso denegado al kernel.");
+
+  if (!content || content.trim() === '') return { success: false, error: "Empty payload" };
+
+  try {
+    // 1. Insertamos el mensaje como ADMIN
+    await prisma.message.create({
+      data: {
+        sessionId,
+        role: 'ADMIN',
+        content: content.trim()
+      }
+    });
+
+    // 2. Actualizamos el timestamp de la sesión para mantenerla arriba en el radar
+    await prisma.chatSession.update({
+      where: { id: sessionId },
+      data: { updatedAt: new Date() }
+    });
+
+    revalidatePath('/meka-admin');
+    return { success: true };
+  } catch (error) {
+    console.error("SYS_REPLY_ERROR:", error);
+    return { success: false, error: "Fallo de inyección en la base de datos." };
+  }
+}
