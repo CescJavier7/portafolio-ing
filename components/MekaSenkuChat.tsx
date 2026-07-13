@@ -35,7 +35,7 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // 1. INICIALIZACIÓN E IDENTIDAD TEMPORAL
+  // 1. INICIALIZACIÓN E IDENTIDAD
   useEffect(() => {
     const savedHistory = localStorage.getItem(STORAGE_KEY);
     if (savedHistory) {
@@ -52,19 +52,20 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     setSessionId(currentSessionId);
   }, []);
 
-  // 2. MOTOR DE SINCRONIZACIÓN HEURÍSTICA
+  // 2. MOTOR DE SINCRONIZACIÓN HEURÍSTICA (GET + NO CACHE)
   useEffect(() => {
     if (!isOpen || !sessionId) return;
 
     const syncRadar = async () => {
       try {
-        const res = await fetch('/api/chat/sync', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            sessionId: sessionId,
-            lastMessageAt: null 
-          })
+        // 🔴 FIX: Petición GET con bypass de caché del navegador
+        const res = await fetch(`/api/chat/sync?sessionId=${sessionId}`, {
+          method: 'GET',
+          cache: 'no-store', // Ignora el caché de Next.js
+          headers: {
+            'Pragma': 'no-cache',
+            'Cache-Control': 'no-cache'
+          }
         });
         
         if (!res.ok) return;
@@ -72,6 +73,7 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
 
         if (data.messages && data.messages.length > 0) {
           setMessages((prev: LocalMessage[]) => {
+            // Evaluamos si hay mensajes en el servidor que no tenemos en pantalla
             const incomingNew = data.messages.filter((serverMsg: any) => 
               !prev.some(localMsg => localMsg.text === serverMsg.content)
             );
@@ -93,10 +95,13 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
       }
     };
 
+    // Ping inicial
     syncRadar();
+
+    // Loop de radar cada 3 segundos
     const radarInterval = setInterval(syncRadar, 3000);
     return () => clearInterval(radarInterval);
-  }, [isOpen, sessionId]); // Dependencia vital: si sessionId cambia, el polling se reinicia con el ID correcto
+  }, [isOpen, sessionId]);
 
   // 3. AUTO-SCROLL
   useEffect(() => {
@@ -105,7 +110,7 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     }
   }, [messages, isLoading, isOpen]);
 
-  // 4. API CORE Y CONSENSO DE IDENTIDAD
+  // 4. API CORE Y ENVÍO DE MENSAJES
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || !sessionId) return; 
@@ -142,8 +147,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
       const data = await res.json();
       if (!res.ok) throw new Error("Colapso de comunicación");
 
-      // 🔴 FIX ARQUITECTÓNICO: CONSENSO DE IDENTIDAD ABSOLUTA
-      // Si el servidor generó un UUID distinto al nuestro, lo adoptamos inmediatamente.
       if (data.sessionId && data.sessionId !== sessionId) {
         setSessionId(data.sessionId);
         localStorage.setItem(SESSION_STORAGE_KEY, data.sessionId);

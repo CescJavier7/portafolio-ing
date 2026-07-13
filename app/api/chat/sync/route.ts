@@ -2,29 +2,37 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function POST(req: Request) {
-  try {
-    const { sessionId, lastMessageAt } = await req.json();
-    if (!sessionId) return NextResponse.json({ error: "No session ID" }, { status: 400 });
+// 🔴 DIRECTIVA CRÍTICA: Desactiva el caché estático de Next.js App Router
+export const dynamic = 'force-dynamic';
 
-    // Buscamos mensajes asociados a la sesión que sean posteriores al último timestamp
-    // que tiene el cliente localmente.
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const sessionId = searchParams.get('sessionId');
+
+    if (!sessionId) {
+      return NextResponse.json({ error: "Missing Target ID" }, { status: 400 });
+    }
+
+    // Buscamos la fuente de la verdad absoluta
     const newMessages = await prisma.message.findMany({
-      where: {
-        sessionId: sessionId,
-        createdAt: {
-          gt: new Date(lastMessageAt || 0) 
-        }
-      },
+      where: { sessionId: sessionId },
       orderBy: { createdAt: 'asc' }
     });
 
-    // Filtramos solo los mensajes emitidos por el administrador o la IA 
-    // (el usuario ya tiene sus propios mensajes renderizados en pantalla).
+    // Filtramos los del usuario, solo enviamos AI y ADMIN
     const incomingMessages = newMessages.filter(msg => msg.role !== 'USER');
 
-    return NextResponse.json({ messages: incomingMessages });
+    // 🔴 Cabeceras defensivas para evitar que el navegador guarde la respuesta
+    return NextResponse.json({ messages: incomingMessages }, {
+      status: 200,
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+      }
+    });
   } catch (error) {
+    console.error("[SYNC_ERROR]:", error);
     return NextResponse.json({ error: "Sync failed" }, { status: 500 });
   }
 }
