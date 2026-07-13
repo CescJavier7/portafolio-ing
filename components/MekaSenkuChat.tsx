@@ -23,7 +23,7 @@ interface LocalMessage {
   text: string;
 }
 
-const STORAGE_KEY = 'meka_javier_os_history';
+// 🔴 FIX: Eliminamos STORAGE_KEY. La Base de Datos es la única fuente de la verdad.
 const SESSION_STORAGE_KEY = 'meka_javier_os_session_id';
 
 export default function MekaSenkuChat({ lang, dict }: ChatProps) {
@@ -35,13 +35,8 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // 1. INICIALIZACIÓN E IDENTIDAD
+  // 1. INICIALIZACIÓN DE IDENTIDAD CRIPTOGRÁFICA
   useEffect(() => {
-    const savedHistory = localStorage.getItem(STORAGE_KEY);
-    if (savedHistory) {
-      try { setMessages(JSON.parse(savedHistory)); } catch (e) {}
-    }
-
     let currentSessionId = localStorage.getItem(SESSION_STORAGE_KEY);
     if (!currentSessionId) {
       currentSessionId = typeof crypto !== 'undefined' && crypto.randomUUID 
@@ -58,14 +53,10 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
 
     const syncRadar = async () => {
       try {
-        // 🔴 FIX: Petición GET con bypass de caché del navegador
         const res = await fetch(`/api/chat/sync?sessionId=${sessionId}`, {
           method: 'GET',
-          cache: 'no-store', // Ignora el caché de Next.js
-          headers: {
-            'Pragma': 'no-cache',
-            'Cache-Control': 'no-cache'
-          }
+          cache: 'no-store',
+          headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
         });
         
         if (!res.ok) return;
@@ -73,7 +64,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
 
         if (data.messages && data.messages.length > 0) {
           setMessages((prev: LocalMessage[]) => {
-            // Evaluamos si hay mensajes en el servidor que no tenemos en pantalla
             const incomingNew = data.messages.filter((serverMsg: any) => 
               !prev.some(localMsg => localMsg.text === serverMsg.content)
             );
@@ -85,9 +75,7 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
               text: m.content
             }));
             
-            const updated: LocalMessage[] = [...prev, ...formattedNew];
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-            return updated;
+            return [...prev, ...formattedNew];
           });
         }
       } catch (error) {
@@ -95,10 +83,7 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
       }
     };
 
-    // Ping inicial
     syncRadar();
-
-    // Loop de radar cada 3 segundos
     const radarInterval = setInterval(syncRadar, 3000);
     return () => clearInterval(radarInterval);
   }, [isOpen, sessionId]);
@@ -110,20 +95,15 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     }
   }, [messages, isLoading, isOpen]);
 
-  // 4. API CORE Y ENVÍO DE MENSAJES
+  // 4. ENVÍO DE MENSAJES
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || !sessionId) return; 
 
+    // 🔴 FIX: Easter Egg Inmutable. Mantenemos el lore de ciberseguridad.
     if (input.trim() === 'sudo rm -rf /' || input.trim() === 'clear') {
-      localStorage.removeItem(STORAGE_KEY); 
-      localStorage.removeItem(SESSION_STORAGE_KEY); 
-      setMessages([]); 
-      const newIdentity = typeof crypto !== 'undefined' && crypto.randomUUID 
-        ? crypto.randomUUID() : `os-node-${Math.random().toString(36).substring(2, 15)}`;
-      setSessionId(newIdentity); 
-      localStorage.setItem(SESSION_STORAGE_KEY, newIdentity);
-      setInput(''); 
+      setInput('');
+      setMessages((prev) => [...prev, { role: 'admin', text: 'Access Denied: Audit logs are immutable in MEKA_OS. E=mc²' }]);
       return; 
     }
 
@@ -153,12 +133,7 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
       }
 
       if (data.reply) {
-         setMessages((prev: LocalMessage[]) => {
-           const aiResponse: LocalMessage = { role: 'ai', text: String(data.reply) };
-           const updated: LocalMessage[] = [...prev, aiResponse];
-           localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-           return updated;
-         });
+         setMessages((prev: LocalMessage[]) => [...prev, { role: 'ai', text: String(data.reply) }]);
       }
 
       if (data.action) {
@@ -173,7 +148,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
           window.open(data.action.url, '_blank');
         }
       }
-
     } catch (error) {
       setMessages((prev: LocalMessage[]) => [...prev, { role: 'ai', text: dict.error }]);
     } finally {

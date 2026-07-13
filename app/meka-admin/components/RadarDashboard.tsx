@@ -1,9 +1,8 @@
 'use client';
 
-import { useOptimistic, useTransition, useRef } from 'react';
-import { toggleHumanOverrideAction, sendAdminReply } from '../actions';
+import { useTransition, useRef, useEffect, useState } from 'react';
+import { toggleHumanOverrideAction, sendAdminReply, getActiveSessions } from '../actions';
 
-// ─── DEFINICIÓN ESTRICTA DE TIPOS (Solución a los errores) ──────────────
 export type MessagePreview = {
   id: string;
   role: 'USER' | 'AI' | 'ADMIN';
@@ -14,37 +13,46 @@ export type ChatSessionPreview = {
   id: string;
   humanOverride: boolean;
   status: 'ACTIVE' | 'PENDING_REVIEW' | 'CLOSED';
-  updatedAt: Date | string; // Soporte para hidratación SSR (Date -> string)
+  updatedAt: Date | string;
   messages: MessagePreview[];
 };
 
-// ─── COMPONENTE PRINCIPAL ───────────────────────────────────────────────
 export function RadarDashboard({ initialSessions }: { initialSessions: ChatSessionPreview[] }) {
   const [isPending, startTransition] = useTransition();
   const formRefs = useRef<{ [key: string]: HTMLFormElement | null }>({});
+  
+  // 🔴 FIX: Referencias para el Auto-Scroll de cada contenedor de chat
+  const chatScrollRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const [liveSessions, setLiveSessions] = useState<ChatSessionPreview[]>(initialSessions);
 
-  const [optimisticSessions, addOptimisticAction] = useOptimistic(
-    initialSessions,
-    (
-      state,
-      action: 
-        | { type: 'TOGGLE_OVERRIDE'; id: string; humanOverride: boolean }
-        | { type: 'ADD_MESSAGE'; id: string; message: MessagePreview }
-    ) => {
-      if (action.type === 'TOGGLE_OVERRIDE') {
-        return state.map(s => s.id === action.id ? { ...s, humanOverride: action.humanOverride } : s);
+  // 🔴 MOTOR DE POLLING DEL RADAR ADMIN
+  useEffect(() => {
+    const radarInterval = setInterval(async () => {
+      try {
+        const freshData = await getActiveSessions();
+        // @ts-ignore - Casteo seguro desde Prisma
+        setLiveSessions(freshData);
+      } catch (error) {
+        console.error("Fallo de escaneo del radar:", error);
       }
-      if (action.type === 'ADD_MESSAGE') {
-        return state.map(s => s.id === action.id ? { ...s, messages: [...(s.messages || []), action.message] } : s);
+    }, 4000); 
+    return () => clearInterval(radarInterval);
+  }, []);
+
+  // 🔴 AUTO-SCROLL AL FINAL DE LA CONVERSACIÓN
+  useEffect(() => {
+    liveSessions.forEach(session => {
+      const scrollContainer = chatScrollRefs.current[session.id];
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
       }
-      return state;
-    }
-  );
+    });
+  }, [liveSessions]); 
 
   const handleOverrideToggle = async (id: string, currentStatus: boolean) => {
     const newState = !currentStatus;
     startTransition(async () => {
-      addOptimisticAction({ type: 'TOGGLE_OVERRIDE', id, humanOverride: newState });
+      setLiveSessions(prev => prev.map(s => s.id === id ? { ...s, humanOverride: newState } : s));
       await toggleHumanOverrideAction(id, newState);
     });
   };
@@ -55,13 +63,8 @@ export function RadarDashboard({ initialSessions }: { initialSessions: ChatSessi
     const replyContent = formData.get('reply') as string;
     
     if (!replyContent || replyContent.trim() === '') return;
+    if (formRefs.current[sessionId]) formRefs.current[sessionId]!.reset();
 
-    // Reseteo inmediato del formulario
-    if (formRefs.current[sessionId]) {
-      formRefs.current[sessionId]!.reset();
-    }
-
-    // Objeto temporal que cumple estrictamente con MessagePreview
     const tempMessage: MessagePreview = {
       id: `temp-${Date.now()}`,
       role: 'ADMIN',
@@ -69,26 +72,28 @@ export function RadarDashboard({ initialSessions }: { initialSessions: ChatSessi
     };
 
     startTransition(async () => {
-      addOptimisticAction({ type: 'ADD_MESSAGE', id: sessionId, message: tempMessage });
+      setLiveSessions(prev => prev.map(s => s.id === sessionId ? { ...s, messages: [...(s.messages || []), tempMessage] } : s));
       await sendAdminReply(sessionId, replyContent);
     });
   };
 
   return (
     <div className="mt-8 space-y-6 font-mono">
-      {!optimisticSessions || optimisticSessions.length === 0 ? (
+      {!liveSessions || liveSessions.length === 0 ? (
         <p className="text-gray-500 animate-pulse">[+] NO INCOMING SIGNALS DETECTED...</p>
       ) : (
-        optimisticSessions.map((session) => (
+        liveSessions.map((session) => (
           <div key={session.id} className="border border-green-800/50 p-4 bg-black/60 relative flex flex-col md:flex-row gap-4">
             
-            {/* Visualizador de Logs */}
             <div className="flex-1 flex flex-col min-w-0">
-              <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar mb-4">
+              {/* 🔴 CONTENEDOR VINCULADO AL SCROLL REF */}
+              <div 
+                ref={el => { chatScrollRefs.current[session.id] = el; }}
+                className="space-y-2 h-48 max-h-48 overflow-y-auto pr-2 custom-scrollbar mb-4 scroll-smooth"
+              >
                 <p className="text-xs text-green-600 border-b border-green-900 pb-1 mb-2 sticky top-0 bg-black/90 z-10">
                   SESSION_ID: {session.id} | STATUS: {session.status}
                 </p>
-                {/* 🔴 Defensa: session.messages?.map previene colapsos si no hay array */}
                 {session.messages?.map((msg) => (
                   <div key={msg.id} className={`text-sm flex gap-2 ${msg.role === 'USER' ? 'text-blue-400' : msg.role === 'ADMIN' ? 'text-red-400 font-bold' : 'text-green-300'}`}>
                     <span className="opacity-50 shrink-0">[{msg.role}]</span>
@@ -97,7 +102,6 @@ export function RadarDashboard({ initialSessions }: { initialSessions: ChatSessi
                 ))}
               </div>
 
-              {/* Input de Comando */}
               {session.humanOverride && (
                 <form 
                   ref={el => { formRefs.current[session.id] = el; }}
@@ -119,7 +123,6 @@ export function RadarDashboard({ initialSessions }: { initialSessions: ChatSessi
               )}
             </div>
 
-            {/* Panel Lateral */}
             <div className="flex flex-col justify-start items-end border-l border-green-900/50 pl-4 w-40 shrink-0">
               <button 
                 onClick={() => handleOverrideToggle(session.id, session.humanOverride)}
@@ -132,7 +135,9 @@ export function RadarDashboard({ initialSessions }: { initialSessions: ChatSessi
                 {session.humanOverride ? '[ ENGAGE_AI ]' : '[ SYS_OVERRIDE ]'}
               </button>
               <p className="text-[9px] text-gray-600 mt-2 text-right w-full">
-                LAST_PING:<br/>{new Date(session.updatedAt).toLocaleTimeString()}
+                LAST_PING:<br/>
+                {/* 🔴 FORMATEO EXACTO DE HORA LOCAL */}
+                {new Date(session.updatedAt).toLocaleTimeString('es-EC', { timeZone: 'America/Guayaquil' })}
               </p>
             </div>
 
