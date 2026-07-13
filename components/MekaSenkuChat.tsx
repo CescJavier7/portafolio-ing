@@ -16,7 +16,6 @@ interface ChatProps {
   };
 }
 
-// ─── TIPADO ESTRICTO ──────────────────────────────────────────
 type MessageRole = 'user' | 'ai' | 'admin';
 
 interface LocalMessage {
@@ -35,11 +34,8 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
   const [sessionId, setSessionId] = useState<string | null>(null);
   
   const scrollRef = useRef<HTMLDivElement>(null);
-  
-  // 🔴 Cursor de tiempo para el Delta Sync (Evita colapsar la base de datos)
-  const lastSyncTime = useRef<string | null>(null);
 
-  // 1. INICIALIZACIÓN E IDENTIDAD
+  // 1. INICIALIZACIÓN E IDENTIDAD TEMPORAL
   useEffect(() => {
     const savedHistory = localStorage.getItem(STORAGE_KEY);
     if (savedHistory) {
@@ -56,7 +52,7 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     setSessionId(currentSessionId);
   }, []);
 
-  // 2. MOTOR DE SINCRONIZACIÓN DIFERENCIAL (SHORT POLLING POST)
+  // 2. MOTOR DE SINCRONIZACIÓN HEURÍSTICA
   useEffect(() => {
     if (!isOpen || !sessionId) return;
 
@@ -67,49 +63,40 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             sessionId: sessionId,
-            lastMessageAt: lastSyncTime.current 
+            lastMessageAt: null 
           })
         });
         
         if (!res.ok) return;
         const data = await res.json();
 
-        // Si recibimos mensajes nuevos desde tu dashboard o de la IA
         if (data.messages && data.messages.length > 0) {
-          const newMessages: LocalMessage[] = data.messages.map((m: any) => ({
-            role: m.role === 'ADMIN' ? 'admin' : 'ai',
-            text: m.content
-          }));
-          
-          setMessages(prev => {
-            const updated = [...prev, ...newMessages];
+          setMessages((prev: LocalMessage[]) => {
+            const incomingNew = data.messages.filter((serverMsg: any) => 
+              !prev.some(localMsg => localMsg.text === serverMsg.content)
+            );
+
+            if (incomingNew.length === 0) return prev;
+
+            const formattedNew: LocalMessage[] = incomingNew.map((m: any) => ({
+              role: m.role === 'ADMIN' ? 'admin' : 'ai',
+              text: m.content
+            }));
+            
+            const updated: LocalMessage[] = [...prev, ...formattedNew];
             localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
             return updated;
           });
-
-          // Movemos el cursor de tiempo al último mensaje recibido
-          const latestMessage = data.messages[data.messages.length - 1];
-          if (latestMessage?.createdAt) {
-            lastSyncTime.current = latestMessage.createdAt;
-          }
         }
       } catch (error) {
-        console.error("Fallo de telemetría diferencial:", error);
+        console.error("Fallo de telemetría:", error);
       }
     };
 
-    // Establecemos la marca de tiempo base si es la primera carga
-    if (!lastSyncTime.current) {
-      lastSyncTime.current = new Date().toISOString();
-    }
-
-    // Ping inicial
     syncRadar();
-
-    // Loop de radar cada 3 segundos
     const radarInterval = setInterval(syncRadar, 3000);
     return () => clearInterval(radarInterval);
-  }, [isOpen, sessionId]);
+  }, [isOpen, sessionId]); // Dependencia vital: si sessionId cambia, el polling se reinicia con el ID correcto
 
   // 3. AUTO-SCROLL
   useEffect(() => {
@@ -118,12 +105,11 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     }
   }, [messages, isLoading, isOpen]);
 
-  // 4. ENVÍO DE MENSAJES (COMUNICACIÓN CON LA API)
+  // 4. API CORE Y CONSENSO DE IDENTIDAD
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || !sessionId) return; 
 
-    // Interceptor de purgado
     if (input.trim() === 'sudo rm -rf /' || input.trim() === 'clear') {
       localStorage.removeItem(STORAGE_KEY); 
       localStorage.removeItem(SESSION_STORAGE_KEY); 
@@ -133,7 +119,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
       setSessionId(newIdentity); 
       localStorage.setItem(SESSION_STORAGE_KEY, newIdentity);
       setInput(''); 
-      lastSyncTime.current = new Date().toISOString(); 
       return; 
     }
 
@@ -155,30 +140,24 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
       });
       
       const data = await res.json();
-      
-      // Manejamos si el endpoint colapsó
       if (!res.ok) throw new Error("Colapso de comunicación");
 
-      // Si la IA respondió inmediatamente (no está en awaitingHuman)
+      // 🔴 FIX ARQUITECTÓNICO: CONSENSO DE IDENTIDAD ABSOLUTA
+      // Si el servidor generó un UUID distinto al nuestro, lo adoptamos inmediatamente.
+      if (data.sessionId && data.sessionId !== sessionId) {
+        setSessionId(data.sessionId);
+        localStorage.setItem(SESSION_STORAGE_KEY, data.sessionId);
+      }
+
       if (data.reply) {
          setMessages((prev: LocalMessage[]) => {
-           // 1. Tipado explícito para evitar el "widening" de TypeScript
-           const aiResponse: LocalMessage = { 
-             role: 'ai', 
-             text: String(data.reply) // 2. Sanitización a string
-           };
-           
+           const aiResponse: LocalMessage = { role: 'ai', text: String(data.reply) };
            const updated: LocalMessage[] = [...prev, aiResponse];
-           
            localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
            return updated;
          });
-         
-         // Actualizamos el cursor para evitar que el Polling duplique esta respuesta
-         lastSyncTime.current = new Date().toISOString();
       }
 
-      // Procesador de Acciones (Descargar CV, Abrir Links)
       if (data.action) {
         if (data.action.type === 'download_cv') {
           const link = document.createElement('a');
@@ -193,7 +172,7 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
       }
 
     } catch (error) {
-      setMessages((prev) => [...prev, { role: 'ai', text: dict.error }]);
+      setMessages((prev: LocalMessage[]) => [...prev, { role: 'ai', text: dict.error }]);
     } finally {
       setIsLoading(false);
     }
@@ -210,10 +189,8 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
             transition={{ type: "spring", stiffness: 260, damping: 20 }}
             className="flex flex-col w-[calc(100vw-3rem)] sm:w-[400px] h-[75vh] max-h-[600px] sm:h-[500px] mb-4 bg-zinc-950/90 backdrop-blur-xl border border-green-500/30 rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(34,197,94,0.15)] relative"
           >
-            {/* Ambient Glow */}
             <div className="absolute top-0 right-1/2 -translate-x-1/2 w-64 h-32 bg-green-500/10 blur-[100px] pointer-events-none" />
 
-            {/* Cabecera */}
             <div className="flex items-center justify-between p-4 bg-black/60 border-b border-green-500/30 z-10 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-green-500/10 rounded-lg border border-green-500/30">
@@ -237,7 +214,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
               </div>
             </div>
 
-            {/* Área de Mensajes */}
             <div 
               ref={scrollRef} 
               className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-4 scroll-smooth z-10 scrollbar-thin"
@@ -252,7 +228,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
               
               {messages.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  {/* Lógica condicional de estilos para Rol Admin vs IA vs Usuario */}
                   <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed ${
                     msg.role === 'user' 
                       ? 'bg-green-600/10 text-green-100 border border-green-500/30 rounded-br-sm' 
@@ -280,7 +255,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
               )}
             </div>
 
-            {/* Formulario de Entrada */}
             <form onSubmit={sendMessage} className="p-3 bg-black/60 border-t border-green-500/30 z-10 shrink-0">
               <div className="flex relative group">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-green-500 font-bold text-sm">~/$</span>
@@ -304,7 +278,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
         )}
       </AnimatePresence>
 
-      {/* Botón Flotante */}
       <AnimatePresence>
         {!isOpen && (
           <motion.button
