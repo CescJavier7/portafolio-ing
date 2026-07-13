@@ -44,6 +44,8 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "127.0.0.1:5432:5432" # <-- EL PARCHE ATÓMICO: Abre el puerto SOLO para tu Mac
     volumes:
       # Persistencia real: los datos sobreviven a `docker-compose down` y
       # a rebuilds del contenedor. Solo se pierden si borras el volumen
