@@ -1,6 +1,6 @@
 'use client';
 
-import { useTransition, useRef, useEffect, useState } from 'react';
+import { useOptimistic, useTransition, useRef, useEffect, useState } from 'react';
 import { toggleHumanOverrideAction, sendAdminReply, getActiveSessions } from '../actions';
 
 export type MessagePreview = {
@@ -21,16 +21,15 @@ export function RadarDashboard({ initialSessions }: { initialSessions: ChatSessi
   const [isPending, startTransition] = useTransition();
   const formRefs = useRef<{ [key: string]: HTMLFormElement | null }>({});
   
-  // 🔴 FIX: Referencias para el Auto-Scroll de cada contenedor de chat
   const chatScrollRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const [liveSessions, setLiveSessions] = useState<ChatSessionPreview[]>(initialSessions);
 
-  // 🔴 MOTOR DE POLLING DEL RADAR ADMIN
+  // MOTOR DE POLLING DEL RADAR ADMIN
   useEffect(() => {
     const radarInterval = setInterval(async () => {
       try {
         const freshData = await getActiveSessions();
-        // @ts-ignore - Casteo seguro desde Prisma
+        // @ts-ignore
         setLiveSessions(freshData);
       } catch (error) {
         console.error("Fallo de escaneo del radar:", error);
@@ -39,7 +38,7 @@ export function RadarDashboard({ initialSessions }: { initialSessions: ChatSessi
     return () => clearInterval(radarInterval);
   }, []);
 
-  // 🔴 AUTO-SCROLL AL FINAL DE LA CONVERSACIÓN
+  // AUTO-SCROLL AL FINAL DE LA CONVERSACIÓN
   useEffect(() => {
     liveSessions.forEach(session => {
       const scrollContainer = chatScrollRefs.current[session.id];
@@ -86,7 +85,6 @@ export function RadarDashboard({ initialSessions }: { initialSessions: ChatSessi
           <div key={session.id} className="border border-green-800/50 p-4 bg-black/60 relative flex flex-col md:flex-row gap-4">
             
             <div className="flex-1 flex flex-col min-w-0">
-              {/* 🔴 CONTENEDOR VINCULADO AL SCROLL REF */}
               <div 
                 ref={el => { chatScrollRefs.current[session.id] = el; }}
                 className="space-y-2 h-48 max-h-48 overflow-y-auto pr-2 custom-scrollbar mb-4 scroll-smooth"
@@ -136,7 +134,6 @@ export function RadarDashboard({ initialSessions }: { initialSessions: ChatSessi
               </button>
               <p className="text-[9px] text-gray-600 mt-2 text-right w-full">
                 LAST_PING:<br/>
-                {/* 🔴 FORMATEO EXACTO DE HORA LOCAL */}
                 {new Date(session.updatedAt).toLocaleTimeString('es-EC', { timeZone: 'America/Guayaquil' })}
               </p>
             </div>

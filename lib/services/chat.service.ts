@@ -1,7 +1,9 @@
 import Groq from "groq-sdk";
+import { prisma } from "@/lib/prisma";
 import { findOrCreateSession, markPendingReview } from "@/lib/repositories/chatSession.repository";
 import { saveMessage } from "@/lib/repositories/message.repository";
 import { sendContactAlert } from "@/lib/services/notification.service";
+import { sendSmartAlert } from "@/lib/services/telegram.service"; // 🔴 FIX: Nueva integración C2
 import type { ChatRequestInput } from "@/lib/validation/chat.schema";
 
 // ─── ENLACES REALES ────────────────────────────────────────────────
@@ -113,28 +115,34 @@ export async function handleIncomingMessage(
 ): Promise<ServiceResult> {
   const { message, lang, history, sessionId } = input;
 
-  // 1. Aseguramos que exista una sesión en DB (nueva o recuperada)
+  // 1. Aseguramos que exista una sesión en DB
   const session = await findOrCreateSession(sessionId, ip);
 
-  // 2. Guardamos SIEMPRE el mensaje del usuario, sin importar quién responda
+  // 🔴 FIX: Verificamos si es el primer mensaje de esta sesión en la BD
+  const messageCount = await prisma.message.count({
+    where: { sessionId: session.id }
+  });
+  const isFirstMessage = messageCount === 0;
+
+  // 2. Guardamos SIEMPRE el mensaje del usuario
   await saveMessage(session.id, "USER", message);
 
+  // 🔴 FIX: Disparamos la alerta a Telegram de forma asíncrona (Fire and Forget)
+  sendSmartAlert(message, session.id, isFirstMessage).catch(err => console.error("Telegram C2 Alert Failed", err));
+
   // 3. ¿Estás tú tomando el control de esta conversación?
-  //    Si sí, NO llamamos a Groq. Marcamos la sesión como pendiente
-  //    de tu revisión y devolvemos una señal al frontend para que
-  //    haga polling esperando tu respuesta manual.
   if (session.humanOverride) {
     return {
       status: 200,
       body: {
         sessionId: session.id,
         awaitingHuman: true,
-        reply: null, // el frontend debe hacer polling a /api/chat/poll o similar
+        reply: null, 
       },
     };
   }
 
-  // 4. Flujo normal: detección de acciones rápidas (CV, GitHub, etc.)
+  // 4. Flujo normal: detección de acciones rápidas
   const detected = detectAction(message);
   if (detected) {
     const replyText = actionReply(
@@ -147,7 +155,7 @@ export async function handleIncomingMessage(
 
     if (detected.type === "open_link" && detected.target === "email") {
       await sendContactAlert({ message, ip });
-      await markPendingReview(session.id); // opcional: marcar para que revises luego
+      await markPendingReview(session.id); 
     }
 
     return {
@@ -184,8 +192,7 @@ export async function handleIncomingMessage(
       max_tokens: 500,
     });
 
-    const reply =
-      chatCompletion.choices[0]?.message?.content || "Error lógico en la red neuronal.";
+    const reply = chatCompletion.choices[0]?.message?.content || "Error lógico en la red neuronal.";
 
     await saveMessage(session.id, "AI", reply);
 
