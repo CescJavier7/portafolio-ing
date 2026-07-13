@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from 'react';
 import { Terminal, Send, Atom, X, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Definimos la interfaz estricta en TypeScript
 interface ChatProps {
   lang: string;
   dict: {
@@ -25,35 +24,39 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<{role: 'user' | 'ai', text: string}[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId, setSessionId] = useState<string | undefined>(undefined);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // 1. Cargar historial y sessionId del localStorage al montar el componente
-  //    (Evita errores de hidratación en Next.js)
   useEffect(() => {
+    // 1. Restaurar historial
     const savedHistory = localStorage.getItem(STORAGE_KEY);
     if (savedHistory) {
       try {
         setMessages(JSON.parse(savedHistory));
       } catch (e) {
-        console.error("Error parseando el historial de memoria local.");
+        console.error("Error parseando el historial");
       }
     }
 
-    const savedSessionId = localStorage.getItem(SESSION_STORAGE_KEY);
-    if (savedSessionId) {
-      setSessionId(savedSessionId);
+    // 2. 🔴 ANCLAJE CRIPTOGRÁFICO DE IDENTIDAD (Fingerprinting Defensivo)
+    // Previene la creación de sesiones fantasma en el Radar
+    let currentSessionId = localStorage.getItem(SESSION_STORAGE_KEY);
+    if (!currentSessionId) {
+      // Usamos Web Crypto API con fallback seguro
+      currentSessionId = typeof crypto !== 'undefined' && crypto.randomUUID 
+        ? crypto.randomUUID() 
+        : `os-node-${Math.random().toString(36).substring(2, 15)}`;
+      localStorage.setItem(SESSION_STORAGE_KEY, currentSessionId);
     }
+    setSessionId(currentSessionId);
   }, []);
 
-  // 2. Guardar en localStorage cada vez que el array de mensajes cambia
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
     }
   }, [messages]);
 
-  // 3. Auto-scroll al fondo cuando hay nuevos mensajes o se abre el chat
   useEffect(() => {
     if (scrollRef.current && isOpen) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -62,16 +65,22 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    
+    // 🔴 Bloqueo estricto: No disparamos API si la identidad aún no está hidratada
+    if (!input.trim() || !sessionId) return; 
 
-    // INTERCEPTOR DE COMANDOS (Debe ir aquí arriba)
     if (input.trim() === 'sudo rm -rf /' || input.trim() === 'clear') {
-      localStorage.removeItem(STORAGE_KEY); // Limpiamos la memoria del navegador
-      localStorage.removeItem(SESSION_STORAGE_KEY); // Limpiamos también la sesión
-      setMessages([]); // Limpiamos la pantalla
-      setSessionId(undefined); // Reiniciamos la sesión en memoria
-      setInput(''); // Limpiamos el input
-      return; // Cortamos la ejecución para no llamar a la API
+      localStorage.removeItem(STORAGE_KEY); 
+      localStorage.removeItem(SESSION_STORAGE_KEY); 
+      setMessages([]); 
+      // Generamos nueva identidad tras un purgado manual
+      const newIdentity = typeof crypto !== 'undefined' && crypto.randomUUID 
+        ? crypto.randomUUID() 
+        : `os-node-${Math.random().toString(36).substring(2, 15)}`;
+      setSessionId(newIdentity); 
+      localStorage.setItem(SESSION_STORAGE_KEY, newIdentity);
+      setInput(''); 
+      return; 
     }
 
     const userMsg = input;
@@ -79,17 +88,8 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     setMessages((prev) => [...prev, { role: 'user', text: userMsg }]);
     setIsLoading(true);
 
-    // Cuántos turnos previos mandamos al backend. El backend también aplica
-    // su propio tope (por si acaso), pero recortamos aquí para no mandar
-    // sesiones larguísimas completas en cada request.
     const MAX_HISTORY_MESSAGES = 12;
 
-    // El backend espera { role: 'user' | 'assistant', content: string },
-    // pero este componente guarda { role: 'user' | 'ai', text: string } —
-    // los traducimos aquí. Usamos el `messages` de ANTES de agregar userMsg
-    // (la actualización de arriba es async, así que esta closure todavía ve
-    // el estado viejo) — exactamente lo que queremos: el historial previo,
-    // sin duplicar el mensaje que ya viaja por separado en `message`.
     const historyForApi = messages.slice(-MAX_HISTORY_MESSAGES).map((m) => ({
       role: m.role === 'ai' ? 'assistant' : 'user',
       content: m.text,
@@ -108,28 +108,23 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
         throw new Error(data.error || "Colapso de comunicación");
       }
 
-      // Guardamos/actualizamos el sessionId para que las próximas peticiones
-      // se asocien a la misma ChatSession en vez de crear una nueva cada vez.
+      // Validamos y actualizamos si el backend decide forzar una nueva sesión por alguna política
       if (data.sessionId && data.sessionId !== sessionId) {
         setSessionId(data.sessionId);
         localStorage.setItem(SESSION_STORAGE_KEY, data.sessionId);
       }
 
-      // 1. Mostramos el mensaje de texto en el chat
       setMessages((prev) => [...prev, { role: 'ai', text: data.reply }]);
 
-      // 2. NUEVO: Procesamos las acciones de UI (Tool Calling)
       if (data.action) {
         if (data.action.type === 'download_cv') {
-          // Técnica de inyección de enlace invisible para descargas
           const link = document.createElement('a');
           link.href = data.action.url;
-          link.download = 'Kevin_Javier_Montatixe_CV.pdf'; // Mismo nombre que usa ContactApple.tsx
+          link.download = 'Kevin_Javier_Montatixe_CV.pdf'; 
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
         } else if (data.action.type === 'open_link') {
-          // Abrir repositorios o redes sociales en una nueva pestaña
           window.open(data.action.url, '_blank');
         }
       }
@@ -142,7 +137,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
   };
 
   return (
-    // Contenedor fijo en la esquina inferior izquierda
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-start font-mono">
       
       <AnimatePresence>
@@ -152,13 +146,10 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20, pointerEvents: "none" }}
             transition={{ type: "spring", stiffness: 260, damping: 20 }}
-            // 1. AJUSTE RESPONSIVO: Altura dinámica (h-[75vh]) en móviles y fija en PC.
             className="flex flex-col w-[calc(100vw-3rem)] sm:w-[400px] h-[75vh] max-h-[600px] sm:h-[500px] mb-4 bg-zinc-950/90 backdrop-blur-xl border border-green-500/30 rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(34,197,94,0.15)] relative"
           >
-            {/* Efecto de brillo de fondo */}
             <div className="absolute top-0 right-1/2 -translate-x-1/2 w-64 h-32 bg-green-500/10 blur-[100px] pointer-events-none" />
 
-            {/* Header UI (Se mantiene igual) */}
             <div className="flex items-center justify-between p-4 bg-black/60 border-b border-green-500/30 z-10 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-green-500/10 rounded-lg border border-green-500/30">
@@ -182,11 +173,10 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
               </div>
             </div>
 
-            {/* 2. EL PARCHE DE SCROLL: min-h-0 y overscroll-contain */}
             <div 
               ref={scrollRef} 
               className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-4 scroll-smooth z-10 scrollbar-thin"
-              style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(34,197,94,0.3) transparent' }} // Estilo nativo para la barra
+              style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(34,197,94,0.3) transparent' }}
             >
               {messages.length === 0 && (
                 <div className="text-center text-green-500/50 text-sm mt-10 space-y-2">
@@ -217,7 +207,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
               )}
             </div>
 
-            {/* Input de Comandos (shrink-0 para que no se aplaste) */}
             <form onSubmit={sendMessage} className="p-3 bg-black/60 border-t border-green-500/30 z-10 shrink-0">
               <div className="flex relative group">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-green-500 font-bold text-sm">~/$</span>
@@ -228,9 +217,10 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
                   placeholder={dict.placeholder}
                   className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl py-2.5 pl-10 pr-10 text-green-100 text-sm placeholder-green-700/40 focus:outline-none focus:border-green-500/50 focus:ring-1 focus:ring-green-500/50 transition-all"
                 />
+                {/* 🔴 Deshabilitamos el botón hasta que la identidad criptográfica (sessionId) esté lista */}
                 <button 
                   type="submit" 
-                  disabled={isLoading || !input.trim()}
+                  disabled={isLoading || !input.trim() || !sessionId}
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-green-500/10 text-green-500 rounded-lg hover:bg-green-500/20 hover:text-green-300 disabled:opacity-30 disabled:hover:bg-transparent transition-all"
                 >
                   <Send className="w-4 h-4" />
@@ -241,7 +231,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
         )}
       </AnimatePresence>
 
-      {/* Botón Flotante (FAB) */}
       <AnimatePresence>
         {!isOpen && (
           <motion.button
@@ -255,7 +244,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
           >
             <MessageSquare className="w-6 h-6 text-green-400 group-hover:text-green-300" />
             
-            {/* Ping animation para llamar la atención */}
             <span className="absolute top-0 right-0 flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>

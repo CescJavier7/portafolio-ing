@@ -3,47 +3,52 @@ import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm'; // <--- Importante para que funcionen las tablas
+import remarkGfm from 'remark-gfm'; 
 import Link from 'next/link';
 import { ArrowLeft, Share2, Bookmark } from 'lucide-react';
+import { notFound } from 'next/navigation'; // 🔴 INYECCIÓN DE SEGURIDAD
 
-// ─── TIPADO DEL DICCIONARIO (mínimo necesario para esta página) ──────────────
 interface BlogPostDictionary {
   back: string;
   writtenBy: string;
   authorBio: string;
 }
 
-// Lee el markdown del artículo desde la carpeta específica del idioma.
-// content/blog/es/{slug}.md  |  content/blog/en/{slug}.md
-// Si el artículo no existe traducido en ese idioma, hacemos fallback a
-// español para no romper la página (mejor mostrar el original que un 404).
 function getPostContent(lang: string, slug: string) {
-  const folder = path.join(process.cwd(), 'content/blog', lang);
-  let file = path.join(folder, `${slug}.md`);
+  try {
+    const folder = path.join(process.cwd(), 'content/blog', lang);
+    let file = path.join(folder, `${slug}.md`);
 
-  if (!fs.existsSync(file)) {
-    file = path.join(process.cwd(), 'content/blog', 'es', `${slug}.md`);
+    if (!fs.existsSync(file)) {
+      file = path.join(process.cwd(), 'content/blog', 'es', `${slug}.md`);
+    }
+
+    // 🔴 MITIGACIÓN DE ENOENT: Si el fallback también falla, cortamos ejecución
+    if (!fs.existsSync(file)) return null; 
+
+    const content = fs.readFileSync(file, 'utf8');
+    return matter(content);
+  } catch (error) {
+    console.error(`[FS_ERROR] Archivo comprometido o faltante: ${slug}`, error);
+    return null;
   }
-
-  const content = fs.readFileSync(file, 'utf8');
-  return matter(content);
 }
 
 export default async function BlogPost({
   params,
 }: {
-  // Mismo ajuste que en layout.tsx: Next.js 16 espera `string` genérico
-  // para segmentos dinámicos en el tipo auto-generado; declarar la unión
-  // 'es' | 'en' aquí rompe el build ("does not satisfy the constraint").
   params: Promise<{ lang: string; slug: string }>;
 }) {
   const { lang: rawLang, slug } = await params;
   const lang: 'es' | 'en' = rawLang === 'en' ? 'en' : 'es';
+  
   const post = getPostContent(lang, slug);
 
-  // Copys de interfaz mínimos (no ameritan traer todo `getDictionary` aquí,
-  // pero siguen el mismo patrón: texto fijo por locale, con fallback seguro).
+  // 🔴 PATRÓN EARLY RETURN: Previene el Error 500 y renderiza el 404 elegantemente
+  if (!post) {
+    notFound(); 
+  }
+
   const ui: BlogPostDictionary =
     lang === 'en'
       ? {
@@ -96,13 +101,12 @@ export default async function BlogPost({
 
         <div className="prose-container">
           <ReactMarkdown
-            remarkPlugins={[remarkGfm]} // <--- Activamos el soporte para tablas
+            remarkPlugins={[remarkGfm]} 
             components={{
               h2: ({ ...props }) => <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white mt-16 mb-6" {...props} />,
               h3: ({ ...props }) => <h3 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white mt-12 mb-4" {...props} />,
               p: ({ ...props }) => <p className="text-lg md:text-xl text-zinc-600 dark:text-zinc-400 leading-[1.7] mb-8 font-medium" {...props} />,
               
-              // ─── DISEÑO DE TABLAS PROFESIONAL ────────────────────────────────
               table: ({ ...props }) => (
                 <div className="my-10 overflow-x-auto rounded-2xl border border-zinc-200 dark:border-zinc-800">
                   <table className="w-full border-collapse text-left text-sm" {...props} />
@@ -112,20 +116,6 @@ export default async function BlogPost({
               th: ({ ...props }) => <th className="px-6 py-4 font-bold text-zinc-900 dark:text-white border-b border-zinc-200 dark:border-zinc-800" {...props} />,
               td: ({ ...props }) => <td className="px-6 py-4 text-zinc-600 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-800" {...props} />,
               
-              // ─── BLOQUES DE CÓDIGO (TERMINAL STYLE) ─────────────────────────
-              // IMPORTANTE: la prop `inline` que solía distinguir código en
-              // línea de bloques de código fue removida en versiones
-              // recientes de react-markdown. Usarla (`!inline`) hace que
-              // SIEMPRE sea `true` — así, hasta un simple `snort` mencionado
-              // dentro de un párrafo terminaba envuelto en <div><pre>,
-              // produciendo HTML inválido (<div>/<pre> dentro de <p>) y el
-              // consiguiente error de hidratación.
-              // En su lugar, usamos `node.position`: un bloque de código
-              // (fenced, ```) siempre ocupa más de una línea en el markdown
-              // fuente (la línea de apertura ``` y la de cierre ```, como
-              // mínimo), mientras que el código en línea (`como este`)
-              // siempre vive en una sola línea. Es una señal fiable e
-              // independiente de la versión de la librería.
               code: ({ node, className, children, ...props }: any) => {
                 const isBlock = node?.position
                   ? node.position.start.line !== node.position.end.line
