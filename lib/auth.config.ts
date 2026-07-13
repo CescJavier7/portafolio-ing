@@ -6,6 +6,7 @@ import type { NextAuthConfig } from "next-auth";
 // las cosas que sí son compatibles con Edge: páginas, callbacks de
 // verificación de sesión (JWT), etc.
 export const authConfig = {
+  trustHost: true, // Necesario detrás de un proxy reverso (Traefik) en producción
   pages: {
     signIn: "/meka-admin/login",
   },
