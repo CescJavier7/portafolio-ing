@@ -24,8 +24,6 @@ interface LocalMessage {
 }
 
 const SESSION_STORAGE_KEY = 'meka_javier_os_session_id';
-
-// 🔴 FIX: Generador de claves dinámicas para aislamiento de datos (Multi-Tenant Ready)
 const getStorageKey = (id: string) => `meka_javier_os_history_${id}`;
 
 export default function MekaSenkuChat({ lang, dict }: ChatProps) {
@@ -35,9 +33,11 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   
+  // 🔴 FIX: Índice de limpieza visual. No borra la memoria, solo oculta el renderizado.
+  const [visualClearIndex, setVisualClearIndex] = useState<number>(0);
+  
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // 1. INICIALIZACIÓN E IDENTIDAD CRIPTOGRÁFICA
   useEffect(() => {
     let currentSessionId = localStorage.getItem(SESSION_STORAGE_KEY);
     if (!currentSessionId) {
@@ -48,14 +48,12 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     }
     setSessionId(currentSessionId);
 
-    // Restauración aislada
     const savedHistory = localStorage.getItem(getStorageKey(currentSessionId));
     if (savedHistory) {
       try { setMessages(JSON.parse(savedHistory)); } catch (e) {}
     }
   }, []);
 
-  // 2. MOTOR DE SINCRONIZACIÓN (STALE-WHILE-REVALIDATE)
   useEffect(() => {
     if (!isOpen || !sessionId) return;
 
@@ -84,7 +82,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
             }));
             
             const updated = [...prev, ...formattedNew];
-            // Guardamos en el compartimento estanco
             localStorage.setItem(getStorageKey(sessionId), JSON.stringify(updated));
             return updated;
           });
@@ -99,20 +96,25 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     return () => clearInterval(radarInterval);
   }, [isOpen, sessionId]);
 
-  // 3. AUTO-SCROLL
   useEffect(() => {
     if (scrollRef.current && isOpen) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isLoading, isOpen]);
+  }, [messages, isLoading, isOpen, visualClearIndex]);
 
-  // 4. API CORE Y ENVÍO DE MENSAJES
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || !sessionId) return; 
 
-    // 🔴 FIX: Easter Egg que respeta el caché local y la auditoría
-    if (input.trim() === 'sudo rm -rf /' || input.trim() === 'clear') {
+    // 🔴 FIX UX: Si escriben clear, movemos el índice visual para limpiar la pantalla.
+    if (input.trim() === 'clear') {
+      setInput('');
+      setVisualClearIndex(messages.length);
+      return;
+    }
+
+    // Easter Egg solo para sudo rm -rf /
+    if (input.trim() === 'sudo rm -rf /') {
       setInput('');
       const adminOverride: LocalMessage = { role: 'admin', text: 'Access Denied: Audit logs are immutable in MEKA_OS. E=mc²' };
       setMessages((prev) => {
@@ -126,7 +128,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     const userMsg = input;
     setInput('');
     
-    // Actualización optimista
     setMessages((prev) => {
       const updated: LocalMessage[] = [...prev, { role: 'user', text: userMsg }];
       localStorage.setItem(getStorageKey(sessionId), JSON.stringify(updated));
@@ -149,11 +150,9 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
       const data = await res.json();
       if (!res.ok) throw new Error("Colapso de comunicación");
 
-      // Consenso de Identidad
       if (data.sessionId && data.sessionId !== sessionId) {
         setSessionId(data.sessionId);
         localStorage.setItem(SESSION_STORAGE_KEY, data.sessionId);
-        // Migramos el historial al nuevo ID si el backend forzó un cambio
         localStorage.setItem(getStorageKey(data.sessionId), JSON.stringify([...messages, { role: 'user', text: userMsg }]));
       }
 
@@ -241,7 +240,8 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
                 </div>
               )}
               
-              {messages.map((msg, i) => (
+              {/* 🔴 FIX: Aplicamos el .slice(visualClearIndex) para ocultar mensajes antiguos sin borrarlos */}
+              {messages.slice(visualClearIndex).map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed ${
                     msg.role === 'user' 
