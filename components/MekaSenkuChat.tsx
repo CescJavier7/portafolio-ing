@@ -79,6 +79,10 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     if (!isOpen || !sessionId) return;
 
     const syncRadar = async () => {
+      // 🔴 FIX NIVEL PRO: Ahorro extremo de recursos. 
+      // Si el visitante minimizó el navegador o cambió de pestaña, no consultamos a la BD.
+      if (document.hidden) return;
+
       try {
         const res = await fetch(`/api/chat/sync?sessionId=${sessionId}`, {
           method: 'GET',
@@ -112,8 +116,9 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
       }
     };
 
-    syncRadar();
-    const radarInterval = setInterval(syncRadar, 3000);
+    syncRadar(); // Ejecución inmediata al abrir
+    const radarInterval = setInterval(syncRadar, 3000); // Loop cada 3s
+    
     return () => clearInterval(radarInterval);
   }, [isOpen, sessionId]);
 
