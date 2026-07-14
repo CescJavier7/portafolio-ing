@@ -28,7 +28,7 @@ const STORAGE_KEY = 'meka_javier_os_history';
 const SESSION_STORAGE_KEY = 'meka_javier_os_session_id';
 const ACTIVITY_STORAGE_KEY = 'meka_javier_os_last_activity';
 const SYNC_INTERVAL_MS = 3000;
-const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutos
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 
 export default function MekaSenkuChat({ lang, dict }: ChatProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -52,13 +52,11 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     localStorage.setItem(ACTIVITY_STORAGE_KEY, Date.now().toString());
   };
 
-  // 1. Inicialización y Control de Sesión (TTL 30 min)
   useEffect(() => {
     let currentSessionId = localStorage.getItem(SESSION_STORAGE_KEY);
     const lastActivity = localStorage.getItem(ACTIVITY_STORAGE_KEY);
     const now = Date.now();
 
-    // Destrucción por inactividad
     if (currentSessionId && lastActivity && (now - parseInt(lastActivity, 10) > SESSION_TIMEOUT_MS)) {
       localStorage.removeItem(SESSION_STORAGE_KEY);
       localStorage.removeItem(STORAGE_KEY);
@@ -89,14 +87,12 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     }
   }, [lang]);
 
-  // 2. Sincronización con LocalStorage
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
     }
   }, [messages]);
 
-  // 3. Motor del Radar (Sincronización en Tiempo Real)
   useEffect(() => {
     if (!isOpen || !sessionId) return;
 
@@ -104,7 +100,8 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
       if (document.hidden) return; 
       
       try {
-        const res = await fetch(`/api/chat/sync?sessionId=${encodeURIComponent(sessionId)}`, {
+        // 🔴 FIX: Cache-Buster inyectado para forzar la actualización en tiempo real
+        const res = await fetch(`/api/chat/sync?sessionId=${encodeURIComponent(sessionId)}&t=${Date.now()}`, {
           method: 'GET',
           cache: 'no-store',
           headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
@@ -115,7 +112,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
 
         if (data.messages && data.messages.length > 0) {
           setMessages((prev) => {
-            // Deduplicación híbrida: Compara por ID o por Texto exacto si es un mensaje local optimista
             const incomingNew = data.messages.filter((serverMsg: any) => 
               !prev.some(localMsg => 
                 localMsg.serverId === serverMsg.id || 
@@ -132,6 +128,7 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
             }));
             
             updateActivity();
+            // Si llega mensaje nuevo del server, apagamos el indicador
             setAwaitingHuman(false); 
             setIsLoading(false);
             
@@ -148,14 +145,12 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     return () => clearInterval(radarInterval);
   }, [isOpen, sessionId]);
 
-  // 4. Auto-scroll fluido
   useEffect(() => {
     if (scrollRef.current && isOpen) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isLoading, isOpen, awaitingHuman]);
 
-  // 5. Envío de Mensajes
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || !sessionId) return; 
@@ -163,7 +158,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     updateActivity();
     const userText = input.trim();
     
-    // Comandos de sistema (Graceful Teardown)
     if (userText === 'sudo rm -rf /' || userText === 'clear') {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(SESSION_STORAGE_KEY);
@@ -180,7 +174,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     }
 
     setInput('');
-    // Inyección optimista SIN serverId para que el radar lo fusione luego
     setMessages((prev) => [...prev, { role: 'user', text: userText }]);
     setIsLoading(true);
 
@@ -210,12 +203,14 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
         return;
       }
 
+      // 🔴 FIX MÁQUINA DE ESTADOS: Si la IA contesta normalmente, 
+      // destruimos el estado "Un humano está revisando".
+      setAwaitingHuman(false);
+
       if (data.reply) {
-         // Inyección de la IA SIN serverId
          setMessages((prev) => [...prev, { role: 'ai', text: data.reply }]);
       }
 
-      // Manejo de acciones (CV, Links)
       if (data.action) {
         if (data.action.type === 'download_cv') {
           const link = document.createElement('a');
@@ -249,7 +244,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
           >
             <div className="absolute top-0 right-1/2 -translate-x-1/2 w-64 h-32 bg-green-500/10 blur-[100px] pointer-events-none" />
 
-            {/* HEADER */}
             <div className="flex items-center justify-between p-4 bg-black/60 border-b border-green-500/30 z-10 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-green-500/10 rounded-lg border border-green-500/30">
@@ -270,7 +264,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
               </div>
             </div>
 
-            {/* ZONA DE MENSAJES */}
             <div 
               ref={scrollRef} 
               className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-4 scroll-smooth z-10 scrollbar-thin"
@@ -303,7 +296,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
                 ))}
               </AnimatePresence>
 
-              {/* Loader IA */}
               {isLoading && (
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start">
                   <div className="flex items-center gap-2 bg-black/60 text-green-500/70 p-3 rounded-2xl rounded-bl-sm text-sm border border-zinc-800">
@@ -313,7 +305,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
                 </motion.div>
               )}
 
-              {/* Alerta de Humano */}
               {awaitingHuman && !isLoading && (
                 <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex justify-start">
                   <div className="flex items-center gap-2 bg-amber-950/30 text-amber-400 p-3 rounded-2xl rounded-bl-sm text-sm border border-amber-800/50">
@@ -327,7 +318,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
               )}
             </div>
 
-            {/* FORMULARIO */}
             <form onSubmit={sendMessage} className="p-3 bg-black/60 border-t border-green-500/30 z-10 shrink-0">
               <div className="flex relative group">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-green-500 font-bold text-sm">~/$</span>

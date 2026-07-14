@@ -32,11 +32,11 @@ export function RadarDashboard({ initialSessions }: { initialSessions: ChatSessi
     const scanRadar = async () => {
       if (document.hidden) return; 
       try {
-        const res = await fetch('/api/admin/radar', {
-          method: 'GET',
-          cache: 'no-store',
-          headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
-        });
+        const res = await fetch(`/api/admin/radar?t=${Date.now()}`, {
+  method: 'GET',
+  cache: 'no-store',
+  headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+});
         
         if (!res.ok) return;
         const freshData = await res.json();
