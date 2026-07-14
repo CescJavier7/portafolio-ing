@@ -33,7 +33,7 @@ const GREETING_DELAY_MS = 2000;
 
 // ─── AVATAR UX: Cara Hacker SVG Dinámica ───
 function HackerFace({ size = 32, isLive = false }: { size?: number; isLive?: boolean }) {
-  const primaryColor = isLive ? '#ef4444' : '#22c55e'; // Rojo si admin controla, Verde si IA
+  const primaryColor = isLive ? '#ef4444' : '#22c55e';
   const eyeColor = isLive ? '#f87171' : '#4ade80';
 
   return (
@@ -71,17 +71,10 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
   const [messages, setMessages] = useState<LocalMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  
-  // 🔴 FIX MÁQUINA DE ESTADOS: Estado global de control manual
   const [isHumanLive, setIsHumanLive] = useState(false);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const syncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // 🔴 FIX UX: Call to Action Dinámico
-  const greetingText = lang === 'en' 
-    ? "🚀 Explore the AI created by Javier!" 
-    : "🚀 ¡Explora la IA creada por Javier!";
 
   const initialWelcomeMessage: LocalMessage = {
     serverId: 'sys-init',
@@ -154,7 +147,7 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     }
   }, [messages, isLoading, isOpen, isHumanLive]);
 
-  // 🔴 FIX MOTOR DE RED: Radar invulnerable que extrae `humanOverride` directamente de Prisma
+  // Radar invulnerable
   useEffect(() => {
     if (!isOpen || !sessionId) return;
 
@@ -170,7 +163,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
 
         const data = await res.json();
         
-        // Sincronización estricta del estado del admin
         if (typeof data.humanOverride === 'boolean') {
           setIsHumanLive(data.humanOverride);
         }
@@ -264,14 +256,12 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
         localStorage.setItem(SESSION_STORAGE_KEY, data.sessionId);
       }
 
-      // Si el servidor detecta override, activamos la UI de Admin y apagamos el loader
       if (data.awaitingHuman) {
         setIsHumanLive(true);
         setIsLoading(false);
         return;
       }
 
-      // Si la IA contesta, apagamos la UI del admin
       setIsHumanLive(false);
 
       if (data.reply) {
@@ -325,7 +315,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
               </button>
             </div>
 
-            {/* 🔴 FIX UX: Live Banner Elegante (Reemplaza la burbuja ámbar bloqueante) */}
             <AnimatePresence>
               {isHumanLive && (
                 <motion.div
@@ -417,51 +406,71 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
         )}
       </AnimatePresence>
 
-      {/* 🔴 FIX UX: Call to Action Flotante Agresivo */}
-      <AnimatePresence>
-        {!isOpen && showGreeting && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8, y: 15, rotate: -2 }}
-            animate={{ opacity: 1, scale: 1, y: 0, rotate: 0 }}
-            exit={{ opacity: 0, scale: 0.8, y: 15 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            onClick={openChat}
-            className="mb-4 max-w-[240px] sm:max-w-[280px] cursor-pointer bg-gradient-to-br from-green-950 to-black border border-green-500/50 rounded-2xl rounded-br-sm p-4 shadow-[0_0_40px_rgba(34,197,94,0.3)] relative group"
-          >
-            <div className="absolute inset-0 bg-green-500/10 rounded-2xl rounded-br-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <button
-              onClick={(e) => { e.stopPropagation(); setShowGreeting(false); setGreetingDismissed(true); }}
-              className="absolute -top-2 -right-2 bg-zinc-900 border border-green-500/50 rounded-full p-1 text-green-500/70 hover:text-white transition-colors z-10"
+      {/* 🔴 CONTENEDOR RELATIVO PARA EL CTA Y EL AVATAR */}
+      <div className="relative flex flex-col items-end">
+        
+        {/* Globo de Diálogo (CTA Reclutadores) */}
+        <AnimatePresence>
+          {!isOpen && showGreeting && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8, y: 15 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              onClick={openChat}
+              className="absolute bottom-full right-0 mb-5 w-64 sm:w-72 cursor-pointer bg-zinc-950/95 border border-green-500/50 rounded-2xl p-4 shadow-[0_0_40px_rgba(34,197,94,0.2)] group z-50 origin-bottom-right"
             >
-              <X className="w-3.5 h-3.5" />
-            </button>
-            <p className="text-green-100 text-sm sm:text-base font-bold leading-tight relative z-0 flex items-center gap-2">
-              <span className="animate-bounce inline-block">👋</span>
-              {greetingText}
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <div className="absolute inset-0 bg-green-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowGreeting(false); setGreetingDismissed(true); }}
+                className="absolute -top-2 -right-2 bg-zinc-900 border border-green-500/50 rounded-full p-1 text-green-500/70 hover:text-white transition-colors z-10 hover:bg-zinc-800"
+              >
+                <X className="w-4 h-4" />
+              </button>
 
-      <AnimatePresence>
-        {!isOpen && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={openChat}
-            className="relative flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-[#020617] border border-green-500/50 rounded-2xl shadow-[0_0_20px_rgba(34,197,94,0.4)] hover:shadow-[0_0_40px_rgba(34,197,94,0.6)] transition-shadow"
-          >
-            <HackerFace size={34} isLive={false} />
-            <span className="absolute top-1.5 right-1.5 flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500 shadow-[0_0_10px_#22c55e]"></span>
-            </span>
-          </motion.button>
-        )}
-      </AnimatePresence>
+              <div className="relative z-0 flex items-start gap-3">
+                <span className="text-2xl animate-bounce mt-1">👋</span>
+                <div>
+                  <h4 className="text-green-400 font-bold text-xs sm:text-sm tracking-widest uppercase mb-1">
+                    {lang === 'en' ? 'Incoming Signal' : 'Señal Entrante'}
+                  </h4>
+                  <p className="text-zinc-200 text-xs sm:text-sm leading-relaxed font-medium">
+                    {lang === 'en' 
+                      ? "Hi! I'm Javier's AI. Looking for a Fullstack & Cybersecurity Engineer? Let's chat!" 
+                      : "¡Hola! Soy la IA de Javier. ¿Buscas un Ingeniero Fullstack y Ciberseguridad? ¡Hablemos!"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Cola del globo apuntando al avatar */}
+              <div className="absolute -bottom-2 right-5 w-4 h-4 bg-zinc-950 border-b border-r border-green-500/50 transform rotate-45" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Botón Avatar Principal */}
+        <AnimatePresence>
+          {!isOpen && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={openChat}
+              className="relative flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-[#020617] border border-green-500/50 rounded-2xl shadow-[0_0_20px_rgba(34,197,94,0.4)] hover:shadow-[0_0_40px_rgba(34,197,94,0.6)] transition-shadow z-40"
+            >
+              <HackerFace size={34} isLive={false} />
+              <span className="absolute top-1 right-1 flex h-3.5 w-3.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-green-500 shadow-[0_0_10px_#22c55e]"></span>
+              </span>
+            </motion.button>
+          )}
+        </AnimatePresence>
+
+      </div>
     </div>
   );
 }
