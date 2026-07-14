@@ -25,16 +25,30 @@ export function RadarDashboard({ initialSessions }: { initialSessions: ChatSessi
   const [liveSessions, setLiveSessions] = useState<ChatSessionPreview[]>(initialSessions);
 
   // MOTOR DE POLLING DEL RADAR ADMIN
+  // 🔴 FIX ARCHITECTURE: MOTOR DE POLLING OPTIMIZADO
   useEffect(() => {
-    const radarInterval = setInterval(async () => {
+    const scanRadar = async () => {
+      // PRO-TIP: Si el admin minimiza la pestaña, detenemos el martilleo a la Base de Datos
+      if (document.hidden) return; 
+
       try {
-        const freshData = await getActiveSessions();
-        // @ts-ignore
+        const res = await fetch('/api/admin/radar', {
+          method: 'GET',
+          cache: 'no-store',
+          headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+        });
+        
+        if (!res.ok) return;
+        const freshData = await res.json();
         setLiveSessions(freshData);
       } catch (error) {
         console.error("Fallo de escaneo del radar:", error);
       }
-    }, 4000); 
+    };
+
+    scanRadar(); // Ping Inicial
+    const radarInterval = setInterval(scanRadar, 4000); 
+    
     return () => clearInterval(radarInterval);
   }, []);
 

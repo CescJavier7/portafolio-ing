@@ -35,12 +35,12 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // 🔴 FIX: Saludo inicial dinámico de MEKA_OS
+  // 🔴 UX/UI MEJORA: Secuencia de Boot Terminal profesional
   const initialWelcomeMessage: LocalMessage = {
     role: 'ai',
     text: lang === 'en' 
-      ? "System Online. I am MEKA_OS, the AI assistant for Cesc Javier (Kevin Montatixe). You can ask me about his tech stack, request his CV, or establish a direct contact line. How can I assist you today? E=mc²"
-      : "Sistema Iniciado. Soy MEKA_OS, la IA asistente de Cesc Javier (Kevin Montatixe). Puedes preguntarme sobre su stack tecnológico, descargar su CV o solicitar una línea de contacto directo. ¿En qué te ayudo hoy? E=mc²"
+      ? "INITIALIZING KERNEL...\nMEKA_OS v2.0 ONLINE.\n\nGreetings. I am the Artificial Intelligence architected by Kevin Montatixe (Cesc Javier). I am authorized to discuss his Software Engineering stack, run cybersecurity simulations, or establish a secure contact line.\n\nSpecify your query parameters to begin. E=mc²"
+      : "INICIANDO KERNEL...\nMEKA_OS v2.0 EN LÍNEA.\n\nSaludos. Soy la Inteligencia Artificial diseñada por Kevin Montatixe (Cesc Javier). Estoy autorizada para analizar su stack de Ingeniería de Software, discutir arquitecturas de Ciberseguridad o establecer una línea de contacto directo.\n\nIngresa tu parámetro de consulta para comenzar. E=mc²"
   };
 
   useEffect(() => {
@@ -63,7 +63,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
         if (parsed.length > 0) {
           setMessages(parsed);
         } else {
-          // Historial vacío, inyectamos bienvenida
           setMessages([initialWelcomeMessage]);
           localStorage.setItem(getStorageKey(currentSessionId), JSON.stringify([initialWelcomeMessage]));
         }
@@ -71,7 +70,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
         setMessages([initialWelcomeMessage]);
       }
     } else {
-      // Sesión completamente nueva
       setMessages([initialWelcomeMessage]);
       localStorage.setItem(getStorageKey(currentSessionId), JSON.stringify([initialWelcomeMessage]));
     }
@@ -129,10 +127,9 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     e.preventDefault();
     if (!input.trim() || !sessionId) return; 
 
-    // 🔴 FIX: Destrucción criptográfica real (Clear real)
     if (input.trim() === 'clear') {
       setInput('');
-      localStorage.removeItem(getStorageKey(sessionId)); // Destruimos historial viejo
+      localStorage.removeItem(getStorageKey(sessionId)); 
       
       const newIdentity = typeof crypto !== 'undefined' && crypto.randomUUID 
         ? crypto.randomUUID() 
@@ -141,13 +138,11 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
       setSessionId(newIdentity);
       localStorage.setItem(SESSION_STORAGE_KEY, newIdentity);
       
-      // Reiniciamos la pantalla con el saludo inicial
       setMessages([initialWelcomeMessage]);
       localStorage.setItem(getStorageKey(newIdentity), JSON.stringify([initialWelcomeMessage]));
       return;
     }
 
-    // Easter Egg inmutable
     if (input.trim() === 'sudo rm -rf /') {
       setInput('');
       const adminOverride: LocalMessage = { role: 'admin', text: 'Access Denied: Audit logs are immutable in MEKA_OS. E=mc²' };
@@ -267,10 +262,10 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
               className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-4 scroll-smooth z-10 scrollbar-thin"
               style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(34,197,94,0.3) transparent' }}
             >
-              {/* Eliminamos el .slice() del render para evitar bugs visuales */}
               {messages.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed ${
+                  {/* 🔴 FIX: Añadimos 'whitespace-pre-wrap' para respetar los saltos de línea (\n) del KERNEL */}
+                  <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
                     msg.role === 'user' 
                       ? 'bg-green-600/10 text-green-100 border border-green-500/30 rounded-br-sm' 
                       : msg.role === 'admin'

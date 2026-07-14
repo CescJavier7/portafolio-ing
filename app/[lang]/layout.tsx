@@ -7,11 +7,10 @@ import SmoothScroll from '@/components/SmoothScroll';
 import NavBar from '@/components/NavBar';
 import Footer from '@/components/Footer';
 import { getDictionary } from '@/get-dictionary';
-import MekaSenkuChat from '@/components/MekaSenkuChat'; // Importación en layout
+import MekaSenkuChat from '@/components/MekaSenkuChat'; 
 
 const inter = Inter({ subsets: ['latin'] });
 
-// ─── 1. METADATA DINÁMICA CON PARAMS ASÍNCRONOS ─────────────────────────────
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params;
   const baseUrl = 'https://cescjavier.dev';
@@ -45,12 +44,10 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   };
 }
 
-// ─── 2. GENERACIÓN DE RUTAS ──────────────────────────────────────────────────
 export async function generateStaticParams() {
   return [{ lang: 'es' }, { lang: 'en' }];
 }
 
-// ─── 3. ROOT LAYOUT ──────────────────────────────────────────────────────────
 export default async function RootLayout({
   children,
   params,
@@ -58,11 +55,9 @@ export default async function RootLayout({
   children: React.ReactNode;
   params: Promise<{ lang: string }>;
 }>) {
-  // Desempaquetamos de forma segura y sanitizamos el parámetro de idioma
   const { lang: rawLang } = await params;
   const lang: 'es' | 'en' = rawLang === 'en' ? 'en' : 'es';
   
-  // Extraemos la fuente de la verdad
   const dict = await getDictionary(lang);
   
   const jsonLd = {
@@ -75,10 +70,14 @@ export default async function RootLayout({
   };
 
   return (
-    // suppressHydrationWarning es vital en el tag html cuando usas next-themes
     <html lang={lang} suppressHydrationWarning>
       <head>
-        {/* LA SOLUCIÓN NUCLEAR (V2): Lectura directa desde memoria */}
+        {/* 🔴 FIX: Inyección de Metadatos SEO estructurados para Google */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        
         <script
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
@@ -87,11 +86,8 @@ export default async function RootLayout({
                 try {
                   var savedScroll = sessionStorage.getItem('i18n_scroll');
                   if (savedScroll) {
-                    // Congelamos el comportamiento de salto nativo
                     document.documentElement.style.scrollBehavior = 'auto';
-                    // Teletransportamos antes de pintar
                     window.scrollTo({ top: parseInt(savedScroll, 10), behavior: 'instant' });
-                    // Destruimos la memoria para evitar re-saltos en futuras visitas
                     sessionStorage.removeItem('i18n_scroll');
                   }
                 } catch(e) {}
@@ -102,7 +98,6 @@ export default async function RootLayout({
         <meta name="view-transition" content="same-origin" />
       </head>
       <body className={`${inter.className} antialiased transition-colors duration-500 flex flex-col min-h-screen bg-white dark:bg-black`}>
-        {/* Proveedor de tema: Activa enableSystem para detectar OS del usuario */}
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <SmoothScroll>
             <NavBar dict={dict.navigation} lang={lang} />
