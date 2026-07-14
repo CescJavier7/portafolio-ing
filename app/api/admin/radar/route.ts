@@ -1,46 +1,52 @@
-// app/api/admin/radar/route.ts
+// app/api/chat/sync/route.ts
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
 
-// 🔴 FIX: Anula el caché global agresivo del App Router
+// 🔴 DIRECTIVA CRÍTICA: Desactiva el caché estático de Next.js App Router
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
-  // 🔴 FIX DE SEGURIDAD: este endpoint exponía TODAS las conversaciones de
-  // TODOS los visitantes sin ninguna verificación de sesión. Cualquiera en
-  // internet podía leerlas con un simple GET. Ahora exige sesión admin,
-  // igual que las server actions en actions.ts.
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  }
-
+export async function GET(req: Request) {
   try {
-    const sessions = await prisma.chatSession.findMany({
-      // 🔴 FIX: mismo filtro que getActiveSessions() en actions.ts, para que
-      // la carga inicial (SSR) y el polling (cliente) muestren siempre el
-      // mismo conjunto de sesiones, sin parpadeos ni inconsistencias.
-      where: {
-        status: { in: ['ACTIVE', 'PENDING_REVIEW'] },
+    const { searchParams } = new URL(req.url);
+    const sessionId = searchParams.get('sessionId');
+
+    if (!sessionId) {
+      return NextResponse.json({ error: "Missing Target ID" }, { status: 400 });
+    }
+
+    // 🔴 FIX: traemos también el estado actual de humanOverride. Necesario
+    // para que el frontend detecte cuando el admin LIBERA el control sin
+    // haber mandado ningún mensaje nuevo (antes dejaba "awaitingHuman"
+    // colgado para siempre en ese caso).
+    const [session, newMessages] = await Promise.all([
+      prisma.chatSession.findUnique({
+        where: { id: sessionId },
+        select: { humanOverride: true },
+      }),
+      prisma.message.findMany({
+        where: { sessionId: sessionId },
+        orderBy: { createdAt: 'asc' },
+      }),
+    ]);
+
+    // Filtramos los del usuario, solo enviamos AI y ADMIN
+    const incomingMessages = newMessages.filter(msg => msg.role !== 'USER');
+
+    return NextResponse.json(
+      {
+        messages: incomingMessages,
+        humanOverride: session?.humanOverride ?? false,
       },
-      orderBy: { updatedAt: 'desc' },
-      include: {
-        messages: {
-          orderBy: { createdAt: 'asc' }
+      {
+        status: 200,
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+          'Pragma': 'no-cache',
         }
       }
-    });
-
-    return NextResponse.json(sessions, {
-      status: 200,
-      headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-        'Pragma': 'no-cache',
-      }
-    });
+    );
   } catch (error) {
-    console.error("[SYS_ERROR] Radar Telemetry Colapso:", error);
-    return NextResponse.json({ error: "Fallo de comunicación interna" }, { status: 500 });
+    console.error("[SYNC_ERROR]:", error);
+    return NextResponse.json({ error: "Sync failed" }, { status: 500 });
   }
 }
