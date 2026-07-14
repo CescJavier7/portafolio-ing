@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, X } from 'lucide-react';
+import { Send, X, Terminal, Atom } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ChatProps {
@@ -13,37 +13,50 @@ interface ChatProps {
     placeholder: string;
     calculating: string;
     error: string;
-    greeting?: string;
   };
+}
+
+type MessageRole = 'user' | 'ai' | 'admin';
+
+interface LocalMessage {
+  serverId?: string; 
+  role: MessageRole;
+  text: string;
 }
 
 const STORAGE_KEY = 'meka_javier_os_history';
 const SESSION_STORAGE_KEY = 'meka_javier_os_session_id';
+const ACTIVITY_STORAGE_KEY = 'meka_javier_os_last_activity';
 const SYNC_INTERVAL_MS = 3000;
-const GREETING_DELAY_MS = 1800; 
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
+const GREETING_DELAY_MS = 2000; 
 
-function HackerFace({ size = 32, awaitingHuman = false }: { size?: number; awaitingHuman?: boolean }) {
+// ─── AVATAR UX: Cara Hacker SVG Dinámica ───
+function HackerFace({ size = 32, isLive = false }: { size?: number; isLive?: boolean }) {
+  const primaryColor = isLive ? '#ef4444' : '#22c55e'; // Rojo si admin controla, Verde si IA
+  const eyeColor = isLive ? '#f87171' : '#4ade80';
+
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="6" y="10" width="52" height="44" rx="10" stroke="#22c55e" strokeWidth="2.5" fill="#020617" />
-      <line x1="32" y1="10" x2="32" y2="3" stroke="#22c55e" strokeWidth="2.5" />
-      <circle cx="32" cy="3" r="2.5" fill={awaitingHuman ? '#f59e0b' : '#22c55e'}>
-        <animate attributeName="opacity" values="1;0.3;1" dur="1.6s" repeatCount="indefinite" />
+      <rect x="6" y="10" width="52" height="44" rx="10" stroke={primaryColor} strokeWidth="2.5" fill="#020617" className="transition-colors duration-500" />
+      <line x1="32" y1="10" x2="32" y2="3" stroke={primaryColor} strokeWidth="2.5" className="transition-colors duration-500" />
+      <circle cx="32" cy="3" r="2.5" fill={primaryColor} className="transition-colors duration-500">
+        <animate attributeName="opacity" values="1;0.3;1" dur={isLive ? "0.8s" : "1.6s"} repeatCount="indefinite" />
       </circle>
-      <rect x="8" y="10" width="48" height="2" fill="#22c55e" opacity="0.35">
+      <rect x="8" y="10" width="48" height="2" fill={primaryColor} opacity="0.35" className="transition-colors duration-500">
         <animate attributeName="y" values="14;50;14" dur="3.2s" repeatCount="indefinite" />
       </rect>
       <g>
-        <rect x="18" y="26" width="9" height="9" rx="2" fill="#4ade80">
+        <rect x="18" y="26" width="9" height="9" rx="2" fill={eyeColor} className="transition-colors duration-500">
           <animate attributeName="height" values="9;9;1;9;9" keyTimes="0;0.85;0.9;0.95;1" dur="4s" repeatCount="indefinite" />
           <animate attributeName="y" values="26;26;30;26;26" keyTimes="0;0.85;0.9;0.95;1" dur="4s" repeatCount="indefinite" />
         </rect>
-        <rect x="37" y="26" width="9" height="9" rx="2" fill="#4ade80">
+        <rect x="37" y="26" width="9" height="9" rx="2" fill={eyeColor} className="transition-colors duration-500">
           <animate attributeName="height" values="9;9;1;9;9" keyTimes="0;0.85;0.9;0.95;1" dur="4s" repeatCount="indefinite" />
           <animate attributeName="y" values="26;26;30;26;26" keyTimes="0;0.85;0.9;0.95;1" dur="4s" repeatCount="indefinite" />
         </rect>
       </g>
-      <rect x="24" y="42" width="16" height="3" fill="#22c55e">
+      <rect x="24" y="42" width="16" height="3" fill={primaryColor} className="transition-colors duration-500">
         <animate attributeName="opacity" values="1;1;0;0;1" keyTimes="0;0.5;0.51;0.99;1" dur="1.2s" repeatCount="indefinite" />
       </rect>
     </svg>
@@ -55,15 +68,34 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
   const [showGreeting, setShowGreeting] = useState(false);
   const [greetingDismissed, setGreetingDismissed] = useState(false);
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<{role: 'user' | 'ai' | 'admin', text: string, serverId?: string}[]>([]);
+  const [messages, setMessages] = useState<LocalMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId, setSessionId] = useState<string | undefined>(undefined);
-  const [awaitingHuman, setAwaitingHuman] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  
+  // 🔴 FIX MÁQUINA DE ESTADOS: Estado global de control manual
+  const [isHumanLive, setIsHumanLive] = useState(false);
+  
   const scrollRef = useRef<HTMLDivElement>(null);
   const syncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const greetingText = dict.greeting || (lang === 'en' ? "Hi, I'm Javier's AI" : "Hola, soy la IA de Javier");
+  // 🔴 FIX UX: Call to Action Dinámico
+  const greetingText = lang === 'en' 
+    ? "🚀 Explore the AI created by Javier!" 
+    : "🚀 ¡Explora la IA creada por Javier!";
 
+  const initialWelcomeMessage: LocalMessage = {
+    serverId: 'sys-init',
+    role: 'ai',
+    text: lang === 'en' 
+      ? "INITIALIZING KERNEL...\nMEKA_OS v2.0 ONLINE.\n\nGreetings. I am the AI architected by Cesc Javier. I am authorized to discuss his tech stack or establish a secure contact line.\n\nSpecify your query to begin. E=mc²"
+      : "INICIANDO KERNEL...\nMEKA_OS v2.0 EN LÍNEA.\n\nSaludos. Soy la IA diseñada por Cesc Javier. Estoy autorizada para analizar su stack tecnológico o establecer contacto directo.\n\nIngresa tu consulta para comenzar. E=mc²"
+  };
+
+  const updateActivity = () => {
+    localStorage.setItem(ACTIVITY_STORAGE_KEY, Date.now().toString());
+  };
+
+  // Lógica de Saludo Flotante
   useEffect(() => {
     if (isOpen || greetingDismissed) return;
     const alreadyGreeted = sessionStorage.getItem('meka_greeted');
@@ -77,38 +109,58 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     return () => clearTimeout(timer);
   }, [isOpen, greetingDismissed]);
 
+  // TTL & Sesión
   useEffect(() => {
+    let currentSessionId = localStorage.getItem(SESSION_STORAGE_KEY);
+    const lastActivity = localStorage.getItem(ACTIVITY_STORAGE_KEY);
+    const now = Date.now();
+
+    if (currentSessionId && lastActivity && (now - parseInt(lastActivity, 10) > SESSION_TIMEOUT_MS)) {
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+      localStorage.removeItem(STORAGE_KEY);
+      currentSessionId = null;
+    }
+
+    if (!currentSessionId) {
+      currentSessionId = typeof crypto !== 'undefined' && crypto.randomUUID 
+        ? crypto.randomUUID() 
+        : `os-node-${Math.random().toString(36).substring(2, 15)}`;
+      localStorage.setItem(SESSION_STORAGE_KEY, currentSessionId);
+      updateActivity();
+    }
+
+    setSessionId(currentSessionId);
+
     const savedHistory = localStorage.getItem(STORAGE_KEY);
     if (savedHistory) {
-      try {
+      try { 
         setMessages(JSON.parse(savedHistory));
       } catch (e) {
-        console.error("Error parseando el historial de memoria local.");
+        setMessages([initialWelcomeMessage]);
       }
+    } else {
+      setMessages([initialWelcomeMessage]);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([initialWelcomeMessage]));
     }
-    const savedSessionId = localStorage.getItem(SESSION_STORAGE_KEY);
-    if (savedSessionId) setSessionId(savedSessionId);
-  }, []);
+  }, [lang]);
 
   useEffect(() => {
-    if (messages.length > 0) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-    }
+    if (messages.length > 0) localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
   }, [messages]);
 
   useEffect(() => {
     if (scrollRef.current && isOpen) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isLoading, isOpen, awaitingHuman]);
+  }, [messages, isLoading, isOpen, isHumanLive]);
 
+  // 🔴 FIX MOTOR DE RED: Radar invulnerable que extrae `humanOverride` directamente de Prisma
   useEffect(() => {
     if (!isOpen || !sessionId) return;
 
     const syncMessages = async () => {
       if (document.hidden) return;
       try {
-        // 🔴 FIX: Cache-buster inyectado para forzar la actualización en tiempo real
         const res = await fetch(`/api/chat/sync?sessionId=${encodeURIComponent(sessionId)}&t=${Date.now()}`, {
           method: 'GET',
           cache: 'no-store',
@@ -118,6 +170,11 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
 
         const data = await res.json();
         
+        // Sincronización estricta del estado del admin
+        if (typeof data.humanOverride === 'boolean') {
+          setIsHumanLive(data.humanOverride);
+        }
+
         if (data.messages && data.messages.length > 0) {
           setMessages((prev) => {
             const incomingNew = data.messages.filter((serverMsg: any) => 
@@ -127,13 +184,7 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
               )
             );
 
-            if (incomingNew.length === 0) {
-               // Si no hay mensajes nuevos, revisamos si el admin liberó la IA
-               if (data.humanOverride === false && awaitingHuman) {
-                 setAwaitingHuman(false);
-               }
-               return prev;
-            }
+            if (incomingNew.length === 0) return prev;
 
             const formattedNew = incomingNew.map((m: any) => ({
               serverId: m.id,
@@ -141,9 +192,7 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
               text: m.content
             }));
             
-            setAwaitingHuman(false); 
             setIsLoading(false);
-            
             return [...prev, ...formattedNew];
           });
         }
@@ -161,7 +210,7 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
         syncIntervalRef.current = null;
       }
     };
-  }, [isOpen, sessionId, awaitingHuman]);
+  }, [isOpen, sessionId]);
 
   const openChat = () => {
     setIsOpen(true);
@@ -169,29 +218,30 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     setGreetingDismissed(true);
   };
 
-  const dismissGreeting = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowGreeting(false);
-    setGreetingDismissed(true);
-  };
-
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || !sessionId) return; 
 
-    if (input.trim() === 'sudo rm -rf /' || input.trim() === 'clear') {
+    updateActivity();
+    const userText = input.trim();
+    
+    if (userText === 'sudo rm -rf /' || userText === 'clear') {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(SESSION_STORAGE_KEY);
-      setMessages([]);
-      setSessionId(undefined);
-      setAwaitingHuman(false);
+      localStorage.removeItem(ACTIVITY_STORAGE_KEY);
+      
+      const newIdentity = crypto.randomUUID();
+      setSessionId(newIdentity);
+      localStorage.setItem(SESSION_STORAGE_KEY, newIdentity);
+      
+      setMessages([initialWelcomeMessage]);
+      setIsHumanLive(false);
       setInput('');
       return;
     }
 
-    const userMsg = input;
     setInput('');
-    setMessages((prev) => [...prev, { role: 'user', text: userMsg }]);
+    setMessages((prev) => [...prev, { role: 'user', text: userText }]);
     setIsLoading(true);
 
     const historyForApi = messages.slice(-12).map((m) => ({
@@ -203,25 +253,26 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMsg, lang, history: historyForApi, sessionId }),
+        body: JSON.stringify({ message: userText, lang, history: historyForApi, sessionId }),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Colapso de comunicación");
+      if (!res.ok) throw new Error("Colapso de comunicación");
 
       if (data.sessionId && data.sessionId !== sessionId) {
         setSessionId(data.sessionId);
         localStorage.setItem(SESSION_STORAGE_KEY, data.sessionId);
       }
 
+      // Si el servidor detecta override, activamos la UI de Admin y apagamos el loader
       if (data.awaitingHuman) {
-        setAwaitingHuman(true);
+        setIsHumanLive(true);
         setIsLoading(false);
         return;
       }
 
-      // 🔴 FIX: Destruimos el estado "humano revisando" si la IA contesta
-      setAwaitingHuman(false);
+      // Si la IA contesta, apagamos la UI del admin
+      setIsHumanLive(false);
 
       if (data.reply) {
         setMessages((prev) => [...prev, { role: 'ai', text: data.reply }]);
@@ -258,30 +309,46 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
             transition={{ type: "spring", stiffness: 260, damping: 22 }}
             className="flex flex-col w-[calc(100vw-2rem)] sm:w-[400px] h-[70vh] max-h-[600px] sm:h-[520px] mb-3 bg-zinc-950/95 backdrop-blur-xl border border-green-500/30 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(34,197,94,0.18)] relative"
           >
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-green-500/10 blur-[100px] pointer-events-none" />
+            <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 blur-[100px] pointer-events-none transition-colors duration-500 ${isHumanLive ? 'bg-red-500/10' : 'bg-green-500/10'}`} />
 
-            <div className="flex items-center justify-between p-3.5 sm:p-4 bg-black/70 border-b border-green-500/30 z-10 shrink-0">
+            <div className={`flex items-center justify-between p-3.5 sm:p-4 bg-black/70 border-b z-10 shrink-0 transition-colors duration-500 ${isHumanLive ? 'border-red-500/30' : 'border-green-500/30'}`}>
               <div className="flex items-center gap-2.5">
-                <div className="p-1 bg-green-500/10 rounded-lg border border-green-500/30 shrink-0">
-                  <HackerFace size={26} awaitingHuman={awaitingHuman} />
+                <div className={`p-1 rounded-lg border shrink-0 transition-colors duration-500 ${isHumanLive ? 'bg-red-500/10 border-red-500/30' : 'bg-green-500/10 border-green-500/30'}`}>
+                  <HackerFace size={26} isLive={isHumanLive} />
                 </div>
-                <span className="text-green-400 font-bold tracking-widest text-xs sm:text-sm">
-                  MEKA_JAVIER_OS
+                <span className={`font-bold tracking-widest text-xs sm:text-sm transition-colors duration-500 ${isHumanLive ? 'text-red-400' : 'text-green-400'}`}>
+                  {isHumanLive ? 'SYS_ADMIN // JAVIER' : 'MEKA_JAVIER_OS'}
                 </span>
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-green-500/60 hover:text-green-400 transition-colors p-1"
-                aria-label="Cerrar chat"
-              >
+              <button onClick={() => setIsOpen(false)} className="text-zinc-500 hover:text-white transition-colors p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
+            {/* 🔴 FIX UX: Live Banner Elegante (Reemplaza la burbuja ámbar bloqueante) */}
+            <AnimatePresence>
+              {isHumanLive && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="bg-red-950/60 border-b border-red-900/50 flex items-center justify-center py-2 shrink-0 shadow-inner"
+                >
+                  <span className="text-[10px] text-red-400 font-bold tracking-widest uppercase flex items-center gap-2">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </span>
+                    {lang === 'en' ? 'Direct connection secured' : 'Conexión directa establecida'}
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div
               ref={scrollRef}
               className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3.5 sm:p-4 space-y-3.5 sm:space-y-4 scroll-smooth z-10 scrollbar-thin"
-              style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(34,197,94,0.3) transparent' }}
+              style={{ scrollbarWidth: 'thin', scrollbarColor: isHumanLive ? 'rgba(239,68,68,0.3) transparent' : 'rgba(34,197,94,0.3) transparent' }}
             >
               {messages.length === 0 && (
                 <div className="text-center text-green-500/50 text-sm mt-10 space-y-2">
@@ -292,16 +359,16 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
 
               {messages.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed ${
+                  <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap shadow-sm ${
                     msg.role === 'user'
-                      ? 'bg-green-600/10 text-green-100 border border-green-500/30 rounded-br-sm'
+                      ? 'bg-zinc-800/50 text-zinc-100 border border-zinc-700/50 rounded-br-sm'
                       : msg.role === 'admin'
-                        ? 'bg-red-950/40 text-red-100 border border-red-500/50 rounded-bl-sm shadow-[0_0_15px_rgba(239,68,68,0.2)]'
-                        : 'bg-black/60 text-green-300 border border-zinc-800 rounded-bl-sm shadow-inner'
+                        ? 'bg-red-950/40 text-red-100 border border-red-500/40 rounded-bl-sm shadow-[0_0_15px_rgba(239,68,68,0.15)]'
+                        : 'bg-black/60 text-green-300 border border-green-900/50 rounded-bl-sm shadow-inner'
                   }`}>
                     {msg.role === 'admin' && (
                         <span className="block text-[10px] text-red-500/80 mb-1 font-bold tracking-widest uppercase">
-                          MEKA_OS // SYS_ADMIN
+                          SYS_ADMIN
                         </span>
                     )}
                     {msg.text}
@@ -309,43 +376,38 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
                 </div>
               ))}
 
-              {isLoading && (
+              {isLoading && !isHumanLive && (
                 <div className="flex justify-start">
                   <div className="flex items-center gap-2 bg-black/60 text-green-500/70 p-3 rounded-2xl rounded-bl-sm text-sm border border-zinc-800">
-                    <HackerFace size={16} />
+                    <Atom className="w-4 h-4 animate-spin" />
                     {dict.calculating}
-                  </div>
-                </div>
-              )}
-
-              {awaitingHuman && !isLoading && (
-                <div className="flex justify-start">
-                  <div className="flex items-center gap-2 bg-amber-950/30 text-amber-400 p-3 rounded-2xl rounded-bl-sm text-sm border border-amber-800/50">
-                    <span className="relative flex h-2 w-2 shrink-0">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                    </span>
-                    {lang === 'en' ? 'A human is reviewing your message. One moment...' : 'Un humano está revisando tu mensaje. Un momento...'}
                   </div>
                 </div>
               )}
             </div>
 
-            <form onSubmit={sendMessage} className="p-2.5 sm:p-3 bg-black/70 border-t border-green-500/30 z-10 shrink-0">
+            <form onSubmit={sendMessage} className={`p-2.5 sm:p-3 bg-black/70 border-t z-10 shrink-0 transition-colors duration-500 ${isHumanLive ? 'border-red-500/30' : 'border-green-500/30'}`}>
               <div className="flex relative group">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-green-500 font-bold text-sm">~/$</span>
+                <span className={`absolute left-3 top-1/2 -translate-y-1/2 font-bold text-sm transition-colors duration-500 ${isHumanLive ? 'text-red-500' : 'text-green-500'}`}>~/$</span>
                 <input
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={dict.placeholder}
-                  className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl py-2.5 pl-10 pr-10 text-green-100 text-sm placeholder-green-700/40 focus:outline-none focus:border-green-500/50 focus:ring-1 focus:ring-green-500/50 transition-all"
+                  className={`w-full bg-zinc-900/50 border rounded-xl py-2.5 pl-10 pr-10 text-zinc-100 text-sm focus:outline-none focus:ring-1 transition-all ${
+                    isHumanLive 
+                      ? 'border-red-900/50 placeholder-red-700/40 focus:border-red-500/50 focus:ring-red-500/50' 
+                      : 'border-zinc-800 placeholder-green-700/40 focus:border-green-500/50 focus:ring-green-500/50'
+                  }`}
                 />
                 <button
                   type="submit"
                   disabled={isLoading || !input.trim()}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-green-500/10 text-green-500 rounded-lg hover:bg-green-500/20 hover:text-green-300 disabled:opacity-30 disabled:hover:bg-transparent transition-all"
-                  aria-label="Enviar mensaje"
+                  className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg disabled:opacity-30 disabled:hover:bg-transparent transition-all ${
+                    isHumanLive
+                      ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-300'
+                      : 'bg-green-500/10 text-green-500 hover:bg-green-500/20 hover:text-green-300'
+                  }`}
                 >
                   <Send className="w-4 h-4" />
                 </button>
@@ -355,24 +417,28 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
         )}
       </AnimatePresence>
 
+      {/* 🔴 FIX UX: Call to Action Flotante Agresivo */}
       <AnimatePresence>
         {!isOpen && showGreeting && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 10 }}
-            transition={{ type: "spring", stiffness: 300, damping: 24 }}
+            initial={{ opacity: 0, scale: 0.8, y: 15, rotate: -2 }}
+            animate={{ opacity: 1, scale: 1, y: 0, rotate: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 15 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
             onClick={openChat}
-            className="mb-3 max-w-[210px] sm:max-w-[240px] cursor-pointer bg-zinc-950/95 border border-green-500/40 rounded-2xl rounded-br-sm px-4 py-3 shadow-[0_0_30px_rgba(34,197,94,0.15)] relative"
+            className="mb-4 max-w-[240px] sm:max-w-[280px] cursor-pointer bg-gradient-to-br from-green-950 to-black border border-green-500/50 rounded-2xl rounded-br-sm p-4 shadow-[0_0_40px_rgba(34,197,94,0.3)] relative group"
           >
+            <div className="absolute inset-0 bg-green-500/10 rounded-2xl rounded-br-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <button
-              onClick={dismissGreeting}
-              className="absolute -top-2 -right-2 bg-zinc-900 border border-green-500/40 rounded-full p-0.5 text-green-500/70 hover:text-green-300 transition-colors"
-              aria-label="Cerrar mensaje"
+              onClick={(e) => { e.stopPropagation(); setShowGreeting(false); setGreetingDismissed(true); }}
+              className="absolute -top-2 -right-2 bg-zinc-900 border border-green-500/50 rounded-full p-1 text-green-500/70 hover:text-white transition-colors z-10"
             >
               <X className="w-3.5 h-3.5" />
             </button>
-            <p className="text-green-300 text-xs sm:text-sm leading-snug">{greetingText}</p>
+            <p className="text-green-100 text-sm sm:text-base font-bold leading-tight relative z-0 flex items-center gap-2">
+              <span className="animate-bounce inline-block">👋</span>
+              {greetingText}
+            </p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -383,16 +449,15 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0 }}
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.94 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={openChat}
-            className="relative flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-black border border-green-500/50 rounded-2xl shadow-[0_0_20px_rgba(34,197,94,0.3)] hover:shadow-[0_0_32px_rgba(34,197,94,0.5)] transition-shadow"
-            aria-label="Abrir chat con la IA de Javier"
+            className="relative flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-[#020617] border border-green-500/50 rounded-2xl shadow-[0_0_20px_rgba(34,197,94,0.4)] hover:shadow-[0_0_40px_rgba(34,197,94,0.6)] transition-shadow"
           >
-            <HackerFace size={34} />
-            <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
+            <HackerFace size={34} isLive={false} />
+            <span className="absolute top-1.5 right-1.5 flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500 shadow-[0_0_10px_#22c55e]"></span>
             </span>
           </motion.button>
         )}
