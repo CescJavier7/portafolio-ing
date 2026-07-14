@@ -13,40 +13,26 @@ interface ChatProps {
     placeholder: string;
     calculating: string;
     error: string;
-    greeting?: string; // "Hola, soy la IA de Javier" — opcional, con fallback abajo
+    greeting?: string;
   };
 }
 
 const STORAGE_KEY = 'meka_javier_os_history';
 const SESSION_STORAGE_KEY = 'meka_javier_os_session_id';
 const SYNC_INTERVAL_MS = 3000;
-const GREETING_DELAY_MS = 1800; // tiempo antes de mostrar la burbuja de bienvenida
+const GREETING_DELAY_MS = 1800; 
 
-// ─── AVATAR: cara-hacker en SVG, coherente con la identidad terminal/verde ───
-// Ojos LED parpadeantes + línea de "escaneo" + boca cursor de terminal.
 function HackerFace({ size = 32, awaitingHuman = false }: { size?: number; awaitingHuman?: boolean }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 64 64"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      {/* Casco/marco de la cara */}
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="6" y="10" width="52" height="44" rx="10" stroke="#22c55e" strokeWidth="2.5" fill="#020617" />
-      {/* Antena */}
       <line x1="32" y1="10" x2="32" y2="3" stroke="#22c55e" strokeWidth="2.5" />
       <circle cx="32" cy="3" r="2.5" fill={awaitingHuman ? '#f59e0b' : '#22c55e'}>
         <animate attributeName="opacity" values="1;0.3;1" dur="1.6s" repeatCount="indefinite" />
       </circle>
-
-      {/* Línea de escaneo horizontal, sube y baja */}
       <rect x="8" y="10" width="48" height="2" fill="#22c55e" opacity="0.35">
         <animate attributeName="y" values="14;50;14" dur="3.2s" repeatCount="indefinite" />
       </rect>
-
-      {/* Ojos: parpadeo periódico */}
       <g>
         <rect x="18" y="26" width="9" height="9" rx="2" fill="#4ade80">
           <animate attributeName="height" values="9;9;1;9;9" keyTimes="0;0.85;0.9;0.95;1" dur="4s" repeatCount="indefinite" />
@@ -57,8 +43,6 @@ function HackerFace({ size = 32, awaitingHuman = false }: { size?: number; await
           <animate attributeName="y" values="26;26;30;26;26" keyTimes="0;0.85;0.9;0.95;1" dur="4s" repeatCount="indefinite" />
         </rect>
       </g>
-
-      {/* Boca: cursor de terminal parpadeante */}
       <rect x="24" y="42" width="16" height="3" fill="#22c55e">
         <animate attributeName="opacity" values="1;1;0;0;1" keyTimes="0;0.5;0.51;0.99;1" dur="1.2s" repeatCount="indefinite" />
       </rect>
@@ -71,19 +55,15 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
   const [showGreeting, setShowGreeting] = useState(false);
   const [greetingDismissed, setGreetingDismissed] = useState(false);
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<{role: 'user' | 'ai', text: string}[]>([]);
+  const [messages, setMessages] = useState<{role: 'user' | 'ai' | 'admin', text: string, serverId?: string}[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
   const [awaitingHuman, setAwaitingHuman] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const syncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const knownMessageIdsRef = useRef<Set<string>>(new Set());
-  const wasAwaitingRef = useRef(false);
 
   const greetingText = dict.greeting || (lang === 'en' ? "Hi, I'm Javier's AI" : "Hola, soy la IA de Javier");
 
-  // Burbuja de bienvenida: aparece si el chat sigue cerrado tras un momento,
-  // y solo si el visitante no la ha cerrado ni ha abierto el chat ya antes.
   useEffect(() => {
     if (isOpen || greetingDismissed) return;
     const alreadyGreeted = sessionStorage.getItem('meka_greeted');
@@ -120,53 +100,52 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     if (scrollRef.current && isOpen) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isLoading, isOpen]);
+  }, [messages, isLoading, isOpen, awaitingHuman]);
 
   useEffect(() => {
-    wasAwaitingRef.current = awaitingHuman;
-  }, [awaitingHuman]);
-
-  // Motor de sincronización: mientras awaitingHuman esté activo, preguntamos
-  // por mensajes nuevos Y por si el admin liberó el control sin responder.
-  useEffect(() => {
-    if (!awaitingHuman || !sessionId) {
-      if (syncIntervalRef.current) {
-        clearInterval(syncIntervalRef.current);
-        syncIntervalRef.current = null;
-      }
-      return;
-    }
+    if (!isOpen || !sessionId) return;
 
     const syncMessages = async () => {
+      if (document.hidden) return;
       try {
-        const res = await fetch(`/api/chat/sync?sessionId=${encodeURIComponent(sessionId)}`, {
+        // 🔴 FIX: Cache-buster inyectado para forzar la actualización en tiempo real
+        const res = await fetch(`/api/chat/sync?sessionId=${encodeURIComponent(sessionId)}&t=${Date.now()}`, {
           method: 'GET',
           cache: 'no-store',
+          headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
         });
         if (!res.ok) return;
 
         const data = await res.json();
-        const incoming: { id: string; role: 'AI' | 'ADMIN'; content: string }[] = data.messages || [];
-        const newOnes = incoming.filter((m) => !knownMessageIdsRef.current.has(m.id));
+        
+        if (data.messages && data.messages.length > 0) {
+          setMessages((prev) => {
+            const incomingNew = data.messages.filter((serverMsg: any) => 
+              !prev.some(localMsg => 
+                localMsg.serverId === serverMsg.id || 
+                (localMsg.text === serverMsg.content && !localMsg.serverId)
+              )
+            );
 
-        if (newOnes.length > 0) {
-          newOnes.forEach((m) => knownMessageIdsRef.current.add(m.id));
-          setMessages((prev) => [
-            ...prev,
-            ...newOnes.map((m) => ({ role: 'ai' as const, text: m.content })),
-          ]);
-          setAwaitingHuman(false);
-          return;
-        }
+            if (incomingNew.length === 0) {
+               // Si no hay mensajes nuevos, revisamos si el admin liberó la IA
+               if (data.humanOverride === false && awaitingHuman) {
+                 setAwaitingHuman(false);
+               }
+               return prev;
+            }
 
-        // 🔴 FIX: el admin liberó el control (ENGAGE_AI) sin responder nada.
-        // Antes esto dejaba el mensaje de "esperando" colgado para siempre.
-        if (data.humanOverride === false) {
-          const releaseText = lang === 'en'
-            ? "Javier has closed the direct connection. If you'd like, I can keep helping — just ask me anything."
-            : "Javier ha cerrado la conexión directa. Si deseas, puedo seguir ayudándote — pregúntame lo que necesites.";
-          setMessages((prev) => [...prev, { role: 'ai', text: releaseText }]);
-          setAwaitingHuman(false);
+            const formattedNew = incomingNew.map((m: any) => ({
+              serverId: m.id,
+              role: m.role === 'ADMIN' ? 'admin' : 'ai',
+              text: m.content
+            }));
+            
+            setAwaitingHuman(false); 
+            setIsLoading(false);
+            
+            return [...prev, ...formattedNew];
+          });
         }
       } catch (error) {
         console.error("Error sincronizando mensajes:", error);
@@ -182,7 +161,7 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
         syncIntervalRef.current = null;
       }
     };
-  }, [awaitingHuman, sessionId, lang]);
+  }, [isOpen, sessionId, awaitingHuman]);
 
   const openChat = () => {
     setIsOpen(true);
@@ -206,7 +185,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
       setMessages([]);
       setSessionId(undefined);
       setAwaitingHuman(false);
-      knownMessageIdsRef.current.clear();
       setInput('');
       return;
     }
@@ -216,9 +194,8 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     setMessages((prev) => [...prev, { role: 'user', text: userMsg }]);
     setIsLoading(true);
 
-    const MAX_HISTORY_MESSAGES = 12;
-    const historyForApi = messages.slice(-MAX_HISTORY_MESSAGES).map((m) => ({
-      role: m.role === 'ai' ? 'assistant' : 'user',
+    const historyForApi = messages.slice(-12).map((m) => ({
+      role: m.role === 'ai' || m.role === 'admin' ? 'assistant' : 'user',
       content: m.text,
     }));
 
@@ -243,7 +220,12 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
         return;
       }
 
-      setMessages((prev) => [...prev, { role: 'ai', text: data.reply }]);
+      // 🔴 FIX: Destruimos el estado "humano revisando" si la IA contesta
+      setAwaitingHuman(false);
+
+      if (data.reply) {
+        setMessages((prev) => [...prev, { role: 'ai', text: data.reply }]);
+      }
 
       if (data.action) {
         if (data.action.type === 'download_cv') {
@@ -313,8 +295,15 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
                   <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed ${
                     msg.role === 'user'
                       ? 'bg-green-600/10 text-green-100 border border-green-500/30 rounded-br-sm'
-                      : 'bg-black/60 text-green-300 border border-zinc-800 rounded-bl-sm shadow-inner'
+                      : msg.role === 'admin'
+                        ? 'bg-red-950/40 text-red-100 border border-red-500/50 rounded-bl-sm shadow-[0_0_15px_rgba(239,68,68,0.2)]'
+                        : 'bg-black/60 text-green-300 border border-zinc-800 rounded-bl-sm shadow-inner'
                   }`}>
+                    {msg.role === 'admin' && (
+                        <span className="block text-[10px] text-red-500/80 mb-1 font-bold tracking-widest uppercase">
+                          MEKA_OS // SYS_ADMIN
+                        </span>
+                    )}
                     {msg.text}
                   </div>
                 </div>
@@ -366,7 +355,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
         )}
       </AnimatePresence>
 
-      {/* Burbuja de bienvenida — solo visible cuando el chat está cerrado */}
       <AnimatePresence>
         {!isOpen && showGreeting && (
           <motion.div
@@ -389,7 +377,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
         )}
       </AnimatePresence>
 
-      {/* Botón flotante — avatar de la cara-hacker */}
       <AnimatePresence>
         {!isOpen && (
           <motion.button
@@ -410,7 +397,6 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
           </motion.button>
         )}
       </AnimatePresence>
-
     </div>
   );
 }
