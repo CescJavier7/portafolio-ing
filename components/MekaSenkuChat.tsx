@@ -52,7 +52,7 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     localStorage.setItem(ACTIVITY_STORAGE_KEY, Date.now().toString());
   };
 
-  // Inicialización y Control de Sesión (TTL 30 min)
+  // 1. Inicialización y Control de Sesión (TTL 30 min)
   useEffect(() => {
     let currentSessionId = localStorage.getItem(SESSION_STORAGE_KEY);
     const lastActivity = localStorage.getItem(ACTIVITY_STORAGE_KEY);
@@ -89,19 +89,19 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     }
   }, [lang]);
 
-  // Sincronización LocalStorage
+  // 2. Sincronización con LocalStorage
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
     }
   }, [messages]);
 
-  // 🔴 FIX LÓGICA CORE: El motor de sincronización nunca se apaga mientras el chat esté abierto
+  // 3. Motor del Radar (Sincronización en Tiempo Real)
   useEffect(() => {
     if (!isOpen || !sessionId) return;
 
     const syncMessages = async () => {
-      if (document.hidden) return; // Ahorro de recursos si el usuario cambia de pestaña
+      if (document.hidden) return; 
       
       try {
         const res = await fetch(`/api/chat/sync?sessionId=${encodeURIComponent(sessionId)}`, {
@@ -115,9 +115,12 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
 
         if (data.messages && data.messages.length > 0) {
           setMessages((prev) => {
-            // Deduplicación basada en ID estricto
+            // Deduplicación híbrida: Compara por ID o por Texto exacto si es un mensaje local optimista
             const incomingNew = data.messages.filter((serverMsg: any) => 
-              !prev.some(localMsg => localMsg.serverId === serverMsg.id)
+              !prev.some(localMsg => 
+                localMsg.serverId === serverMsg.id || 
+                (localMsg.text === serverMsg.content && !localMsg.serverId)
+              )
             );
 
             if (incomingNew.length === 0) return prev;
@@ -129,7 +132,7 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
             }));
             
             updateActivity();
-            setAwaitingHuman(false); // Apagamos el indicador visual, pero el motor sigue corriendo
+            setAwaitingHuman(false); 
             setIsLoading(false);
             
             return [...prev, ...formattedNew];
@@ -145,13 +148,14 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     return () => clearInterval(radarInterval);
   }, [isOpen, sessionId]);
 
-  // Auto-scroll fluido
+  // 4. Auto-scroll fluido
   useEffect(() => {
     if (scrollRef.current && isOpen) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isLoading, isOpen, awaitingHuman]);
 
+  // 5. Envío de Mensajes
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || !sessionId) return; 
@@ -159,7 +163,7 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     updateActivity();
     const userText = input.trim();
     
-    // Comandos de sistema
+    // Comandos de sistema (Graceful Teardown)
     if (userText === 'sudo rm -rf /' || userText === 'clear') {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(SESSION_STORAGE_KEY);
@@ -176,8 +180,8 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     }
 
     setInput('');
-    const tempMessageId = `temp-${Date.now()}`;
-    setMessages((prev) => [...prev, { serverId: tempMessageId, role: 'user', text: userText }]);
+    // Inyección optimista SIN serverId para que el radar lo fusione luego
+    setMessages((prev) => [...prev, { role: 'user', text: userText }]);
     setIsLoading(true);
 
     const historyForApi = messages.slice(-12).map((m) => ({
@@ -207,7 +211,8 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
       }
 
       if (data.reply) {
-         setMessages((prev) => [...prev, { serverId: `ai-${Date.now()}`, role: 'ai', text: data.reply }]);
+         // Inyección de la IA SIN serverId
+         setMessages((prev) => [...prev, { role: 'ai', text: data.reply }]);
       }
 
       // Manejo de acciones (CV, Links)
@@ -244,6 +249,7 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
           >
             <div className="absolute top-0 right-1/2 -translate-x-1/2 w-64 h-32 bg-green-500/10 blur-[100px] pointer-events-none" />
 
+            {/* HEADER */}
             <div className="flex items-center justify-between p-4 bg-black/60 border-b border-green-500/30 z-10 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-green-500/10 rounded-lg border border-green-500/30">
@@ -264,12 +270,12 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
               </div>
             </div>
 
+            {/* ZONA DE MENSAJES */}
             <div 
               ref={scrollRef} 
               className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-4 scroll-smooth z-10 scrollbar-thin"
               style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(34,197,94,0.3) transparent' }}
             >
-              {/* 🔴 FIX UX: Burbujas dinámicas con Framer Motion (Efecto WhatsApp) */}
               <AnimatePresence initial={false}>
                 {messages.map((msg, i) => (
                   <motion.div 
@@ -279,7 +285,7 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
                     transition={{ type: "spring", stiffness: 300, damping: 25 }}
                     className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                    <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap shadow-sm ${
                       msg.role === 'user' 
                         ? 'bg-green-600/10 text-green-100 border border-green-500/30 rounded-br-sm' 
                         : msg.role === 'admin'
@@ -297,6 +303,7 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
                 ))}
               </AnimatePresence>
 
+              {/* Loader IA */}
               {isLoading && (
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start">
                   <div className="flex items-center gap-2 bg-black/60 text-green-500/70 p-3 rounded-2xl rounded-bl-sm text-sm border border-zinc-800">
@@ -306,6 +313,7 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
                 </motion.div>
               )}
 
+              {/* Alerta de Humano */}
               {awaitingHuman && !isLoading && (
                 <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex justify-start">
                   <div className="flex items-center gap-2 bg-amber-950/30 text-amber-400 p-3 rounded-2xl rounded-bl-sm text-sm border border-amber-800/50">
@@ -319,6 +327,7 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
               )}
             </div>
 
+            {/* FORMULARIO */}
             <form onSubmit={sendMessage} className="p-3 bg-black/60 border-t border-green-500/30 z-10 shrink-0">
               <div className="flex relative group">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-green-500 font-bold text-sm">~/$</span>
