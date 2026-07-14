@@ -2,7 +2,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-// 🔴 DIRECTIVA CRÍTICA: Desactiva el caché estático de Next.js App Router
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
@@ -14,22 +13,20 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Missing Target ID" }, { status: 400 });
     }
 
-    // 🔴 FIX: traemos también el estado actual de humanOverride. Necesario
-    // para que el frontend detecte cuando el admin LIBERA el control sin
-    // haber mandado ningún mensaje nuevo (antes dejaba "awaitingHuman"
-    // colgado para siempre en ese caso).
-    const [session, newMessages] = await Promise.all([
-      prisma.chatSession.findUnique({
-        where: { id: sessionId },
-        select: { humanOverride: true },
-      }),
-      prisma.message.findMany({
-        where: { sessionId: sessionId },
-        orderBy: { createdAt: 'asc' },
-      }),
-    ]);
+    // 🔴 FIX: traemos también el estado actual de humanOverride de la sesión.
+    // Esto permite que el frontend detecte cuando el admin LIBERA el control
+    // sin haber mandado ningún mensaje nuevo — antes esto dejaba al visitante
+    // con el mensaje de "esperando" colgado para siempre.
+    const session = await prisma.chatSession.findUnique({
+      where: { id: sessionId },
+      select: { humanOverride: true },
+    });
 
-    // Filtramos los del usuario, solo enviamos AI y ADMIN
+    const newMessages = await prisma.message.findMany({
+      where: { sessionId: sessionId },
+      orderBy: { createdAt: 'asc' }
+    });
+
     const incomingMessages = newMessages.filter(msg => msg.role !== 'USER');
 
     return NextResponse.json(
