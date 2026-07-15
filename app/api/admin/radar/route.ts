@@ -1,52 +1,31 @@
-// app/api/chat/sync/route.ts
+// Ruta exacta: app/api/admin/radar/route.ts
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// ... resto de tu código GET ...
-
-export async function GET(req: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(req.url);
-    const sessionId = searchParams.get('sessionId');
-
-    if (!sessionId) {
-      return NextResponse.json({ error: "Missing Target ID" }, { status: 400 });
-    }
-
-    // 🔴 FIX: traemos también el estado actual de humanOverride de la sesión.
-    // Esto permite que el frontend detecte cuando el admin LIBERA el control
-    // sin haber mandado ningún mensaje nuevo — antes esto dejaba al visitante
-    // con el mensaje de "esperando" colgado para siempre.
-    const session = await prisma.chatSession.findUnique({
-      where: { id: sessionId },
-      select: { humanOverride: true },
-    });
-
-    const newMessages = await prisma.message.findMany({
-      where: { sessionId: sessionId },
-      orderBy: { createdAt: 'asc' }
-    });
-
-    const incomingMessages = newMessages.filter(msg => msg.role !== 'USER');
-
-    return NextResponse.json(
-      {
-        messages: incomingMessages,
-        humanOverride: session?.humanOverride ?? false,
-      },
-      {
-        status: 200,
-        headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-          'Pragma': 'no-cache',
+    // Extraemos TODAS las sesiones, ordenadas por el último mensaje recibido
+    const sessions = await prisma.chatSession.findMany({
+      include: {
+        messages: {
+          orderBy: { createdAt: 'asc' }
         }
+      },
+      orderBy: { updatedAt: 'desc' }
+    });
+
+    return NextResponse.json(sessions, { 
+      status: 200,
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
       }
-    );
+    });
   } catch (error) {
-    console.error("[SYNC_ERROR]:", error);
-    return NextResponse.json({ error: "Sync failed" }, { status: 500 });
+    console.error("[RADAR_ERROR]:", error);
+    return NextResponse.json({ error: "Falla de escaneo en el radar central" }, { status: 500 });
   }
 }
