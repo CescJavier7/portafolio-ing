@@ -39,6 +39,12 @@ async function getAdminToken(request: NextRequest) {
   return getToken({
     req: request,
     secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+    // Detrás de un reverse proxy (Traefik) la detección automática de
+    // "¿es HTTPS?" puede fallar si no llega bien X-Forwarded-Proto, y
+    // getToken termina buscando la cookie SIN el prefijo `__Secure-`
+    // mientras el navegador la guardó CON ese prefijo (por ser HTTPS).
+    // Forzamos explícitamente según el entorno para eliminar la ambigüedad.
+    secureCookie: process.env.NODE_ENV === 'production',
   });
 }
 
