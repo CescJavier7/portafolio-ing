@@ -12,43 +12,43 @@
     "blog": "Blog"
   },
   "skills": {
-    "tag": "Technical Stack",
-    "title": "Engineered with",
-    "subtitle": "relentless security.",
-    "description": "A multidisciplinary stack that combines offensive and defensive cybersecurity, resilient infrastructure, and modern software development.",
+    "tag": "Tech Stack",
+    "title": "Technological Arsenal",
+    "subtitle": "Fullstack, Infrastructure & Cybersecurity",
+    "description": "An ecosystem of tools mastered through real-world practice. From frontend architecture to secure deployment on private servers, prioritizing performance and security.",
     "cards": {
-      "cyber": {
-        "title": "DevSecOps & Cybersecurity",
-        "desc": "Vulnerability analysis, ethical hacking, and Zero-Trust architectures focused on active threat detection and response."
+      "cyber": { 
+        "title": "Cybersecurity & DevSecOps", 
+        "desc": "Network auditing, pentesting, and Zero-Trust architectures. Experience deploying perimeter scanners and protecting critical infrastructure." 
       },
-      "infra": {
-        "title": "Infrastructure & DevOps",
-        "desc": "Linux server administration, containers, and deployment automation with a focus on availability and security."
+      "cloud": { 
+        "title": "Cloud & DevOps", 
+        "desc": "Absolute management of Linux VPS servers. Orchestration with Docker, reverse proxy with Traefik, and DNS zone management in Cloudflare." 
       },
-      "front": {
-        "title": "Frontend Software Engineering",
-        "desc": "Modern, accessible, high-performance interfaces built with React and the Next.js ecosystem."
+      "fullstack": { 
+        "title": "Modern Fullstack", 
+        "desc": "Development of reactive interfaces and high-performance APIs with hybrid rendering, strict typing, and utility-first design." 
       },
-      "data": {
-        "title": "Data Architecture",
-        "desc": "Design and optimization of relational databases, referential integrity, and high-performance queries."
+      "languages": { 
+        "title": "Core Languages & Mobile", 
+        "desc": "Mastery of strongly typed languages, object-oriented programming, and native development." 
       },
-      "auto": {
-        "title": "Python & Automation",
-        "desc": "Automation scripts, scraping, and algorithmic problem-solving with Python."
+      "data": { 
+        "title": "Data & Architecture", 
+        "desc": "Relational modeling, modern ORMs, and in-memory databases for ultra-low latency caching." 
       },
-      "core": {
-        "title": "Software Engineering (Core)",
-        "desc": "Solid foundations in programming and data structures with C++."
+      "quant": { 
+        "title": "Algorithms & Quant Finance", 
+        "desc": "Development of automated trading systems (MQL4), mathematical data analysis, and automation with Python." 
       },
-      "uiux": {
-        "title": "Observability & UI/UX",
-        "desc": "Real-time monitoring and data visualization for informed decision-making, with close attention to user experience."
+      "uiux": { 
+        "title": "UX/UI & Observability", 
+        "desc": "User-centric interface design (Figma) and real-time system monitoring (Grafana/Loki)." 
       },
-      "soft": {
-        "title": "Soft Skills & Mentoring",
-        "desc": "Technical leadership, teaching, and the ability to transfer complex knowledge clearly and effectively.",
-        "tag": "Technical Communication"
+      "soft": { 
+        "title": "STEM Mentoring", 
+        "desc": "Technical leadership, knowledge transfer, and high-level academic consulting.", 
+        "tag": "Soft Skills" 
       }
     }
   },

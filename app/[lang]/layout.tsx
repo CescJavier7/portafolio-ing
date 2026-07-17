@@ -8,6 +8,7 @@ import NavBar from '@/components/NavBar';
 import Footer from '@/components/Footer';
 import { getDictionary } from '@/get-dictionary';
 import MekaSenkuChat from '@/components/MekaSenkuChat'; 
+import Script from 'next/script';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -78,7 +79,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         
-        <script
+        <Script
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `

@@ -1,5 +1,6 @@
 import { getDictionary } from '@/get-dictionary';
 import AboutAppleScroll from '@/components/AboutAppleScroll';
+import AcademicBento from '@/components/AcademicBento';
 import SkillsApple from '@/components/SkillsApple';
 import ProjectsApple from '@/components/ProjectApple';
 import CertificationsApple from '@/components/CertificationsApple';
@@ -18,6 +19,10 @@ export default async function Home({
   return (
     <main className="min-h-screen bg-white text-black dark:bg-black dark:text-white antialiased">
       <AboutAppleScroll dict={dict.about} />
+      {/* FIX: Se pasa 'lang' para usar el diccionario interno, en lugar de dict.contact */}
+      <div id="academico">
+        <AcademicBento lang={lang} />
+      </div>
       <SkillsApple dict={dict.skills} />
       <ProjectsApple dict={dict.projects} />
       <CertificationsApple dict={dict.certifications} />

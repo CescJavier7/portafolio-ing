@@ -12,43 +12,43 @@
     "blog": "Blog"
   },
   "skills": {
-    "tag": "Stack Técnico",
-    "title": "Diseño con",
-    "subtitle": "seguridad implacable.",
-    "description": "Un stack multidisciplinario que combina ciberseguridad ofensiva y defensiva, infraestructura resiliente y desarrollo de software moderno.",
+    "tag": "Tech Stack",
+    "title": "Arsenal Tecnológico",
+    "subtitle": "Fullstack, Infraestructura & Ciberseguridad",
+    "description": "Un ecosistema de herramientas dominadas a través de la práctica real. Desde la arquitectura en el frontend hasta el despliegue seguro en servidores privados, priorizando el rendimiento y la seguridad.",
     "cards": {
-      "cyber": {
-        "title": "DevSecOps & Ciberseguridad",
-        "desc": "Análisis de vulnerabilidades, hacking ético y arquitecturas Zero-Trust orientadas a la detección y respuesta activa de amenazas."
+      "cyber": { 
+        "title": "Ciberseguridad & DevSecOps", 
+        "desc": "Auditoría de redes, pentesting y arquitecturas Zero-Trust. Experiencia desplegando escáneres perimetrales y protegiendo infraestructura crítica." 
       },
-      "infra": {
-        "title": "Infraestructura & DevOps",
-        "desc": "Administración de servidores Linux, contenedores y automatización de despliegues con foco en disponibilidad y seguridad."
+      "cloud": { 
+        "title": "Cloud & DevOps", 
+        "desc": "Gestión absoluta de servidores VPS Linux. Orquestación con Docker, proxy inverso con Traefik y gestión de zonas DNS en Cloudflare." 
       },
-      "front": {
-        "title": "Ingeniería de Software Frontend",
-        "desc": "Interfaces modernas, accesibles y de alto rendimiento construidas con React y el ecosistema de Next.js."
+      "fullstack": { 
+        "title": "Fullstack Moderno", 
+        "desc": "Desarrollo de interfaces reactivas y APIs de alto rendimiento con renderizado híbrido, tipado estricto y diseño utilitario." 
       },
-      "data": {
-        "title": "Arquitectura de Datos",
-        "desc": "Diseño y optimización de bases de datos relacionales, integridad referencial y consultas de alto rendimiento."
+      "languages": { 
+        "title": "Core Languages & Mobile", 
+        "desc": "Dominio de lenguajes fuertemente tipados, programación orientada a objetos y desarrollo nativo." 
       },
-      "auto": {
-        "title": "Python & Automatización",
-        "desc": "Scripts de automatización, scraping y resolución algorítmica de problemas con Python."
+      "data": { 
+        "title": "Data & Arquitectura", 
+        "desc": "Modelado relacional, ORMs modernos y bases de datos en memoria para caché de latencia ultra baja." 
       },
-      "core": {
-        "title": "Ingeniería de Software (Core)",
-        "desc": "Fundamentos sólidos de programación y estructuras de datos con C++."
+      "quant": { 
+        "title": "Algoritmia & Finanzas", 
+        "desc": "Desarrollo de sistemas de trading automatizado (MQL4), análisis de datos matemáticos y automatización con Python." 
       },
-      "uiux": {
-        "title": "Observabilidad & UI/UX",
-        "desc": "Monitoreo en tiempo real y visualización de datos para una toma de decisiones informada, con atención al detalle en la experiencia de usuario."
+      "uiux": { 
+        "title": "UX/UI & Observabilidad", 
+        "desc": "Diseño de interfaces centradas en el usuario (Figma) y monitorización de sistemas en tiempo real (Grafana/Loki)." 
       },
-      "soft": {
-        "title": "Soft Skills & Mentoría",
-        "desc": "Liderazgo técnico, docencia y capacidad de transferir conocimiento complejo de forma clara y efectiva.",
-        "tag": "Comunicación Técnica"
+      "soft": { 
+        "title": "Mentoría STEM", 
+        "desc": "Liderazgo técnico, transferencia de conocimiento y consultoría académica de alto nivel.", 
+        "tag": "Soft Skills" 
       }
     }
   },
