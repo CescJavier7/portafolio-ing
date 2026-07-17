@@ -3,13 +3,93 @@
     "tagline": "Engineering & Cybersecurity. Built with Next.js 15."
   },
   "navigation": {
-    "about": "About",
-    "skills": "Skills",
-    "projects": "Projects",
-    "certifications": "Certifications",
-    "experience": "Experience",
-    "contact": "Contact",
+    "aboutMe": "About Me",
+    "aboutMeItems": {
+      "about": "About",
+      "academic": "Academic",
+      "skills": "Skills",
+      "certifications": "Certifications",
+      "experience": "Experience",
+      "contact": "Contact"
+    },
+    "services": "Services",
+    "sentinel": "Sentra",
     "blog": "Blog"
+  },
+  "services": {
+    "tag": "Services",
+    "title": "Engineering, tailored.",
+    "subtitle": "Software, cybersecurity & teaching.",
+    "description": "Three areas where I work to the same standard: technical rigor, security by design, and clear communication of results.",
+    "cards": {
+      "dev": {
+        "title": "Software Development",
+        "desc": "Fullstack web apps, APIs, and automations, built with clean architecture and designed to scale without a rewrite.",
+        "items": [
+          "Web apps with Next.js/React and APIs with FastAPI/Node.js",
+          "Database modeling (PostgreSQL, modern ORMs)",
+          "Custom process automation and scripting (Python)",
+          "Deployment on VPS with Docker, Traefik and monitoring"
+        ],
+        "cta": "Tell me about your project"
+      },
+      "cyber": {
+        "title": "Cybersecurity",
+        "desc": "Web security audits, infrastructure hardening, and Zero-Trust architectures. The engine behind this service is Sentra, my automated audit platform.",
+        "items": [
+          "Web security posture audit (passive and authorized active)",
+          "Ethical pentesting and OWASP Top 10 validation",
+          "Linux server hardening, firewalls and network segmentation",
+          "Observability and incident response (Grafana, Loki, Fail2ban)"
+        ],
+        "cta": "Meet Sentra"
+      },
+      "teaching": {
+        "title": "Computer Science Teaching",
+        "desc": "Classes and tutoring in software, cybersecurity, and mathematics, plus thesis and capstone project mentoring.",
+        "items": [
+          "Programming, algorithms and computational logic",
+          "Cybersecurity fundamentals and ethical hacking",
+          "Calculus, linear algebra and applied mathematics",
+          "Thesis and capstone project mentoring"
+        ],
+        "cta": "Book a session"
+      }
+    },
+    "ctaBand": {
+      "title": "Not sure what you need?",
+      "subtitle": "Reach out and we'll scope it together, no strings attached.",
+      "buttonLabel": "Let's talk"
+    }
+  },
+  "sentinel": {
+    "badge": "In development",
+    "name": "Sentra",
+    "tagline": "Automated web security auditing.",
+    "title": "Sentra",
+    "subtitle": "Automated web security auditing.",
+    "description": "Sentra is the platform I'm building so any team can understand their domain's external security posture in minutes: passive and authorized active scanning, a clear Security Score, and actionable, AI-backed recommendations.",
+    "statusLabel": "Not yet publicly available",
+    "features": [
+      {
+        "title": "A clear Security Score",
+        "desc": "A 0-100 score that summarizes your security posture, without the unnecessary jargon."
+      },
+      {
+        "title": "Passive & active scanning",
+        "desc": "SSL/TLS, DNS, headers, and, with explicit authorization, active scanning with tools like Nuclei and ZAP."
+      },
+      {
+        "title": "Technical & executive reports",
+        "desc": "One report for your technical team, one for decision-makers, generated automatically."
+      },
+      {
+        "title": "AI-backed recommendations",
+        "desc": "Prioritized explanations and mitigations, grounded in OWASP, NIST, and CIS Controls."
+      }
+    ],
+    "ctaWaitlist": "I want early access",
+    "ctaBack": "See all services"
   },
   "skills": {
     "tag": "Tech Stack",

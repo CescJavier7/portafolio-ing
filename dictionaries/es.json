@@ -3,13 +3,93 @@
     "tagline": "Ingeniería & Ciberseguridad. Construido con Next.js 15."
   },
   "navigation": {
-    "about": "Sobre mí",
-    "skills": "Habilidades",
-    "projects": "Proyectos",
-    "certifications": "Certificados",
-    "experience": "Experiencia",
-    "contact": "Contacto",
+    "aboutMe": "Sobre mí",
+    "aboutMeItems": {
+      "about": "Sobre mí",
+      "academic": "Académico",
+      "skills": "Habilidades",
+      "certifications": "Certificados",
+      "experience": "Experiencia",
+      "contact": "Contacto"
+    },
+    "services": "Servicios",
+    "sentinel": "Sentra",
     "blog": "Blog"
+  },
+  "services": {
+    "tag": "Servicios",
+    "title": "Ingeniería a la medida.",
+    "subtitle": "Software, ciberseguridad y docencia.",
+    "description": "Tres frentes en los que trabajo con el mismo estándar: rigor técnico, seguridad desde el diseño y comunicación clara de resultados.",
+    "cards": {
+      "dev": {
+        "title": "Desarrollo de Software",
+        "desc": "Aplicaciones web fullstack, APIs y automatizaciones, construidas con arquitectura limpia y pensadas para escalar sin reescribirse.",
+        "items": [
+          "Aplicaciones web con Next.js/React y APIs con FastAPI/Node.js",
+          "Modelado de bases de datos (PostgreSQL, ORMs modernos)",
+          "Automatización de procesos y scripts a medida (Python)",
+          "Despliegue en VPS con Docker, Traefik y monitorización"
+        ],
+        "cta": "Cuéntame tu proyecto"
+      },
+      "cyber": {
+        "title": "Ciberseguridad",
+        "desc": "Auditorías de seguridad web, hardening de infraestructura y arquitecturas Zero-Trust. El motor detrás de este servicio es Sentra, mi plataforma de auditoría automatizada.",
+        "items": [
+          "Auditoría de postura de seguridad web (pasiva y activa autorizada)",
+          "Pentesting ético y validación de OWASP Top 10",
+          "Hardening de servidores Linux, firewalls y segmentación de red",
+          "Observabilidad y respuesta a incidentes (Grafana, Loki, Fail2ban)"
+        ],
+        "cta": "Conocer Sentra"
+      },
+      "teaching": {
+        "title": "Docencia Informática",
+        "desc": "Clases y tutorías en software, ciberseguridad y matemáticas, además de acompañamiento en tesis y proyectos de titulación.",
+        "items": [
+          "Programación, algoritmos y lógica computacional",
+          "Fundamentos de ciberseguridad y hacking ético",
+          "Cálculo, álgebra lineal y matemáticas aplicadas",
+          "Asesoría y acompañamiento en tesis de titulación"
+        ],
+        "cta": "Agendar una clase"
+      }
+    },
+    "ctaBand": {
+      "title": "¿No estás seguro de qué necesitas?",
+      "subtitle": "Escríbeme y definimos el alcance juntos, sin compromiso.",
+      "buttonLabel": "Hablemos"
+    }
+  },
+  "sentinel": {
+    "badge": "En desarrollo",
+    "name": "Sentra",
+    "tagline": "Auditoría de seguridad web, automatizada.",
+    "title": "Sentra",
+    "subtitle": "Auditoría de seguridad web, automatizada.",
+    "description": "Sentra es la plataforma que estoy construyendo para que cualquier equipo pueda conocer la postura de seguridad externa de su dominio en minutos: análisis pasivo y activo autorizado, un Security Score claro y recomendaciones accionables, respaldadas por IA.",
+    "statusLabel": "Aún no está disponible al público",
+    "features": [
+      {
+        "title": "Security Score claro",
+        "desc": "Un puntaje de 0 a 100 que resume tu postura de seguridad, sin jerga innecesaria."
+      },
+      {
+        "title": "Escaneo pasivo y activo",
+        "desc": "SSL/TLS, DNS, headers y, con autorización explícita, escaneo activo con herramientas como Nuclei y ZAP."
+      },
+      {
+        "title": "Informes técnicos y ejecutivos",
+        "desc": "Un reporte para tu equipo técnico y otro para quien toma decisiones, generados automáticamente."
+      },
+      {
+        "title": "Recomendaciones con IA",
+        "desc": "Explicaciones y mitigaciones priorizadas, basadas en OWASP, NIST y CIS Controls."
+      }
+    ],
+    "ctaWaitlist": "Quiero probarla primero",
+    "ctaBack": "Ver todos los servicios"
   },
   "skills": {
     "tag": "Tech Stack",
