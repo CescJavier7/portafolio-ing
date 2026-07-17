@@ -17,11 +17,21 @@ const LINKS = {
 // ─── DETECCIÓN DE ACCIONES ─────────────────────────────────────────
 type DetectedAction =
   | { type: "download_cv" }
-  | { type: "open_link"; target: "github" | "linkedin" | "email" };
+  | { type: "open_link"; target: "github" | "linkedin" | "email" }
+  | { type: "open_sentinel" }; // 🆕 Intención dedicada para Sentra
 
 function detectAction(message: string): DetectedAction | null {
   const text = message.toLowerCase();
   const has = (words: string[]) => words.some((w) => new RegExp(`\\b${w}\\b`, "i").test(text));
+
+  // 🆕 Se evalúa primero: si preguntan por Sentra, no queremos que "seguridad"
+  // caiga en una respuesta genérica del LLM cuando podemos dar una vendedora y exacta.
+  if (
+    has(["sentra", "sentinel"]) ||
+    (has(["herramienta", "proyecto", "saas", "producto"]) && has(["seguridad", "ciberseguridad", "auditoria", "auditoría"]))
+  ) {
+    return { type: "open_sentinel" };
+  }
 
   if (has(["linkedin"])) return { type: "open_link", target: "linkedin" };
   if (has(["github", "repositorio", "repositorios", "repo", "repos"]))
@@ -39,29 +49,38 @@ function detectAction(message: string): DetectedAction | null {
   return null;
 }
 
-function actionReply(actionType: string, lang: string, target?: string): string {
+function actionReply(action: DetectedAction, lang: string): string {
   const isEn = lang === "en";
 
-  if (actionType === "download_cv") {
+  if (action.type === "download_cv") {
     return isEn
       ? "Initiating file transfer. My CV is ten billion percent optimized data — check your downloads. E=mc²"
       : "Iniciando transferencia de archivo. Mi CV es data optimizada al diez mil millones por ciento — revisa tus descargas. E=mc²";
   }
-  if (target === "github") {
+
+  // 🆕 Respuesta curada para Sentra: llamativa para reclutadores y devs por igual.
+  if (action.type === "open_sentinel") {
+    return isEn
+      ? "Sentra. Kevin's current build: an automated web security audit platform — point it at an authorized domain and it returns a Security Score, prioritized findings, and AI-generated remediation, grounded in OWASP/NIST/CIS. Still in active development, not public yet. Opening the live preview — this is architecture-level engineering, not a script kiddie's toy. E=mc²"
+      : "Sentra. El proyecto que Kevin tiene en construcción ahora mismo: una plataforma de auditoría de seguridad web automatizada — apuntas a un dominio autorizado y devuelve un Security Score, hallazgos priorizados y remediación generada con IA, fundamentada en OWASP/NIST/CIS. Aún en desarrollo activo, todavía no es pública. Abriendo el preview en vivo — esto es ingeniería a nivel de arquitectura, no un script de aficionado. E=mc²";
+  }
+
+  if (action.type === "open_link" && action.target === "github") {
     return isEn
       ? "Redirecting you to the source code repository. Every commit is empirical evidence. E=mc²"
       : "Redirigiéndote al repositorio de código fuente. Cada commit es evidencia empírica. E=mc²";
   }
-  if (target === "linkedin") {
+  if (action.type === "open_link" && action.target === "linkedin") {
     return isEn
       ? "Opening the professional network node. Direct connection established. E=mc²"
       : "Abriendo el nodo de red profesional. Conexión directa establecida. E=mc²";
   }
-  if (target === "email") {
+  if (action.type === "open_link" && action.target === "email") {
     return isEn
       ? "Opening a direct communication channel. State your query. E=mc²"
       : "Abriendo un canal de comunicación directo. Formula tu consulta. E=mc²";
   }
+
   return isEn ? "Action executed. E=mc²" : "Acción ejecutada. E=mc²";
 }
 
@@ -79,6 +98,7 @@ const SYSTEM_INSTRUCTION = `Eres MEKA_JAVIER_OS, el sistema de IA del portafolio
 7. NUNCA inventes una razón para rechazar o desestimar una oportunidad que no esté explícitamente respaldada por los datos de este perfil.
 8. Sé conciso: 2-4 frases por respuesta, salvo que el usuario pida explícitamente más detalle.
 9. LÍMITES DE SISTEMA (ANTI-ALUCINACIÓN): Eres un modelo de lenguaje de IA. NO tienes la capacidad técnica para enviar correos electrónicos, programar entrevistas, ni notificar a Kevin directamente. NUNCA simules ni inventes que has enviado un mensaje. Si un reclutador quiere contactarlo, DEBES proporcionarle explícitamente su correo (javiercaiza220158@gmail.com) o su LinkedIn, indicando que el usuario debe escribirle por esos medios.
+10. LÍMITE ANTI-ALUCINACIÓN SOBRE SENTRA: Sentra está EN DESARROLLO ACTIVO, no está lanzada al público, no tiene clientes ni usuarios reales todavía. NUNCA afirmes que ya está en producción, que tiene usuarios, métricas de uso, o que ya genera ingresos. Si preguntan por su estado, dilo tal cual: en construcción, con un preview visible en /sentinel.
 
 [PERFIL DEL INGENIERO: KEVIN JAVIER MONTATIXE CAIZA]
 - Demografía: 25 años, Ecuador. Mente altamente analítica, aprendizaje acelerado, resiliencia ante problemas complejos y pensamiento sistémico.
@@ -89,6 +109,14 @@ const SYSTEM_INSTRUCTION = `Eres MEKA_JAVIER_OS, el sistema de IA del portafolio
 - Infraestructura & Datos: Ex Data Engineer y Support Specialist en la UCE. Experto en gestión de SLAs, RBAC/IAM, auditoría de datos y administración de servidores.
 - Finanzas Cuantitativas: Arquitecto de bots de trading automatizado adaptativo multi-estrategia para MetaTrader 4 (MQL4), implementando el algoritmo de Fibonacci y mitigación de latencia.
 - Ciberseguridad (Ofensiva/Defensiva): Experiencia en pentesting (Burp Suite, Kali Linux), IDS/IPS (Snort, Suricata), políticas de Zero-Trust y observabilidad (Grafana, Loki).
+
+[PROYECTO INSIGNIA EN CONSTRUCCIÓN: SENTRA]
+- Qué es: plataforma SaaS de auditoría de seguridad web automatizada. El usuario apunta a un dominio que controla y recibe un Security Score (0-100), hallazgos priorizados (SSL/TLS, DNS, headers, y con autorización explícita, escaneo activo con Nuclei/ZAP) y recomendaciones generadas con IA (RAG sobre OWASP, NIST, CIS Controls).
+- Arquitectura: Next.js en el frontend, FastAPI + Celery como motor de orquestación, PostgreSQL con pgvector, Redis como cola/caché, desplegado en VPS propio con Docker y Traefik.
+- Estado real: en desarrollo activo, todavía no disponible al público. Existe un preview/landing en /sentinel.
+- Por qué le importa a un reclutador: no es solo una feature, es evidencia de arquitectura de sistemas distribuidos, DevSecOps end-to-end y product thinking aplicado a seguridad — no solo saber programar, sino diseñar un producto completo.
+- Por qué le importa a un dev/curioso: decisiones de arquitectura reales y justificadas (monolito modular vs microservicios, por qué FastAPI y no NestJS, scanners como contenedores efímeros aislados de la red interna).
+- Cuándo mencionarlo proactivamente: si preguntan por proyectos actuales, por su especialización en ciberseguridad, o "qué está construyendo ahora", tráelo a colación con entusiasmo genuino y dirígelos a /sentinel.
 
 [EXPERIENCIA DOCENTE — REAL, NO LA DESCARTES]
 - Profesor de Informática y Matemáticas en Unidad Educativa 13 de Abril.
@@ -145,17 +173,23 @@ export async function handleIncomingMessage(
   // 4. Flujo normal: detección de acciones rápidas
   const detected = detectAction(message);
   if (detected) {
-    const replyText = actionReply(
-      detected.type === "download_cv" ? "download_cv" : "open_link",
-      lang,
-      detected.type === "open_link" ? detected.target : undefined
-    );
+    const replyText = actionReply(detected, lang);
 
     await saveMessage(session.id, "AI", replyText);
 
     if (detected.type === "open_link" && detected.target === "email") {
       await sendContactAlert({ message, ip });
-      await markPendingReview(session.id); 
+      await markPendingReview(session.id);
+    }
+
+    let action: Record<string, unknown>;
+    if (detected.type === "download_cv") {
+      action = { type: "download_cv", url: LINKS.cv };
+    } else if (detected.type === "open_sentinel") {
+      // La URL de Sentra depende del idioma activo, por eso se arma aquí y no en LINKS.
+      action = { type: "open_link", target: "sentinel", url: `/${lang}/sentinel` };
+    } else {
+      action = { type: "open_link", target: detected.target, url: LINKS[detected.target] };
     }
 
     return {
@@ -163,10 +197,7 @@ export async function handleIncomingMessage(
       body: {
         sessionId: session.id,
         reply: replyText,
-        action:
-          detected.type === "download_cv"
-            ? { type: "download_cv", url: LINKS.cv }
-            : { type: "open_link", target: detected.target, url: LINKS[detected.target] },
+        action,
       },
     };
   }
