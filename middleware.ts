@@ -42,14 +42,16 @@ async function getAdminToken(request: NextRequest) {
   });
 }
 
-// AJUSTA ESTO: el nombre del campo de rol debe coincidir exactamente
-// con lo que expones en el callback `jwt()` de lib/auth.config.ts.
-// Si tu token no trae `role`, este check siempre fallará "en falso seguro"
-// (deniega acceso), lo cual es el comportamiento correcto por defecto.
+// Tu AdminUser (lib/auth.ts) todavía no maneja roles: authorize() solo
+// devuelve { id, email } y el callback jwt() solo copia token.id. Por eso
+// aquí el único criterio válido es "existe un JWT decodificable" — igual
+// que ya validan tus propios actions.ts con `if (!session?.user)`.
+//
+// Si en el futuro agregas roles (AdminUser.role en Prisma + devolverlo en
+// authorize() + copiarlo en el callback jwt()), vuelve a añadir aquí el
+// chequeo de `token.role === 'ADMIN'` etc.
 function hasAdminRole(token: Awaited<ReturnType<typeof getAdminToken>>): boolean {
-  if (!token) return false;
-  const role = (token as { role?: string }).role;
-  return role === 'ADMIN' || role === 'ANALYST';
+  return !!token;
 }
 
 export async function middleware(request: NextRequest) {
