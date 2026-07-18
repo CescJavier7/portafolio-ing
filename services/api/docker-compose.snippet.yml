@@ -1,0 +1,35 @@
+# Fusiona este servicio dentro de tu docker-compose.yml existente,
+# reutilizando la MISMA red donde ya viven tus contenedores de postgres/redis
+# y el network externo que usa Traefik. Ajusta los nombres si difieren.
+
+services:
+  sentra-api:
+    build:
+      context: ./services/api
+    container_name: sentra-api
+    restart: unless-stopped
+    env_file:
+      - ./services/api/.env
+    depends_on:
+      - postgres   # ajusta al nombre real de tu servicio de Postgres
+      - redis      # ajusta al nombre real de tu servicio de Redis
+    networks:
+      - internal        # red donde están postgres/redis
+      - traefik-public  # red externa que usa Traefik (ajusta el nombre)
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sentra-api.rule=Host(`api.cescjavier.dev`)"
+      - "traefik.http.routers.sentra-api.entrypoints=websecure"
+      - "traefik.http.routers.sentra-api.tls.certresolver=letsencrypt"  # ajusta al nombre de tu resolver
+      - "traefik.http.services.sentra-api.loadbalancer.server.port=8000"
+      # Rate limiting también a nivel de proxy, como capa extra ante el
+      # rate limiting de la app (defensa en profundidad):
+      - "traefik.http.middlewares.sentra-api-ratelimit.ratelimit.average=50"
+      - "traefik.http.middlewares.sentra-api-ratelimit.ratelimit.burst=100"
+      - "traefik.http.routers.sentra-api.middlewares=sentra-api-ratelimit"
+
+networks:
+  internal:
+    external: false
+  traefik-public:
+    external: true

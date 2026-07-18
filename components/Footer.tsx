@@ -27,7 +27,7 @@ export default function Footer({ dict }: FooterProps) {
             © {new Date().getFullYear()} CescJavier7.
           </p>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-            {dict?.tagline ?? 'Ingeniería & Ciberseguridad. Construido con Next.js 15.'}
+            {dict?.tagline ?? 'Ingeniería & Ciberseguridad. Realizado por CescJvaier7 =).'}
           </p>
         </div>
 
