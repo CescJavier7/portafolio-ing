@@ -9,7 +9,7 @@ services/api/
     models/     -> Organization, User, RefreshToken
     schemas/    -> validación de entrada/salida (Pydantic)
     api/v1/     -> routers: auth.py, billing.py, deps.py
-    services/   -> stripe_service.py
+    services/   -> lemonsqueezy_service.py
     main.py
   requirements.txt
   Dockerfile
@@ -26,53 +26,60 @@ cp .env.example .env
 python3 -c "import secrets; print(secrets.token_urlsafe(48))"
 # pégalo en .env como JWT_SECRET=...
 
-# Completa STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET y STRIPE_PRICE_ID_PRO
-# desde tu dashboard de Stripe (modo test primero, sk_test_... / whsec_...).
+# Completa LEMONSQUEEZY_API_KEY, LEMONSQUEEZY_STORE_ID,
+# LEMONSQUEEZY_VARIANT_ID_PRO y LEMONSQUEEZY_WEBHOOK_SECRET desde tu
+# dashboard de Lemon Squeezy (usa el modo Test Mode del dashboard mientras
+# no haya ventas reales).
 ```
 
-## 3. Migraciones (Alembic) — falta inicializar
+## 3. Migraciones (Alembic)
 
-No generé Alembic completo para no inflar la entrega, pero es el siguiente paso obligatorio antes de correr esto:
+Ya está inicializado (`alembic/env.py` con soporte async para asyncpg). Para
+levantar el esquema desde cero:
 
 ```bash
 pip install -r requirements.txt
-alembic init alembic
-# En alembic/env.py: importar app.db.base.Base y tus modelos,
-# y apuntar target_metadata = Base.metadata
-alembic revision --autogenerate -m "init: organizations, users, refresh_tokens"
 alembic upgrade head
 ```
 
-Si quieres, en el próximo paso te dejo el `alembic/env.py` ya configurado — lo salteé aquí para no duplicar trabajo si prefieres revisar primero el resto.
+Si cambias un modelo (columnas, tablas nuevas), genera la migración con:
+```bash
+alembic revision --autogenerate -m "descripcion del cambio"
+alembic upgrade head
+```
 
 ## 4. Probar localmente
 
+Necesitas 3 cosas corriendo a la vez: Postgres, Redis (rate limiting) y
+la propia API. En pestañas de terminal separadas:
+
 ```bash
+# Terminal A — Redis (si no tienes uno ya corriendo):
+docker run -d --name sentra-redis -p 6379:6379 redis:alpine
+
+# Terminal B — la API:
 uvicorn app.main:app --reload
 # docs en http://localhost:8000/docs (solo si ENVIRONMENT=development)
-```
 
-Prueba con `curl` o Postman:
-```bash
+# Terminal C — pruebas:
 curl -X POST http://localhost:8000/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"test@test.com","password":"unaClaveSegura123","organization_name":"Mi Org"}'
 ```
 
-## 5. Webhook de Stripe en local
+## 5. Webhook de Lemon Squeezy en local
 
-Stripe no puede pegarle a `localhost` directo. Usa el CLI de Stripe:
-```bash
-stripe listen --forward-to localhost:8000/api/v1/billing/webhook
-# te da un whsec_... temporal para pruebas locales, distinto al de producción
-```
+Lemon Squeezy no puede pegarle a `localhost` directo. Usa un túnel (ngrok,
+cloudflared, etc.) para exponer tu `localhost:8000`, y registra esa URL
+pública + `/api/v1/billing/webhook` en Dashboard > Settings > Webhooks.
+El "Signing secret" que te dan ahí es tu `LEMONSQUEEZY_WEBHOOK_SECRET`.
 
 ## 6. Checklist de seguridad antes de ir a producción
 
 - [ ] `JWT_SECRET` generado con `secrets.token_urlsafe`, no el placeholder.
 - [ ] `.env` real fuera de git (verifica tu `.gitignore`).
 - [ ] `ENVIRONMENT=production` en el `.env` del VPS (activa `secureCookie`, oculta `/docs`, agrega HSTS).
-- [ ] Stripe en modo **live** (`sk_live_...`) solo cuando todo lo demás esté probado en test.
+- [ ] Lemon Squeezy fuera de **Test Mode** solo cuando todo lo demás esté probado.
 - [ ] Migrar `_processed_event_ids` (en memoria) a una tabla real antes de tener más de una réplica del contenedor — está marcado con `TODO` en `billing.py`.
 - [ ] Implementar el envío real del correo de verificación (`TODO` en `auth.py` — hoy el usuario queda `email_verified=False` sin forma de verificarse todavía; falta ese endpoint + proveedor de email).
 - [ ] Confirmar que Traefik SÍ reenvía `X-Forwarded-For` real (afecta tanto el rate limiting como los logs).
@@ -81,5 +88,5 @@ stripe listen --forward-to localhost:8000/api/v1/billing/webhook
 
 1. Endpoint `POST /auth/verify-email` (falta implementar).
 2. Envío de email real (Resend, SES, Postmark — tú eliges).
-3. `alembic/env.py` configurado + primera migración.
-4. Conectar esto con el frontend de `/sentinel` (formulario de registro/login).
+3. Conectar esto con el frontend de `/sentinel` (formulario de registro/login).
+4. Crear el producto/plan Pro en Lemon Squeezy y confirmar el Variant ID en `.env`.

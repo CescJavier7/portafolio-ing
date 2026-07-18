@@ -26,10 +26,11 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15   
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
-    # ── Stripe ───────────────────────────────────────────────
-    STRIPE_SECRET_KEY: str
-    STRIPE_WEBHOOK_SECRET: str
-    STRIPE_PRICE_ID_PRO: str  
+    # ── Stripe - Reemplazado por Lemonsqueezy ───────────────────────────────────────────────
+    LEMONSQUEEZY_API_KEY: str
+    LEMONSQUEEZY_STORE_ID: str
+    LEMONSQUEEZY_VARIANT_ID_PRO: str
+    LEMONSQUEEZY_WEBHOOK_SECRET: str
 
     # ── CORS ─────────────────────────────────────────────────
     ALLOWED_ORIGINS: list[str] = [

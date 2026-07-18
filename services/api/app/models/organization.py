@@ -16,11 +16,11 @@ class Organization(Base):
 
     plan: Mapped[str] = mapped_column(String(20), default="FREE")  # FREE | PRO | TEAM | ENTERPRISE
 
-    # Referencias a Stripe. NUNCA se guarda info de tarjeta aquí: eso vive
-    # exclusivamente en Stripe (PCI compliance por diseño — ni tocamos
-    # datos de tarjeta, así que ni siquiera aplica el alcance de PCI-DSS).
-    stripe_customer_id: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
-    stripe_subscription_id: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
+     # Referencias a Lemon Squeezy. NUNCA se guarda info de tarjeta aquí: eso
+    # vive exclusivamente en su Checkout hosteado (PCI compliance por diseño
+    # — ni tocamos datos de tarjeta, así que ni siquiera aplica PCI-DSS).
+    lemonsqueezy_customer_id: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
+    lemonsqueezy_subscription_id: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
     subscription_status: Mapped[str | None] = mapped_column(String(30), nullable=True)  # active, past_due, canceled...
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

@@ -36,7 +36,6 @@ from app.models.organization import Organization
 from app.models.refresh_token import RefreshToken
 from app.models.user import User
 from app.schemas.auth import AccessTokenResponse, LoginRequest, MessageResponse, RegisterRequest
-from app.services.stripe_service import create_stripe_customer
 
 settings = get_settings()
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -95,8 +94,10 @@ async def register(request: Request, payload: RegisterRequest, db: AsyncSession 
     db.add(organization)
     await db.flush()  # obtenemos organization.id
 
-    stripe_customer_id = create_stripe_customer(payload.email, str(organization.id))
-    organization.stripe_customer_id = stripe_customer_id
+    # A diferencia de Stripe, no creamos un customer remoto aquí: Lemon
+    # Squeezy lo crea/asocia solo al completar el primer Checkout, y lo
+    # enlazamos a esta Organization vía el webhook (ver billing.py).
+
 
     user = User(
         email=payload.email,

@@ -41,6 +41,8 @@ yarn-error.log*
 .env.local
 .env.development
 .env.production
+# Excepción: los .env.example son plantillas sin secretos, sí deben ir a git
+!**/.env.example
 
 # vercel
 .vercel

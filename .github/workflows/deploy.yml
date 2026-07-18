@@ -35,7 +35,7 @@ jobs:
             # funciona) sigue sirviendo tráfico mientras se investiga.
             # Además, no reiniciamos portfolio-db en cada deploy — no hay
             # motivo, no cambió nada ahí.
-            docker compose up -d --build --force-recreate portfolio-app
+            docker compose up -d --build --force-recreate portfolio-app sentra-api sentra-redis
 
             # Limpieza automática de imágenes viejas para no llenar el disco de 50GB
             docker image prune -f

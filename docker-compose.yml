@@ -61,6 +61,55 @@ services:
       timeout: 5s
       retries: 5
 
+  sentra-redis:
+    image: redis:alpine
+    container_name: sentra-redis
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      # Sin proxy-net: Redis solo lo habla sentra-api, nunca internet.
+      - internal-net
+
+  sentra-api:
+    build:
+      context: ./services/api
+    container_name: sentra-api
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    # services/api/.env vive SOLO en el VPS (igual que el .env de la raíz):
+    # secretos de Lemon Squeezy, JWT_SECRET, etc. Nunca en git.
+    env_file:
+      - ./services/api/.env
+    environment:
+      # Reutiliza el MISMO Postgres que portfolio-db, pero una base
+      # `sentra` separada (hay que crearla una vez a mano, ver runbook).
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@portfolio-db:5432/sentra
+      - REDIS_URL=redis://sentra-redis:6379/0
+      - ENVIRONMENT=production
+    depends_on:
+      portfolio-db:
+        condition: service_healthy
+      sentra-redis:
+        condition: service_started
+    networks:
+      - proxy-net # Para que Traefik lo enrute desde afuera
+      - internal-net # Para hablar con portfolio-db y sentra-redis
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy-net"
+      - "traefik.http.routers.sentra-api.rule=Host(`api.cescjavier.dev`)"
+      - "traefik.http.routers.sentra-api.entrypoints=websecure"
+      # Mismo patrón que portfolio-app: sin certresolver, TLS lo resuelve Cloudflare.
+      - "traefik.http.routers.sentra-api.tls=true"
+      - "traefik.http.services.sentra-api.loadbalancer.server.port=8000"
+      # Rate limiting también a nivel de proxy, como capa extra ante el
+      # rate limiting propio de la app (defensa en profundidad).
+      - "traefik.http.middlewares.sentra-api-ratelimit.ratelimit.average=50"
+      - "traefik.http.middlewares.sentra-api-ratelimit.ratelimit.burst=100"
+      - "traefik.http.routers.sentra-api.middlewares=sentra-api-ratelimit"
+
 networks:
   proxy-net:
     external: true
