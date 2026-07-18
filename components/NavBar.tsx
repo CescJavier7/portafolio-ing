@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Shield, Moon, Sun, Menu, X, ChevronDown, LayoutDashboard, LogOut } from 'lucide-react';
+import { Shield, Moon, Sun, Menu, X, ChevronDown, ChevronRight, LayoutDashboard, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -251,46 +251,53 @@ export default function NavBar({ dict, lang }: NavBarProps) {
               </Link>
             ))}
 
-            {/* Sesión en mobile: vive aquí dentro del menú, no en la barra. */}
-            <div className="w-16 h-px bg-zinc-200 dark:bg-zinc-800" />
-            {sessionUser ? (
-              <div className="flex flex-col items-center gap-4">
-                <div className="flex items-center gap-3">
-                  <span className="w-9 h-9 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 text-black text-sm font-black flex items-center justify-center">
-                    {sessionUser.email.charAt(0).toUpperCase()}
-                  </span>
-                  <div className="text-left">
-                    <p className="text-sm font-bold text-zinc-900 dark:text-white max-w-[220px] truncate">
-                      {sessionUser.email}
-                    </p>
-                    <p className="text-[11px] uppercase tracking-wider text-green-600 dark:text-green-400 font-semibold">
-                      {sessionUser.role}
-                    </p>
+            {/* Sesión en mobile: tarjeta estilo iOS (celdas con hairlines),
+                al pie del menú — como el bloque de cuenta en Ajustes. */}
+            <div className="w-full px-6 pt-2">
+              {sessionUser ? (
+                <div className="rounded-2xl bg-zinc-100/80 dark:bg-white/[0.06] border border-zinc-200/80 dark:border-white/10 overflow-hidden">
+                  <div className="flex items-center gap-3 px-4 py-3.5">
+                    <span className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 text-black text-base font-black flex items-center justify-center">
+                      {sessionUser.email.charAt(0).toUpperCase()}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[15px] font-semibold text-zinc-900 dark:text-white truncate">
+                        {sessionUser.email}
+                      </p>
+                      <p className="text-[11px] uppercase tracking-wider text-green-600 dark:text-green-400 font-semibold">
+                        {sessionUser.role}
+                      </p>
+                    </div>
                   </div>
+                  <div className="h-px bg-zinc-200/80 dark:bg-white/10" />
+                  <Link
+                    href={`/${lang}/sentinel/panel`}
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center justify-between px-4 py-3 text-[15px] font-medium text-zinc-900 dark:text-white active:bg-zinc-200/60 dark:active:bg-white/10 transition-colors"
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <LayoutDashboard className="w-4 h-4 text-zinc-400" /> {sessionDict.panel}
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-zinc-400" />
+                  </Link>
+                  <div className="h-px bg-zinc-200/80 dark:bg-white/10" />
+                  <button
+                    onClick={handleMobileLogout}
+                    className="w-full flex items-center gap-2.5 px-4 py-3 text-[15px] font-medium text-red-500 active:bg-red-500/10 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" /> {sessionDict.logout}
+                  </button>
                 </div>
+              ) : (
                 <Link
-                  href={`/${lang}/sentinel/panel`}
+                  href={`/${lang}/sentinel/login`}
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-2 text-base font-semibold text-zinc-900 dark:text-white hover:text-apple-blue transition-colors"
+                  className="block w-full text-center px-6 py-3.5 rounded-2xl bg-apple-blue text-white text-[15px] font-semibold active:opacity-80 transition-opacity"
                 >
-                  <LayoutDashboard className="w-4 h-4" /> {sessionDict.panel}
+                  {sessionDict.login}
                 </Link>
-                <button
-                  onClick={handleMobileLogout}
-                  className="flex items-center gap-2 text-base font-semibold text-red-500"
-                >
-                  <LogOut className="w-4 h-4" /> {sessionDict.logout}
-                </button>
-              </div>
-            ) : (
-              <Link
-                href={`/${lang}/sentinel/login`}
-                onClick={() => setIsOpen(false)}
-                className="text-base font-semibold text-apple-blue"
-              >
-                {sessionDict.login}
-              </Link>
-            )}
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
