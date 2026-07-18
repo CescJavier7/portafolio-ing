@@ -94,7 +94,20 @@ async function request<T>(
     let detail = 'Error inesperado.';
     try {
       const body = await res.json();
-      detail = body.detail ?? detail;
+      // FastAPI da dos formas de `detail`:
+      // - HTTPException: string (ej. "Credenciales inválidas.")
+      // - Validación (422): array de objetos {loc, msg, type, ...}.
+      // Renderizar ese objeto crudo en React revienta la página
+      // (error #31). Aquí lo aplanamos SIEMPRE a un string legible.
+      if (typeof body.detail === 'string') {
+        detail = body.detail;
+      } else if (Array.isArray(body.detail)) {
+        detail =
+          body.detail
+            .map((e: { msg?: string }) => e?.msg)
+            .filter(Boolean)
+            .join('. ') || detail;
+      }
     } catch {
       /* respuesta sin JSON (ej. 502 de Traefik) — se queda el genérico */
     }
