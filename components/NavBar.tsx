@@ -1,12 +1,15 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Shield, Moon, Sun, Menu, X, ChevronDown } from 'lucide-react';
+import { Shield, Moon, Sun, Menu, X, ChevronDown, LayoutDashboard, LogOut } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { AnimatePresence, motion } from 'framer-motion';
 import LanguageToggle from '@/components/LanguageToggle';
 import NavSession from '@/components/sentra/NavSession';
+import { sentraLogout } from '@/lib/sentra/api';
+import { useSentraSession } from '@/lib/sentra/useSession';
 
 interface AboutMeItems {
   about: string;
@@ -42,12 +45,24 @@ const SESSION_FALLBACK: SessionDict = {
 };
 
 export default function NavBar({ dict, lang }: NavBarProps) {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false); // menú móvil
   const [aboutOpen, setAboutOpen] = useState(false); // dropdown desktop
   const [mobileAboutOpen, setMobileAboutOpen] = useState(false); // acordeón móvil
   const { theme, setTheme, resolvedTheme } = useTheme();
   const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Una sola fuente de sesión para el NavBar entero: el avatar de desktop
+  // (NavSession) la recibe por prop y el menú móvil la usa directamente.
+  const { user: sessionUser } = useSentraSession();
+  const sessionDict = dict.session ?? SESSION_FALLBACK;
+
+  async function handleMobileLogout() {
+    setIsOpen(false);
+    await sentraLogout();
+    router.push(`/${lang}/sentinel/login`);
+  }
 
   useEffect(() => {
     setMounted(true);
@@ -154,7 +169,11 @@ export default function NavBar({ dict, lang }: NavBarProps) {
         </div>
 
         <div className="flex items-center gap-4 z-50">
-          <NavSession lang={lang} dict={dict.session ?? SESSION_FALLBACK} />
+          {/* En mobile la sesión vive dentro del menú hamburguesa (la barra
+              quedaba muy cargada con avatar + idioma + tema + menú). */}
+          <div className="hidden sm:block">
+            <NavSession lang={lang} dict={sessionDict} user={sessionUser} />
+          </div>
           <LanguageToggle />
           <button
             onClick={toggleTheme}
@@ -232,16 +251,46 @@ export default function NavBar({ dict, lang }: NavBarProps) {
               </Link>
             ))}
 
-            {/* En mobile el botón de login del NavSession va oculto (sm:) —
-                aquí va la entrada equivalente dentro del menú. El avatar de
-                un usuario logueado SÍ se ve en la barra en mobile. */}
-            <Link
-              href={`/${lang}/sentinel/login`}
-              onClick={() => setIsOpen(false)}
-              className="text-base font-semibold text-apple-blue"
-            >
-              {(dict.session ?? SESSION_FALLBACK).login}
-            </Link>
+            {/* Sesión en mobile: vive aquí dentro del menú, no en la barra. */}
+            <div className="w-16 h-px bg-zinc-200 dark:bg-zinc-800" />
+            {sessionUser ? (
+              <div className="flex flex-col items-center gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="w-9 h-9 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 text-black text-sm font-black flex items-center justify-center">
+                    {sessionUser.email.charAt(0).toUpperCase()}
+                  </span>
+                  <div className="text-left">
+                    <p className="text-sm font-bold text-zinc-900 dark:text-white max-w-[220px] truncate">
+                      {sessionUser.email}
+                    </p>
+                    <p className="text-[11px] uppercase tracking-wider text-green-600 dark:text-green-400 font-semibold">
+                      {sessionUser.role}
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href={`/${lang}/sentinel/panel`}
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-2 text-base font-semibold text-zinc-900 dark:text-white hover:text-apple-blue transition-colors"
+                >
+                  <LayoutDashboard className="w-4 h-4" /> {sessionDict.panel}
+                </Link>
+                <button
+                  onClick={handleMobileLogout}
+                  className="flex items-center gap-2 text-base font-semibold text-red-500"
+                >
+                  <LogOut className="w-4 h-4" /> {sessionDict.logout}
+                </button>
+              </div>
+            ) : (
+              <Link
+                href={`/${lang}/sentinel/login`}
+                onClick={() => setIsOpen(false)}
+                className="text-base font-semibold text-apple-blue"
+              >
+                {sessionDict.login}
+              </Link>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

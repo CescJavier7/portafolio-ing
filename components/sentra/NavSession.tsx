@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LayoutDashboard, LogOut } from 'lucide-react';
-import { sentraLogout } from '@/lib/sentra/api';
-import { useSentraSession } from '@/lib/sentra/useSession';
+import { sentraLogout, type SentraUser } from '@/lib/sentra/api';
 
 interface Dict {
   login: string;
@@ -14,14 +13,20 @@ interface Dict {
   logout: string;
 }
 
-// Widget de sesión del NavBar, estilo SaaS: avatar con la inicial del
-// correo + dropdown con opciones según la cuenta. La lógica de sesión vive
-// en useSentraSession(), que además escucha cambios de login/logout hechos
-// en otras páginas (el NavBar persiste entre navegaciones y sin ese evento
-// se quedaría mostrando el estado viejo).
-export default function NavSession({ lang, dict }: { lang: string; dict: Dict }) {
+// Widget de sesión del NavBar desktop, estilo SaaS: avatar con la inicial
+// del correo + dropdown con opciones según la cuenta. El `user` llega por
+// prop desde el NavBar (una sola instancia de useSentraSession para toda
+// la barra — el menú móvil usa la misma).
+export default function NavSession({
+  lang,
+  dict,
+  user,
+}: {
+  lang: string;
+  dict: Dict;
+  user: SentraUser | null;
+}) {
   const router = useRouter();
-  const { user } = useSentraSession();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -46,7 +51,7 @@ export default function NavSession({ lang, dict }: { lang: string; dict: Dict })
     return (
       <Link
         href={`/${lang}/sentinel/login`}
-        className="hidden sm:inline-flex items-center px-3.5 py-1.5 rounded-full bg-apple-blue text-white text-[11px] font-semibold uppercase tracking-wider hover:opacity-85 transition-opacity"
+        className="inline-flex items-center px-3.5 py-1.5 rounded-full bg-apple-blue text-white text-[11px] font-semibold uppercase tracking-wider hover:opacity-85 transition-opacity"
       >
         {dict.login}
       </Link>
