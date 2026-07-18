@@ -51,7 +51,10 @@ def create_checkout_url(email: str, organization_id: str) -> str:
                     "custom": {"organization_id": organization_id},
                 },
                 "product_options": {
-                    "redirect_url": "https://sentinel.cescjavier.dev/billing/success",
+                    # Tras pagar, de vuelta al panel (donde el badge ya dirá
+                    # Pro). OJO: el subdominio sentinel.cescjavier.dev aún no
+                    # existe — apuntar ahí daba 404 de Traefik.
+                    "redirect_url": "https://cescjavier.dev/es/sentinel/panel",
                 },
             },
             "relationships": {
