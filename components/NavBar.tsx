@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { AnimatePresence, motion } from 'framer-motion';
 import LanguageToggle from '@/components/LanguageToggle';
+import NavSession from '@/components/sentra/NavSession';
 
 interface AboutMeItems {
   about: string;
@@ -16,6 +17,12 @@ interface AboutMeItems {
   contact: string;
 }
 
+interface SessionDict {
+  login: string;
+  panel: string;
+  logout: string;
+}
+
 interface NavBarProps {
   dict: {
     aboutMe: string;
@@ -23,9 +30,16 @@ interface NavBarProps {
     services: string;
     sentinel: string;
     blog: string;
+    session?: SessionDict;
   };
   lang: string;
 }
+
+const SESSION_FALLBACK: SessionDict = {
+  login: 'Iniciar sesión',
+  panel: 'Panel',
+  logout: 'Cerrar sesión',
+};
 
 export default function NavBar({ dict, lang }: NavBarProps) {
   const [mounted, setMounted] = useState(false);
@@ -140,6 +154,7 @@ export default function NavBar({ dict, lang }: NavBarProps) {
         </div>
 
         <div className="flex items-center gap-4 z-50">
+          <NavSession lang={lang} dict={dict.session ?? SESSION_FALLBACK} />
           <LanguageToggle />
           <button
             onClick={toggleTheme}
@@ -216,6 +231,17 @@ export default function NavBar({ dict, lang }: NavBarProps) {
                 {link.name}
               </Link>
             ))}
+
+            {/* En mobile el botón de login del NavSession va oculto (sm:) —
+                aquí va la entrada equivalente dentro del menú. El avatar de
+                un usuario logueado SÍ se ve en la barra en mobile. */}
+            <Link
+              href={`/${lang}/sentinel/login`}
+              onClick={() => setIsOpen(false)}
+              className="text-base font-semibold text-apple-blue"
+            >
+              {(dict.session ?? SESSION_FALLBACK).login}
+            </Link>
           </motion.div>
         )}
       </AnimatePresence>

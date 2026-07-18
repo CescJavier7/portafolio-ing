@@ -29,6 +29,19 @@ class ResendVerificationRequest(BaseModel):
     email: EmailStr
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str = Field(min_length=12, max_length=128)
+
+    @field_validator("new_password")
+    @classmethod
+    def password_strength(cls, v: str) -> str:
+        # Mismas reglas que el registro (ver RegisterRequest).
+        if not re.search(r"[0-9\W]", v):
+            raise ValueError("La contraseña debe incluir al menos un número o símbolo.")
+        return v
+
+
 class AccessTokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"

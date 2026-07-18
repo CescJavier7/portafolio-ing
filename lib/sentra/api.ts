@@ -14,6 +14,22 @@ const API_BASE =
 
 const TOKEN_KEY = 'sentra_access_token';
 
+// Flag en localStorage (persiste entre pestañas/sesiones): "este navegador
+// alguna vez inició sesión". Evita que el NavBar dispare un POST /refresh
+// en CADA visita de un usuario anónimo que jamás se ha logueado.
+const KNOWN_USER_KEY = 'sentra_known_user';
+
+function setKnownUser(known: boolean) {
+  if (typeof window === 'undefined') return;
+  if (known) localStorage.setItem(KNOWN_USER_KEY, '1');
+  else localStorage.removeItem(KNOWN_USER_KEY);
+}
+
+export function sentraIsKnownUser(): boolean {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem(KNOWN_USER_KEY) === '1';
+}
+
 export interface SentraUser {
   id: string;
   email: string;
@@ -97,6 +113,7 @@ export async function sentraLogin(data: {
     body: JSON.stringify(data),
   });
   setToken(res.access_token);
+  setKnownUser(true);
 }
 
 export async function sentraResendVerification(
@@ -116,9 +133,11 @@ export async function sentraRefresh(): Promise<boolean> {
       method: 'POST',
     });
     setToken(res.access_token);
+    setKnownUser(true);
     return true;
   } catch {
     setToken(null);
+    setKnownUser(false);
     return false;
   }
 }
@@ -132,7 +151,23 @@ export async function sentraLogout(): Promise<void> {
     await request('/api/v1/auth/logout', { method: 'POST' });
   } finally {
     setToken(null);
+    setKnownUser(false);
   }
+}
+
+// Cambio de contraseña: el backend revoca TODAS las sesiones y devuelve
+// tokens nuevos para esta — actualizamos el access token para que el
+// usuario no note el corte.
+export async function sentraChangePassword(data: {
+  current_password: string;
+  new_password: string;
+}): Promise<void> {
+  const res = await request<{ access_token: string }>(
+    '/api/v1/auth/change-password',
+    { method: 'POST', body: JSON.stringify(data) },
+    true,
+  );
+  setToken(res.access_token);
 }
 
 export function sentraHasToken(): boolean {

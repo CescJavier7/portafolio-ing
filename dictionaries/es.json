@@ -1,6 +1,6 @@
 {
   "footer": {
-    "tagline": "Ingeniería & Ciberseguridad. Construido con Next.js 15."
+    "tagline": "Ingeniería de Software & Ciberseguridad."
   },
   "navigation": {
     "aboutMe": "Sobre mí",
@@ -14,7 +14,12 @@
     },
     "services": "Servicios",
     "sentinel": "Sentra",
-    "blog": "Blog"
+    "blog": "Blog",
+    "session": {
+      "login": "Iniciar sesión",
+      "panel": "Panel",
+      "logout": "Cerrar sesión"
+    }
   },
   "services": {
     "tag": "Servicios",
@@ -69,7 +74,7 @@
     "title": "Sentra",
     "subtitle": "Auditoría de seguridad web, automatizada.",
     "description": "Sentra es la plataforma que estoy construyendo para que cualquier equipo pueda conocer la postura de seguridad externa de su dominio en minutos: análisis pasivo y activo autorizado, un Security Score claro y recomendaciones accionables, respaldadas por IA.",
-    "statusLabel": "Aún no está disponible al público",
+    "statusLabel": "Acceso anticipado abierto — asegura tu lugar antes del lanzamiento",
     "features": [
       {
         "title": "Security Score claro",
@@ -425,7 +430,15 @@
       "wip": "El panel está en construcción. Tu cuenta ya está activa y lista para cuando lancemos los primeros escaneos.",
       "sessionAs": "Sesión iniciada como",
       "logout": "Cerrar sesión",
-      "loading": "Verificando sesión…"
+      "loading": "Verificando sesión…",
+      "securityTitle": "Seguridad",
+      "securityDesc": "Cambia tu contraseña. Al hacerlo, se cerrarán las sesiones en tus otros dispositivos.",
+      "currentPassword": "Contraseña actual",
+      "newPassword": "Contraseña nueva",
+      "newPasswordHint": "Mínimo 12 caracteres, con al menos un número o símbolo.",
+      "changeSubmit": "Cambiar contraseña",
+      "changing": "Cambiando…",
+      "changed": "Contraseña actualizada. Tus otras sesiones fueron cerradas."
     }
   }
 }

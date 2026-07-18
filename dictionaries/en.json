@@ -1,6 +1,6 @@
 {
   "footer": {
-    "tagline": "Engineering & Cybersecurity. Built with Next.js 15."
+    "tagline": "Software Engineering & Cybersecurity."
   },
   "navigation": {
     "aboutMe": "About Me",
@@ -14,7 +14,12 @@
     },
     "services": "Services",
     "sentinel": "Sentra",
-    "blog": "Blog"
+    "blog": "Blog",
+    "session": {
+      "login": "Sign in",
+      "panel": "Panel",
+      "logout": "Sign out"
+    }
   },
   "services": {
     "tag": "Services",
@@ -69,7 +74,7 @@
     "title": "Sentra",
     "subtitle": "Automated web security auditing.",
     "description": "Sentra is the platform I'm building so any team can understand their domain's external security posture in minutes: passive and authorized active scanning, a clear Security Score, and actionable, AI-backed recommendations.",
-    "statusLabel": "Not yet publicly available",
+    "statusLabel": "Early access open — secure your spot before launch",
     "features": [
       {
         "title": "A clear Security Score",
@@ -425,7 +430,15 @@
       "wip": "The panel is under construction. Your account is active and ready for when the first scans launch.",
       "sessionAs": "Signed in as",
       "logout": "Sign out",
-      "loading": "Checking session…"
+      "loading": "Checking session…",
+      "securityTitle": "Security",
+      "securityDesc": "Change your password. Doing so will sign out your other devices.",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "newPasswordHint": "At least 12 characters, with a number or symbol.",
+      "changeSubmit": "Change password",
+      "changing": "Changing…",
+      "changed": "Password updated. Your other sessions were signed out."
     }
   }
 }

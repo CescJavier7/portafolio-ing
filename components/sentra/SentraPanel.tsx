@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ShieldCheck, LogOut, Construction } from 'lucide-react';
+import { ShieldCheck, LogOut, Construction, KeyRound } from 'lucide-react';
 import {
+  sentraChangePassword,
   sentraHasToken,
   sentraLogout,
   sentraMe,
   sentraRefresh,
+  SentraApiError,
   type SentraUser,
 } from '@/lib/sentra/api';
 
@@ -18,6 +20,106 @@ interface Dict {
   sessionAs: string;
   logout: string;
   loading: string;
+  securityTitle: string;
+  securityDesc: string;
+  currentPassword: string;
+  newPassword: string;
+  newPasswordHint: string;
+  changeSubmit: string;
+  changing: string;
+  changed: string;
+}
+
+const inputClass =
+  'w-full rounded-xl bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-4 py-3 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition';
+
+function ChangePasswordCard({ dict }: { dict: Dict }) {
+  const [current, setCurrent] = useState('');
+  const [next, setNext] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [ok, setOk] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    setOk(false);
+    try {
+      await sentraChangePassword({ current_password: current, new_password: next });
+      setOk(true);
+      setCurrent('');
+      setNext('');
+    } catch (err) {
+      setError(err instanceof SentraApiError ? err.detail : 'Error de conexión.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="rounded-3xl bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 shadow-sm p-8 mt-6">
+      <div className="flex items-center gap-3 mb-1.5">
+        <div className="w-10 h-10 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+          <KeyRound className="w-5 h-5 text-green-500" />
+        </div>
+        <h2 className="text-lg font-black tracking-tight text-zinc-900 dark:text-white">
+          {dict.securityTitle}
+        </h2>
+      </div>
+      <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">{dict.securityDesc}</p>
+
+      <form onSubmit={handleSubmit} className="space-y-4 max-w-sm">
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-2">
+            {dict.currentPassword}
+          </label>
+          <input
+            type="password"
+            required
+            autoComplete="current-password"
+            value={current}
+            onChange={(e) => setCurrent(e.target.value)}
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-2">
+            {dict.newPassword}
+          </label>
+          <input
+            type="password"
+            required
+            minLength={12}
+            autoComplete="new-password"
+            value={next}
+            onChange={(e) => setNext(e.target.value)}
+            className={inputClass}
+          />
+          <p className="mt-1.5 text-[11px] text-zinc-400 dark:text-zinc-500">{dict.newPasswordHint}</p>
+        </div>
+
+        {error && (
+          <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+            {error}
+          </p>
+        )}
+        {ok && (
+          <p className="text-sm text-green-600 dark:text-green-400 bg-green-500/10 border border-green-500/20 rounded-xl px-4 py-3">
+            {dict.changed}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={busy}
+          className="px-6 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-60 disabled:hover:scale-100"
+        >
+          {busy ? dict.changing : dict.changeSubmit}
+        </button>
+      </form>
+    </div>
+  );
 }
 
 export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }) {
@@ -119,6 +221,8 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
               {dict.wip}
             </p>
           </div>
+
+          <ChangePasswordCard dict={dict} />
         </motion.div>
       </div>
     </section>

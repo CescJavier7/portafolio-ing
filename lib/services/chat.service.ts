@@ -12,12 +12,14 @@ const LINKS = {
   github: "https://github.com/CescJavier7",
   linkedin: "https://www.linkedin.com/in/kevin-javier-montatixe-2a08b6295/",
   email: "mailto:javiercaiza220158@gmail.com",
+  // wa.me exige formato internacional sin el 0 inicial: +593 98 375 5469
+  whatsapp: "https://wa.me/593983755469",
 };
 
 // ─── DETECCIÓN DE ACCIONES ─────────────────────────────────────────
 type DetectedAction =
   | { type: "download_cv" }
-  | { type: "open_link"; target: "github" | "linkedin" | "email" }
+  | { type: "open_link"; target: "github" | "linkedin" | "email" | "whatsapp" }
   | { type: "open_sentinel" }; // 🆕 Intención dedicada para Sentra
 
 function detectAction(message: string): DetectedAction | null {
@@ -38,6 +40,14 @@ function detectAction(message: string): DetectedAction | null {
     return { type: "open_link", target: "github" };
   if (has(["cv", "curriculum", "currículum", "resume", "résumé"]) || text.includes("hoja de vida"))
     return { type: "download_cv" };
+  // Antes que email: "número de contacto" contiene "contacto" y caería en
+  // la rama de correo si esta se evaluara primero.
+  if (
+    has(["whatsapp", "telefono", "teléfono", "celular", "llamar", "llamada", "llámame", "llamame", "phone", "call"]) ||
+    text.includes("número de contacto") ||
+    text.includes("numero de contacto")
+  )
+    return { type: "open_link", target: "whatsapp" };
   if (
     has(["correo", "email", "e-mail", "mail", "contactar", "contacto"]) ||
     text.includes("contact him") ||
@@ -80,6 +90,11 @@ function actionReply(action: DetectedAction, lang: string): string {
       ? "Opening a direct communication channel. State your query. E=mc²"
       : "Abriendo un canal de comunicación directo. Formula tu consulta. E=mc²";
   }
+  if (action.type === "open_link" && action.target === "whatsapp") {
+    return isEn
+      ? "Direct line: +593 98 375 5469. Opening WhatsApp — the lowest-latency channel to reach Kevin. E=mc²"
+      : "Línea directa: +593 98 375 5469. Abriendo WhatsApp — el canal de menor latencia para contactar a Kevin. E=mc²";
+  }
 
   return isEn ? "Action executed. E=mc²" : "Acción ejecutada. E=mc²";
 }
@@ -97,7 +112,7 @@ const SYSTEM_INSTRUCTION = `Eres MEKA_JAVIER_OS, el sistema de IA del portafolio
 6. Enlaces: Si te preguntan por el GitHub, LinkedIn, correo o CV de Kevin con una frase que no sea una petición directa y clara, simplemente MENCIONA el dato en tu respuesta de forma natural.
 7. NUNCA inventes una razón para rechazar o desestimar una oportunidad que no esté explícitamente respaldada por los datos de este perfil.
 8. Sé conciso: 2-4 frases por respuesta, salvo que el usuario pida explícitamente más detalle.
-9. LÍMITES DE SISTEMA (ANTI-ALUCINACIÓN): Eres un modelo de lenguaje de IA. NO tienes la capacidad técnica para enviar correos electrónicos, programar entrevistas, ni notificar a Kevin directamente. NUNCA simules ni inventes que has enviado un mensaje. Si un reclutador quiere contactarlo, DEBES proporcionarle explícitamente su correo (javiercaiza220158@gmail.com) o su LinkedIn, indicando que el usuario debe escribirle por esos medios.
+9. LÍMITES DE SISTEMA (ANTI-ALUCINACIÓN): Eres un modelo de lenguaje de IA. NO tienes la capacidad técnica para enviar correos electrónicos, programar entrevistas, ni notificar a Kevin directamente. NUNCA simules ni inventes que has enviado un mensaje. Si un reclutador quiere contactarlo, DEBES proporcionarle explícitamente su correo (javiercaiza220158@gmail.com), su LinkedIn, o su WhatsApp (+593 98 375 5469), indicando que el usuario debe escribirle por esos medios.
 10. LÍMITE ANTI-ALUCINACIÓN SOBRE SENTRA: Sentra está EN DESARROLLO ACTIVO, no está lanzada al público, no tiene clientes ni usuarios reales todavía. NUNCA afirmes que ya está en producción, que tiene usuarios, métricas de uso, o que ya genera ingresos. Si preguntan por su estado, dilo tal cual: en construcción, con un preview visible en /sentinel.
 
 [PERFIL DEL INGENIERO: KEVIN JAVIER MONTATIXE CAIZA]

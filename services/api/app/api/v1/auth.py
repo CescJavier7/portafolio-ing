@@ -41,6 +41,7 @@ from app.models.refresh_token import RefreshToken
 from app.models.user import User
 from app.schemas.auth import (
     AccessTokenResponse,
+    ChangePasswordRequest,
     LoginRequest,
     MessageResponse,
     RegisterRequest,
@@ -342,3 +343,41 @@ async def me(current_user: User = Depends(get_current_user)):
     # El frontend lo usa para saber quién está logueado (panel, navbar, etc.)
     # sin decodificar el JWT en el cliente.
     return current_user
+
+
+@router.post("/change-password", response_model=AccessTokenResponse)
+@limiter.limit("5/minute")
+async def change_password(
+    request: Request,
+    response: Response,
+    payload: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    # Exigir la contraseña actual aunque ya haya sesión: si alguien roba un
+    # access token (15 min), no puede convertirlo en control permanente de
+    # la cuenta cambiando la contraseña.
+    if not verify_password(payload.current_password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="La contraseña actual es incorrecta.",
+        )
+
+    current_user.password_hash = hash_password(payload.new_password)
+
+    # Se revocan TODOS los refresh tokens del usuario: cambiar la contraseña
+    # cierra las sesiones en otros dispositivos (si el motivo del cambio es
+    # un robo de credenciales, esto expulsa al atacante). La sesión actual
+    # se renueva abajo con una familia nueva, así este dispositivo sigue
+    # logueado sin fricción.
+    await db.execute(
+        update(RefreshToken).where(RefreshToken.user_id == current_user.id).values(revoked=True)
+    )
+
+    access_token = await _issue_tokens(db, response, current_user)
+    await db.commit()
+
+    return AccessTokenResponse(
+        access_token=access_token,
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    )
