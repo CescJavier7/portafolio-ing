@@ -14,6 +14,17 @@ const API_BASE =
 
 const TOKEN_KEY = 'sentra_access_token';
 
+// Evento global de cambios de sesión: el NavBar (y cualquier componente
+// montado en el layout) persiste entre navegaciones del App Router, así
+// que un login/logout en una página NO lo remonta. Este evento avisa a
+// todos los interesados para que re-verifiquen. Ver useSentraSession().
+export const SENTRA_AUTH_EVENT = 'sentra:auth-changed';
+
+function notifyAuthChanged() {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event(SENTRA_AUTH_EVENT));
+}
+
 // Flag en localStorage (persiste entre pestañas/sesiones): "este navegador
 // alguna vez inició sesión". Evita que el NavBar dispare un POST /refresh
 // en CADA visita de un usuario anónimo que jamás se ha logueado.
@@ -115,6 +126,7 @@ export async function sentraLogin(data: {
   });
   setToken(res.access_token);
   setKnownUser(true);
+  notifyAuthChanged();
 }
 
 export async function sentraResendVerification(
@@ -153,6 +165,7 @@ export async function sentraLogout(): Promise<void> {
   } finally {
     setToken(null);
     setKnownUser(false);
+    notifyAuthChanged();
   }
 }
 

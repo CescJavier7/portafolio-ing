@@ -2,7 +2,8 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { ShieldCheck, Radar, FileSearch, Sparkles, ArrowUpRight, Clock } from 'lucide-react';
+import { ShieldCheck, Radar, FileSearch, Sparkles, ArrowUpRight, Clock, PartyPopper } from 'lucide-react';
+import { useSentraSession } from '@/lib/sentra/useSession';
 
 interface Feature {
   title: string;
@@ -24,12 +25,19 @@ interface SentinelProps {
     ctaBack: string;
     ctaRegister?: string;
     ctaLogin?: string;
+    ctaLoggedTitle?: string;
+    ctaLoggedBody?: string;
+    ctaPanel?: string;
   };
 }
 
 const featureIcons = [ShieldCheck, Radar, FileSearch, Sparkles];
 
 export default function SentinelLanding({ lang, dict }: SentinelProps) {
+  // Sesión de Sentra: si el visitante ya tiene cuenta, el CTA de registro
+  // no tiene sentido — se convierte en un "ya estás dentro" + link al panel.
+  const { user } = useSentraSession();
+
   if (!dict) return null;
 
   return (
@@ -97,21 +105,41 @@ export default function SentinelLanding({ lang, dict }: SentinelProps) {
             style={{ backgroundImage: 'radial-gradient(#4ade80 1px, transparent 1px)', backgroundSize: '30px 30px' }}
           />
           <div className="relative z-10">
-            <p className="text-sm font-bold uppercase tracking-widest text-green-400 mb-3">{dict.statusLabel}</p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                href={`/${lang}/sentinel/register`}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-105 transition-transform"
-              >
-                {dict.ctaRegister ?? dict.ctaWaitlist} <ArrowUpRight className="w-4 h-4" />
-              </Link>
-              <Link
-                href={`/${lang}/sentinel/login`}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-zinc-700 text-zinc-300 text-sm font-bold hover:bg-white/5 transition-colors"
-              >
-                {dict.ctaLogin ?? dict.ctaBack}
-              </Link>
-            </div>
+            {user ? (
+              <>
+                <p className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-green-400 mb-3">
+                  <PartyPopper className="w-4 h-4" />
+                  {dict.ctaLoggedTitle ?? dict.statusLabel}
+                </p>
+                <p className="text-sm text-zinc-400 max-w-md mx-auto mb-6">{dict.ctaLoggedBody}</p>
+                <div className="flex items-center justify-center">
+                  <Link
+                    href={`/${lang}/sentinel/panel`}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-105 transition-transform"
+                  >
+                    {dict.ctaPanel ?? 'Panel'} <ArrowUpRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-bold uppercase tracking-widest text-green-400 mb-3">{dict.statusLabel}</p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <Link
+                    href={`/${lang}/sentinel/register`}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-105 transition-transform"
+                  >
+                    {dict.ctaRegister ?? dict.ctaWaitlist} <ArrowUpRight className="w-4 h-4" />
+                  </Link>
+                  <Link
+                    href={`/${lang}/sentinel/login`}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-zinc-700 text-zinc-300 text-sm font-bold hover:bg-white/5 transition-colors"
+                  >
+                    {dict.ctaLogin ?? dict.ctaBack}
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
         </motion.div>
       </div>

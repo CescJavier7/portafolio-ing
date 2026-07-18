@@ -62,7 +62,13 @@ def create_checkout_url(email: str, organization_id: str) -> str:
     }
 
     response = requests.post(f"{API_BASE}/checkouts", json=payload, headers=_headers(), timeout=10)
-    response.raise_for_status()
+    if not response.ok:
+        # El body de error de LS dice exactamente por qué rechazó (API key
+        # inválida, variante pending, cuenta en revisión...). Sin esto, el
+        # log solo diría "400/401 Client Error" y a adivinar.
+        raise RuntimeError(
+            f"Lemon Squeezy rechazó el checkout: HTTP {response.status_code} — {response.text[:500]}"
+        )
     return response.json()["data"]["attributes"]["url"]
 
 

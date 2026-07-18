@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { LogIn, MailWarning } from 'lucide-react';
 import { sentraLogin, sentraResendVerification, SentraApiError } from '@/lib/sentra/api';
+import { useSentraSession } from '@/lib/sentra/useSession';
 
 interface Dict {
   title: string;
@@ -27,6 +28,7 @@ const inputClass =
 
 export default function SentraLogin({ lang, dict }: { lang: string; dict: Dict }) {
   const router = useRouter();
+  const { user: sessionUser } = useSentraSession();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -35,6 +37,11 @@ export default function SentraLogin({ lang, dict }: { lang: string; dict: Dict }
   // distinto del 401 genérico de credenciales inválidas.
   const [unverified, setUnverified] = useState(false);
   const [resent, setResent] = useState(false);
+
+  // Con sesión activa, el login no tiene sentido: directo al panel.
+  useEffect(() => {
+    if (sessionUser) router.replace(`/${lang}/sentinel/panel`);
+  }, [sessionUser, lang, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

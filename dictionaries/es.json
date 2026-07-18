@@ -96,7 +96,10 @@
     "ctaWaitlist": "Quiero probarla primero",
     "ctaBack": "Ver todos los servicios",
     "ctaRegister": "Crear mi cuenta",
-    "ctaLogin": "Ya tengo cuenta"
+    "ctaLogin": "Ya tengo cuenta",
+    "ctaLoggedTitle": "Tu lugar está asegurado",
+    "ctaLoggedBody": "Te escribiremos a tu correo en cuanto los primeros escaneos estén listos. Mientras tanto, tu panel te espera.",
+    "ctaPanel": "Ir a mi panel"
   },
   "skills": {
     "tag": "Tech Stack",

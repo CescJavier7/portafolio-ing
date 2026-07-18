@@ -5,14 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LayoutDashboard, LogOut } from 'lucide-react';
-import {
-  sentraHasToken,
-  sentraIsKnownUser,
-  sentraLogout,
-  sentraMe,
-  sentraRefresh,
-  type SentraUser,
-} from '@/lib/sentra/api';
+import { sentraLogout } from '@/lib/sentra/api';
+import { useSentraSession } from '@/lib/sentra/useSession';
 
 interface Dict {
   login: string;
@@ -21,46 +15,15 @@ interface Dict {
 }
 
 // Widget de sesión del NavBar, estilo SaaS: avatar con la inicial del
-// correo + dropdown con opciones según la cuenta. Autocontenido: el NavBar
-// no necesita saber nada de auth, solo montar <NavSession/>.
+// correo + dropdown con opciones según la cuenta. La lógica de sesión vive
+// en useSentraSession(), que además escucha cambios de login/logout hechos
+// en otras páginas (el NavBar persiste entre navegaciones y sin ese evento
+// se quedaría mostrando el estado viejo).
 export default function NavSession({ lang, dict }: { lang: string; dict: Dict }) {
   const router = useRouter();
-  const [user, setUser] = useState<SentraUser | null>(null);
+  const { user } = useSentraSession();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function bootstrap() {
-      // Anónimo que nunca inició sesión en este navegador: ni un solo
-      // request a la API — el botón de login aparece de inmediato.
-      if (!sentraHasToken() && !sentraIsKnownUser()) return;
-
-      if (!sentraHasToken()) {
-        const alive = await sentraRefresh();
-        if (!alive) return;
-      }
-      try {
-        const me = await sentraMe();
-        if (!cancelled) setUser(me);
-      } catch {
-        const alive = await sentraRefresh();
-        if (!alive) return;
-        try {
-          const me = await sentraMe();
-          if (!cancelled) setUser(me);
-        } catch {
-          /* sesión irrecuperable: se queda el botón de login */
-        }
-      }
-    }
-
-    bootstrap();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // Cierra el dropdown al hacer click fuera (patrón estándar de menús).
   useEffect(() => {
@@ -75,8 +38,7 @@ export default function NavSession({ lang, dict }: { lang: string; dict: Dict })
 
   async function handleLogout() {
     setOpen(false);
-    setUser(null);
-    await sentraLogout();
+    await sentraLogout(); // dispara el evento: el hook pone user en null solo
     router.push(`/${lang}/sentinel/login`);
   }
 

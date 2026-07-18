@@ -52,7 +52,17 @@ async def create_checkout(current_user: User = Depends(get_current_user), db: As
 
     # A diferencia de Stripe, no necesitamos un customer_id remoto de
     # antemano: Lemon Squeezy crea/asocia el customer al completar el pago.
-    checkout_url = create_checkout_url(current_user.email, str(org.id))
+    try:
+        checkout_url = create_checkout_url(current_user.email, str(org.id))
+    except Exception as exc:
+        # HTTPException (no excepción cruda): así la respuesta pasa por los
+        # handlers de FastAPI y SÍ lleva headers CORS — un 500 sin manejar
+        # sale sin ellos y el navegador lo disfraza de "error de CORS".
+        print(f"[BILLING] Fallo creando checkout para org {org.id}: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="El proveedor de pagos no aceptó la solicitud. Inténtalo más tarde.",
+        )
     return {"checkout_url": checkout_url}
 
 

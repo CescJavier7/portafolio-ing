@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { MailCheck, ShieldCheck } from 'lucide-react';
 import { sentraRegister, SentraApiError } from '@/lib/sentra/api';
+import { useSentraSession } from '@/lib/sentra/useSession';
 
 interface Dict {
   title: string;
@@ -27,6 +29,14 @@ const inputClass =
   'w-full rounded-xl bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-4 py-3 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition';
 
 export default function SentraRegister({ lang, dict }: { lang: string; dict: Dict }) {
+  const router = useRouter();
+  const { user: sessionUser } = useSentraSession();
+
+  // Con sesión activa, registrarse no tiene sentido: directo al panel.
+  useEffect(() => {
+    if (sessionUser) router.replace(`/${lang}/sentinel/panel`);
+  }, [sessionUser, lang, router]);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [org, setOrg] = useState('');

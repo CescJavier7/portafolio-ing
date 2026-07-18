@@ -96,7 +96,10 @@
     "ctaWaitlist": "I want early access",
     "ctaBack": "See all services",
     "ctaRegister": "Create my account",
-    "ctaLogin": "I have an account"
+    "ctaLogin": "I have an account",
+    "ctaLoggedTitle": "Your spot is secured",
+    "ctaLoggedBody": "We'll email you as soon as the first scans go live. Meanwhile, your panel awaits.",
+    "ctaPanel": "Go to my panel"
   },
   "skills": {
     "tag": "Tech Stack",
