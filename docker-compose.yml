@@ -83,9 +83,14 @@ services:
     env_file:
       - ./services/api/.env
     environment:
-      # Reutiliza el MISMO Postgres que portfolio-db, pero una base
-      # `sentra` separada (hay que crearla una vez a mano, ver runbook).
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@portfolio-db:5432/sentra
+      # OJO: DATABASE_URL ya NO se arma aquí por interpolación. La contraseña
+      # de Postgres contiene caracteres especiales (@) que, insertados crudos
+      # en una URL, rompen el parseo (el host queda mal y asyncpg tira
+      # "Name or service not known"). DATABASE_URL vive en services/api/.env
+      # con la contraseña URL-encodeada (@ -> %40), apuntando a
+      # postgresql+asyncpg://...@portfolio-db:5432/sentra — misma base
+      # Postgres que portfolio-db, base `sentra` separada (crearla una vez
+      # a mano, ver README de services/api).
       - REDIS_URL=redis://sentra-redis:6379/0
       - ENVIRONMENT=production
     depends_on:
