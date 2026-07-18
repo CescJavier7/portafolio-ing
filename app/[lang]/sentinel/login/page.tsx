@@ -1,6 +1,8 @@
 import SentraLogin from '@/components/sentra/SentraLogin';
 import { getDictionary } from '@/get-dictionary';
 
+export const metadata = { robots: { index: false, follow: false } };
+
 export default async function SentraLoginPage({
   params,
 }: {

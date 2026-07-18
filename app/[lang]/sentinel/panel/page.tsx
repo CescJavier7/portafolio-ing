@@ -1,6 +1,9 @@
 import SentraPanel from '@/components/sentra/SentraPanel';
 import { getDictionary } from '@/get-dictionary';
 
+// Página de aplicación: no debe indexarse en Google (es privada por sesión).
+export const metadata = { robots: { index: false, follow: false } };
+
 export default async function SentraPanelPage({
   params,
 }: {

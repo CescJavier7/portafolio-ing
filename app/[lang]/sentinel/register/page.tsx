@@ -1,6 +1,8 @@
 import SentraRegister from '@/components/sentra/SentraRegister';
 import { getDictionary } from '@/get-dictionary';
 
+export const metadata = { robots: { index: false, follow: false } };
+
 export default async function SentraRegisterPage({
   params,
 }: {
