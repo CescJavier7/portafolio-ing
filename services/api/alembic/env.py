@@ -14,6 +14,7 @@ import app.models.organization
 import app.models.user
 import app.models.refresh_token
 import app.models.target
+import app.models.scan
 
 # Configuración de logging de Alembic
 config = context.config

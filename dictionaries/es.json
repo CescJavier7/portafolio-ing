@@ -480,7 +480,47 @@
           "En \"Nombre\" o \"Host\" pega el valor de abajo. Ojo: algunos proveedores agregan tu dominio solo, así que si te pide solo el subdominio usa \"_sentra-challenge\".",
           "En \"Valor\" o \"Contenido\" pega la cadena sentra-verify. Deja el TTL en automático.",
           "Guarda y vuelve aquí en 1–2 minutos para pulsar Verificar (la propagación DNS no es instantánea)."
-        ]
+        ],
+        "scanUI": {
+          "scan": "Escanear",
+          "scanning": "Escaneando…",
+          "rescan": "Volver a escanear",
+          "scoreLabel": "Security Score",
+          "lastScan": "Último escaneo",
+          "noScans": "Sin escaneos todavía.",
+          "detailTitle": "Desglose del score",
+          "passed": "Cumple",
+          "failed": "Falta",
+          "recommendation": "Recomendación",
+          "lockedTitle": "Desglose disponible en Pro",
+          "lockedBody": "Con el plan Pro ves qué suma y qué resta cada punto, con recomendaciones priorizadas para subir tu score.",
+          "lockedCta": "Ver plan Pro",
+          "scansLeft": "Te quedan {n} escaneos hoy",
+          "verifyFirst": "Verifica el dominio para poder escanearlo.",
+          "severity": {
+            "alta": "Alta",
+            "media": "Media",
+            "baja": "Baja"
+          }
+        }
+      },
+      "upgrade_modal": {
+        "title": "Desbloquea Sentra Pro",
+        "subtitle": "Lleva tus auditorías al siguiente nivel.",
+        "outOfScans": "Agotaste tus escaneos gratuitos por hoy. Con Pro escaneas sin esperar.",
+        "benefits": [
+          "Hasta 10 dominios auditables",
+          "Escaneos ilimitados (sin espera de 24 horas)",
+          "Desglose exacto de la ponderación del score",
+          "Recomendaciones priorizadas para subir tu puntaje",
+          "Reportes generados con IA (técnico y ejecutivo)",
+          "Soporte prioritario"
+        ],
+        "price": "$30/mes",
+        "cta": "Mejorar a Pro",
+        "upgrading": "Abriendo checkout…",
+        "later": "Ahora no",
+        "testModeNote": "Pagos en modo de prueba mientras Sentra está en acceso anticipado."
       }
     }
   }

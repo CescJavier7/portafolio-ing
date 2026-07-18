@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LayoutDashboard, LogOut } from 'lucide-react';
 import { sentraLogout, type SentraUser } from '@/lib/sentra/api';
+import ProAvatar from '@/components/sentra/ProAvatar';
 
 interface Dict {
   login: string;
@@ -58,17 +59,15 @@ export default function NavSession({
     );
   }
 
-  const initial = user.email.charAt(0).toUpperCase();
-
   return (
     <div className="relative" ref={containerRef}>
       <button
         onClick={() => setOpen(!open)}
         aria-expanded={open}
         aria-label={user.email}
-        className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 text-black text-sm font-black flex items-center justify-center ring-2 ring-transparent hover:ring-green-500/40 transition-shadow"
+        className="flex items-center justify-center rounded-full hover:opacity-90 transition-opacity"
       >
-        {initial}
+        <ProAvatar email={user.email} plan={user.plan} size={32} />
       </button>
 
       <AnimatePresence>

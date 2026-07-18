@@ -11,17 +11,22 @@ Gestión de dominios a auditar. Reglas clave:
   token — evita IDOR (acceder a recursos de otra org cambiando un id).
 """
 import secrets
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.deps import get_current_user
+from app.core.plans import plan_for
 from app.core.rate_limit import limiter
 from app.db.session import get_db
+from app.models.scan import Scan
 from app.models.target import Target
 from app.models.user import User
 from app.models.organization import Organization
+from app.schemas.scan import ScanResult
 from app.schemas.target import (
     TargetCreate,
     TargetCreatedOut,
@@ -33,16 +38,11 @@ from app.services.dns_verification import (
     check_dns_txt,
     expected_txt_value,
 )
+from app.services.scanner import scan_domain
 
 router = APIRouter(prefix="/targets", tags=["targets"])
 
-# Dominios permitidos por plan. FREE deja probar con uno; el resto exige Pro.
-PLAN_TARGET_LIMITS = {
-    "FREE": 1,
-    "PRO": 10,
-    "TEAM": 50,
-    "ENTERPRISE": 1000,
-}
+SCAN_WINDOW = timedelta(hours=24)
 
 
 def _created_payload(target: Target) -> TargetCreatedOut:
@@ -76,7 +76,7 @@ async def create_target(
     db: AsyncSession = Depends(get_db),
 ):
     org = await db.get(Organization, current_user.organization_id)
-    limit = PLAN_TARGET_LIMITS.get(org.plan if org else "FREE", 1)
+    limit = plan_for(org.plan if org else None).max_targets
 
     count_result = await db.execute(
         select(func.count())
@@ -177,3 +177,97 @@ async def delete_target(
     target = await _get_owned_target(target_id, current_user, db)
     await db.delete(target)
     await db.commit()
+
+
+def _scan_to_result(scan: Scan, domain: str, show_detail: bool, scans_remaining: int | None) -> ScanResult:
+    return ScanResult(
+        id=scan.id,
+        target_id=scan.target_id,
+        domain=domain,
+        score=scan.score,
+        grade=scan.grade,
+        created_at=scan.created_at,
+        findings=scan.findings if show_detail else None,
+        detail_locked=not show_detail,
+        scans_remaining=scans_remaining,
+    )
+
+
+@router.post("/{target_id}/scan", response_model=ScanResult)
+@limiter.limit("10/minute")
+async def scan_target(
+    request: Request,
+    target_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    target = await _get_owned_target(target_id, current_user, db)
+
+    # Barrera ético-legal: no se escanea lo que no se ha verificado.
+    if not target.verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Debes verificar la propiedad del dominio antes de escanearlo.",
+        )
+
+    org = await db.get(Organization, current_user.organization_id)
+    config = plan_for(org.plan if org else None)
+
+    # ── Límite anti-abuso por ventana de 24h (solo se aplica el contador al
+    # plan FREE; PRO tiene un tope alto). El contador vive en la org, así que
+    # borrar dominios no lo reinicia. ──
+    now = datetime.now(timezone.utc)
+    window_start = org.free_scan_window_start
+    if window_start is None or (now - window_start) >= SCAN_WINDOW:
+        # Nueva ventana: se reinician los intentos.
+        org.free_scan_window_start = now
+        org.free_scan_count = 0
+
+    if org.free_scan_count >= config.scans_per_day:
+        # Cuándo recupera intentos (fin de la ventana actual).
+        resets_at = (org.free_scan_window_start or now) + SCAN_WINDOW
+        await db.commit()  # persistir el posible reset de ventana de arriba
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail=(
+                "Agotaste tus escaneos disponibles. "
+                f"Recuperarás {config.scans_per_day} escaneos el {resets_at.strftime('%d/%m %H:%M')} UTC, "
+                "o mejora a Pro para escanear sin esperar."
+            ),
+        )
+
+    # Escaneo real (bloqueante → threadpool para no frenar el event loop).
+    result = await run_in_threadpool(scan_domain, target.domain)
+
+    scan = Scan(
+        target_id=target.id,
+        organization_id=current_user.organization_id,
+        score=result["score"],
+        grade=result["grade"],
+        findings=result["findings"],
+    )
+    db.add(scan)
+
+    org.free_scan_count += 1
+    await db.commit()
+    await db.refresh(scan)
+
+    remaining = max(0, config.scans_per_day - org.free_scan_count)
+    return _scan_to_result(scan, target.domain, config.show_score_detail, remaining)
+
+
+@router.get("/{target_id}/scans", response_model=list[ScanResult])
+async def list_scans(
+    target_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    target = await _get_owned_target(target_id, current_user, db)
+    org = await db.get(Organization, current_user.organization_id)
+    show_detail = plan_for(org.plan if org else None).show_score_detail
+
+    result = await db.execute(
+        select(Scan).where(Scan.target_id == target.id).order_by(Scan.created_at.desc()).limit(10)
+    )
+    scans = result.scalars().all()
+    return [_scan_to_result(s, target.domain, show_detail, None) for s in scans]

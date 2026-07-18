@@ -47,6 +47,7 @@ export interface SentraUser {
   role: string;
   organization_id: string;
   email_verified: boolean;
+  plan: string;
 }
 
 export class SentraApiError extends Error {
@@ -269,4 +270,35 @@ export async function sentraVerifyTarget(
 
 export async function sentraDeleteTarget(targetId: string): Promise<void> {
   await request(`/api/v1/targets/${targetId}`, { method: 'DELETE' }, true);
+}
+
+// ── Escaneos ────────────────────────────────────────────────────────
+
+export interface SentraFinding {
+  id: string;
+  label: string;
+  passed: boolean;
+  weight: number;
+  severity: string;
+  recommendation: string | null;
+}
+
+export interface SentraScan {
+  id: string;
+  target_id: string;
+  domain: string;
+  score: number;
+  grade: string;
+  created_at: string;
+  findings: SentraFinding[] | null;
+  detail_locked: boolean;
+  scans_remaining: number | null;
+}
+
+export async function sentraScanTarget(targetId: string): Promise<SentraScan> {
+  return request(`/api/v1/targets/${targetId}/scan`, { method: 'POST' }, true);
+}
+
+export async function sentraListScans(targetId: string): Promise<SentraScan[]> {
+  return request(`/api/v1/targets/${targetId}/scans`, { method: 'GET' }, true);
 }

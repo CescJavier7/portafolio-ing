@@ -340,10 +340,19 @@ async def logout(request: Request, response: Response, db: AsyncSession = Depend
 
 
 @router.get("/me", response_model=UserOut)
-async def me(current_user: User = Depends(get_current_user)):
+async def me(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     # El frontend lo usa para saber quién está logueado (panel, navbar, etc.)
-    # sin decodificar el JWT en el cliente.
-    return current_user
+    # sin decodificar el JWT en el cliente. Incluye el plan de la org para
+    # el avatar Pro y los gates de features.
+    org = await db.get(Organization, current_user.organization_id)
+    return UserOut(
+        id=current_user.id,
+        email=current_user.email,
+        role=current_user.role,
+        organization_id=current_user.organization_id,
+        email_verified=current_user.email_verified,
+        plan=org.plan if org else "FREE",
+    )
 
 
 @router.post("/change-password", response_model=AccessTokenResponse)

@@ -16,6 +16,7 @@ import {
   type SentraUser,
 } from '@/lib/sentra/api';
 import TargetsCard, { type TargetsDict } from '@/components/sentra/TargetsCard';
+import { type UpgradeDict } from '@/components/sentra/UpgradeModal';
 
 interface Dict {
   title: string;
@@ -40,6 +41,7 @@ interface Dict {
   upgradeError: string;
   testModeNote: string;
   targets: TargetsDict;
+  upgrade_modal: UpgradeDict;
 }
 
 const inputClass =
@@ -299,7 +301,7 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
             </button>
           </div>
 
-          <TargetsCard dict={dict.targets} />
+          <TargetsCard dict={dict.targets} upgradeDict={dict.upgrade_modal} />
 
           <PlanCard dict={dict} />
 

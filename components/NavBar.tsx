@@ -8,6 +8,7 @@ import { useTheme } from 'next-themes';
 import { AnimatePresence, motion } from 'framer-motion';
 import LanguageToggle from '@/components/LanguageToggle';
 import NavSession from '@/components/sentra/NavSession';
+import ProAvatar from '@/components/sentra/ProAvatar';
 import { sentraLogout } from '@/lib/sentra/api';
 import { useSentraSession } from '@/lib/sentra/useSession';
 
@@ -259,9 +260,7 @@ export default function NavBar({ dict, lang }: NavBarProps) {
               {sessionUser ? (
                 <div className="rounded-2xl bg-zinc-100/80 dark:bg-white/[0.06] border border-zinc-200/80 dark:border-white/10 overflow-hidden">
                   <div className="flex items-center gap-3 px-4 py-3.5">
-                    <span className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 text-black text-base font-black flex items-center justify-center">
-                      {sessionUser.email.charAt(0).toUpperCase()}
-                    </span>
+                    <ProAvatar email={sessionUser.email} plan={sessionUser.plan} size={40} />
                     <div className="min-w-0">
                       <p className="text-[15px] font-semibold text-zinc-900 dark:text-white truncate">
                         {sessionUser.email}

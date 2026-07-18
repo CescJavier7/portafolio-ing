@@ -480,7 +480,47 @@
           "In \"Name\" or \"Host\" paste the value below. Note: some providers append your domain automatically, so if it asks only for the subdomain use \"_sentra-challenge\".",
           "In \"Value\" or \"Content\" paste the sentra-verify string. Leave TTL on automatic.",
           "Save and come back here in 1–2 minutes to click Verify (DNS propagation is not instant)."
-        ]
+        ],
+        "scanUI": {
+          "scan": "Scan",
+          "scanning": "Scanning…",
+          "rescan": "Scan again",
+          "scoreLabel": "Security Score",
+          "lastScan": "Last scan",
+          "noScans": "No scans yet.",
+          "detailTitle": "Score breakdown",
+          "passed": "Pass",
+          "failed": "Missing",
+          "recommendation": "Recommendation",
+          "lockedTitle": "Breakdown available on Pro",
+          "lockedBody": "With the Pro plan you see what adds and subtracts each point, with prioritized recommendations to raise your score.",
+          "lockedCta": "See Pro plan",
+          "scansLeft": "{n} scans left today",
+          "verifyFirst": "Verify the domain to scan it.",
+          "severity": {
+            "alta": "High",
+            "media": "Medium",
+            "baja": "Low"
+          }
+        }
+      },
+      "upgrade_modal": {
+        "title": "Unlock Sentra Pro",
+        "subtitle": "Take your audits to the next level.",
+        "outOfScans": "You've used up your free scans for today. With Pro you scan without waiting.",
+        "benefits": [
+          "Up to 10 auditable domains",
+          "Unlimited scans (no 24-hour wait)",
+          "Exact score weighting breakdown",
+          "Prioritized recommendations to raise your score",
+          "AI-generated reports (technical and executive)",
+          "Priority support"
+        ],
+        "price": "$30/mo",
+        "cta": "Upgrade to Pro",
+        "upgrading": "Opening checkout…",
+        "later": "Not now",
+        "testModeNote": "Test-mode payments while Sentra is in early access."
       }
     }
   }
