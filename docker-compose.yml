@@ -17,6 +17,9 @@ services:
       # que ambos servicios comparten `internal-net`.
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@portfolio-db:5432/${POSTGRES_DB}
       - NODE_ENV=production
+      # Validación server-side de tokens de Sentra (chat identificado) por
+      # la red interna de Docker: sin salir a internet ni pasar por Cloudflare.
+      - SENTRA_API_INTERNAL_URL=http://sentra-api:8000
     depends_on:
       portfolio-db:
         condition: service_healthy

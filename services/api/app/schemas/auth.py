@@ -7,6 +7,9 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=12, max_length=128)
     organization_name: str = Field(min_length=2, max_length=120)
+    # Opt-in explícito: el frontend lo manda solo si el usuario marcó el
+    # checkbox. Default False — jamás consentimiento implícito.
+    marketing_consent: bool = False
 
     @field_validator("password")
     @classmethod

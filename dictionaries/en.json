@@ -409,7 +409,8 @@
       "successTitle": "Check your email",
       "successBody": "If the details are valid, we sent you a verification link. Check your spam folder too.",
       "haveAccount": "Already have an account?",
-      "loginLink": "Sign in"
+      "loginLink": "Sign in",
+      "marketingConsent": "I want to receive Sentra news and promotions by email (optional)"
     },
     "login": {
       "title": "Sign in",
@@ -438,7 +439,15 @@
       "newPasswordHint": "At least 12 characters, with a number or symbol.",
       "changeSubmit": "Change password",
       "changing": "Changing…",
-      "changed": "Password updated. Your other sessions were signed out."
+      "changed": "Password updated. Your other sessions were signed out.",
+      "planTitle": "Plan",
+      "planFree": "Free",
+      "planDesc": "Your organization is on the free plan. Upgrade to Pro for full access when scans launch.",
+      "planProDesc": "Your organization is on the Pro plan. Thanks for supporting Sentra.",
+      "upgrade": "Upgrade to Pro — $30/mo",
+      "upgrading": "Opening checkout…",
+      "upgradeError": "Could not start the payment. Try again in a moment.",
+      "testModeNote": "Payments run in test mode while Sentra is in early access."
     }
   }
 }

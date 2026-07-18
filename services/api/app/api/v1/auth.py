@@ -122,6 +122,7 @@ async def register(request: Request, payload: RegisterRequest, db: AsyncSession 
         email_verification_token_hash=hash_email_verification_token(raw_token),
         email_verification_expires_at=datetime.now(timezone.utc)
         + timedelta(hours=settings.EMAIL_VERIFICATION_EXPIRE_HOURS),
+        marketing_consent=payload.marketing_consent,
     )
     db.add(user)
     await db.commit()

@@ -154,12 +154,14 @@ interface ServiceResult {
 
 export async function handleIncomingMessage(
   input: ChatRequestInput,
-  ip: string
+  ip: string,
+  sentraUser?: { userId: string; email: string }
 ): Promise<ServiceResult> {
   const { message, lang, history, sessionId } = input;
 
-  // 1. Aseguramos que exista una sesión en DB
-  const session = await findOrCreateSession(sessionId, ip);
+  // 1. Aseguramos que exista una sesión en DB (vinculada al usuario de
+  // Sentra si el visitante chatea logueado — ver route.ts).
+  const session = await findOrCreateSession(sessionId, ip, sentraUser);
 
   // 🔴 FIX: Verificamos si es el primer mensaje de esta sesión en la BD
   const messageCount = await prisma.message.count({

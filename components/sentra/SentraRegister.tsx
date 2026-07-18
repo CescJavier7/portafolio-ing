@@ -20,6 +20,7 @@ interface Dict {
   successBody: string;
   haveAccount: string;
   loginLink: string;
+  marketingConsent: string;
 }
 
 const inputClass =
@@ -29,6 +30,9 @@ export default function SentraRegister({ lang, dict }: { lang: string; dict: Dic
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [org, setOrg] = useState('');
+  // Opt-in de marketing: SIEMPRE desmarcado por defecto (requisito legal
+  // de consentimiento explícito — GDPR/LOPD).
+  const [consent, setConsent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +42,12 @@ export default function SentraRegister({ lang, dict }: { lang: string; dict: Dic
     setLoading(true);
     setError(null);
     try {
-      await sentraRegister({ email, password, organization_name: org });
+      await sentraRegister({
+        email,
+        password,
+        organization_name: org,
+        marketing_consent: consent,
+      });
       // La API responde SIEMPRE el mensaje genérico (anti-enumeración):
       // el estado de éxito aquí solo significa "petición aceptada".
       setDone(true);
@@ -133,6 +142,18 @@ export default function SentraRegister({ lang, dict }: { lang: string; dict: Dic
                     className={inputClass}
                   />
                 </div>
+
+                <label className="flex items-start gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={consent}
+                    onChange={(e) => setConsent(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 rounded border-zinc-300 dark:border-zinc-700 accent-green-500"
+                  />
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                    {dict.marketingConsent}
+                  </span>
+                </label>
 
                 {error && (
                   <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">

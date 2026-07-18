@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, X, Terminal, Atom } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { sentraGetAccessToken } from '@/lib/sentra/api';
 
 interface ChatProps {
   lang: string;
@@ -242,9 +243,15 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
     }));
 
     try {
+      // Si hay sesión de Sentra activa, mandamos el token: el server la
+      // valida y vincula esta conversación a la cuenta del usuario.
+      const sentraToken = sentraGetAccessToken();
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(sentraToken ? { Authorization: `Bearer ${sentraToken}` } : {}),
+        },
         body: JSON.stringify({ message: userText, lang, history: historyForApi, sessionId }),
       });
 

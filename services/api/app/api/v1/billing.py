@@ -33,6 +33,17 @@ router = APIRouter(prefix="/billing", tags=["billing"])
 _processed_event_ids: set[str] = set()
 
 
+@router.get("/subscription")
+async def get_subscription(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    org = await db.get(Organization, current_user.organization_id)
+    if org is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organización no encontrada.")
+    return {
+        "plan": org.plan,
+        "subscription_status": org.subscription_status,
+    }
+
+
 @router.post("/checkout-session")
 async def create_checkout(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     org = await db.get(Organization, current_user.organization_id)

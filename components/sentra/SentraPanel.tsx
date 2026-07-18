@@ -3,9 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ShieldCheck, LogOut, Construction, KeyRound } from 'lucide-react';
+import { ShieldCheck, LogOut, Construction, KeyRound, Gem } from 'lucide-react';
 import {
   sentraChangePassword,
+  sentraCreateCheckout,
+  sentraGetSubscription,
   sentraHasToken,
   sentraLogout,
   sentraMe,
@@ -28,10 +30,92 @@ interface Dict {
   changeSubmit: string;
   changing: string;
   changed: string;
+  planTitle: string;
+  planFree: string;
+  planDesc: string;
+  planProDesc: string;
+  upgrade: string;
+  upgrading: string;
+  upgradeError: string;
+  testModeNote: string;
 }
 
 const inputClass =
   'w-full rounded-xl bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-4 py-3 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition';
+
+function PlanCard({ dict }: { dict: Dict }) {
+  const [plan, setPlan] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    sentraGetSubscription()
+      .then((sub) => setPlan(sub.plan))
+      .catch(() => setPlan('FREE')); // sin drama: el plan por defecto es FREE
+  }, []);
+
+  async function handleUpgrade() {
+    setBusy(true);
+    setError(null);
+    try {
+      const url = await sentraCreateCheckout();
+      // Checkout hosteado: navegamos, no abrimos popup (los bloqueadores
+      // de popups matarían la venta).
+      window.location.href = url;
+    } catch {
+      setError(dict.upgradeError);
+      setBusy(false);
+    }
+  }
+
+  const isPro = plan === 'PRO';
+
+  return (
+    <div className="rounded-3xl bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 shadow-sm p-8 mt-6">
+      <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+            <Gem className="w-5 h-5 text-green-500" />
+          </div>
+          <h2 className="text-lg font-black tracking-tight text-zinc-900 dark:text-white">
+            {dict.planTitle}
+          </h2>
+        </div>
+        <span
+          className={`px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest border ${
+            isPro
+              ? 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20'
+              : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700'
+          }`}
+        >
+          {plan === null ? '…' : isPro ? 'Pro' : dict.planFree}
+        </span>
+      </div>
+
+      <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
+        {isPro ? dict.planProDesc : dict.planDesc}
+      </p>
+
+      {!isPro && (
+        <>
+          <button
+            onClick={handleUpgrade}
+            disabled={busy || plan === null}
+            className="px-6 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-60 disabled:hover:scale-100"
+          >
+            {busy ? dict.upgrading : dict.upgrade}
+          </button>
+          {error && (
+            <p className="mt-4 text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+              {error}
+            </p>
+          )}
+          <p className="mt-4 text-[11px] text-zinc-400 dark:text-zinc-500">{dict.testModeNote}</p>
+        </>
+      )}
+    </div>
+  );
+}
 
 function ChangePasswordCard({ dict }: { dict: Dict }) {
   const [current, setCurrent] = useState('');
@@ -221,6 +305,8 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
               {dict.wip}
             </p>
           </div>
+
+          <PlanCard dict={dict} />
 
           <ChangePasswordCard dict={dict} />
         </motion.div>

@@ -409,7 +409,8 @@
       "successTitle": "Revisa tu correo",
       "successBody": "Si los datos son válidos, te enviamos un enlace para verificar la cuenta. Revisa también la carpeta de spam.",
       "haveAccount": "¿Ya tienes cuenta?",
-      "loginLink": "Inicia sesión"
+      "loginLink": "Inicia sesión",
+      "marketingConsent": "Quiero recibir noticias y promociones de Sentra por correo (opcional)"
     },
     "login": {
       "title": "Inicia sesión",
@@ -438,7 +439,15 @@
       "newPasswordHint": "Mínimo 12 caracteres, con al menos un número o símbolo.",
       "changeSubmit": "Cambiar contraseña",
       "changing": "Cambiando…",
-      "changed": "Contraseña actualizada. Tus otras sesiones fueron cerradas."
+      "changed": "Contraseña actualizada. Tus otras sesiones fueron cerradas.",
+      "planTitle": "Plan",
+      "planFree": "Gratis",
+      "planDesc": "Tu organización está en el plan gratuito. Mejora a Pro para acceder a todo cuando lancemos los escaneos.",
+      "planProDesc": "Tu organización tiene el plan Pro. Gracias por apoyar el desarrollo de Sentra.",
+      "upgrade": "Mejorar a Pro — $30/mes",
+      "upgrading": "Abriendo checkout…",
+      "upgradeError": "No se pudo iniciar el pago. Inténtalo de nuevo en un momento.",
+      "testModeNote": "Los pagos están en modo de prueba mientras Sentra está en acceso anticipado."
     }
   }
 }

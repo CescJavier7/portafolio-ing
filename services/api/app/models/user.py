@@ -27,6 +27,11 @@ class User(Base):
     email_verification_token_hash: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
     email_verification_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
+    # Consentimiento EXPLÍCITO para noticias/promociones (opt-in, nunca
+    # marcado por defecto). Enviar marketing sin esto = problemas legales
+    # (GDPR/LOPD) y de reputación de dominio.
+    marketing_consent: Mapped[bool] = mapped_column(Boolean, default=False)
+
     # ── Mitigación de fuerza bruta a nivel de cuenta ──────────
     # Complementa el rate limiting por IP (que se puede evadir con proxies):
     # esto limita intentos contra UNA cuenta específica sin importar el origen.

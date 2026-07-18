@@ -97,6 +97,7 @@ export async function sentraRegister(data: {
   email: string;
   password: string;
   organization_name: string;
+  marketing_consent?: boolean;
 }): Promise<{ message: string }> {
   return request('/api/v1/auth/register', {
     method: 'POST',
@@ -172,4 +173,31 @@ export async function sentraChangePassword(data: {
 
 export function sentraHasToken(): boolean {
   return getToken() !== null;
+}
+
+// Para features del portafolio que quieran identificar al usuario logueado
+// (ej. el chat de MekaSenku manda este token y el server lo valida contra
+// /auth/me). Devuelve null si no hay sesión.
+export function sentraGetAccessToken(): string | null {
+  return getToken();
+}
+
+// ── Billing ─────────────────────────────────────────────────────────
+
+export async function sentraGetSubscription(): Promise<{
+  plan: string;
+  subscription_status: string | null;
+}> {
+  return request('/api/v1/billing/subscription', { method: 'GET' }, true);
+}
+
+// Devuelve la URL del Checkout hosteado de Lemon Squeezy: el navegador
+// debe navegar a ella (window.location.href), no abrirla con fetch.
+export async function sentraCreateCheckout(): Promise<string> {
+  const res = await request<{ checkout_url: string }>(
+    '/api/v1/billing/checkout-session',
+    { method: 'POST' },
+    true,
+  );
+  return res.checkout_url;
 }

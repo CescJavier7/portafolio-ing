@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { chatRequestSchema } from "@/lib/validation/chat.schema";
 import { handleIncomingMessage } from "@/lib/services/chat.service";
 import { isRateLimited, getClientIp } from "@/lib/utils/rateLimit";
+import { verifySentraToken } from "@/lib/sentra/verifyToken.server";
 
 export async function POST(req: Request) {
   try {
@@ -25,7 +26,12 @@ export async function POST(req: Request) {
       );
     }
 
-    const result = await handleIncomingMessage(parsed.data, ip);
+    // Si el visitante está logueado en Sentra, el cliente manda su access
+    // token y la sesión de chat queda vinculada a su cuenta. Best-effort:
+    // un token inválido degrada a chat anónimo, nunca a error.
+    const sentraUser = await verifySentraToken(req.headers.get("authorization"));
+
+    const result = await handleIncomingMessage(parsed.data, ip, sentraUser ?? undefined);
     return NextResponse.json(result.body, { status: result.status });
   } catch (error: any) {
     console.error("=== ERROR ROUTE /api/chat ===", error?.message || error);

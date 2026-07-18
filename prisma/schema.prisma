@@ -15,9 +15,16 @@ model ChatSession {
   humanOverride  Boolean       @default(false)
   status         SessionStatus @default(ACTIVE)
 
+  // Vínculo opcional con un usuario registrado de Sentra (viven en otra
+  // base de datos/servicio — por eso es un ID suelto + email denormalizado,
+  // no una relación de Prisma). Se llena cuando el visitante chatea logueado.
+  sentraUserId   String?
+  sentraEmail    String?
+
   messages       Message[]
 
   @@index([status, updatedAt])
+  @@index([sentraUserId])
 }
 
 model Message {
