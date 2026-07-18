@@ -35,6 +35,8 @@ export interface TargetsDict {
   copied: string;
   close: string;
   scanSoon: string;
+  guideTitle: string;
+  guideSteps: string[];
 }
 
 const inputClass =
@@ -261,6 +263,22 @@ export default function TargetsCard({ dict }: { dict: TargetsDict }) {
                 </div>
                 <CopyField label={dict.recordName} value={instructions.dns_record_name} copyLabel={dict.copy} copiedLabel={dict.copied} />
                 <CopyField label={dict.recordValue} value={instructions.dns_record_value} copyLabel={dict.copy} copiedLabel={dict.copied} />
+              </div>
+
+              {/* Guía genérica: el registro es idéntico en todo proveedor,
+                  solo cambia dónde se pega. */}
+              <div className="mt-6 rounded-2xl bg-zinc-50 dark:bg-black/30 border border-zinc-200 dark:border-zinc-800 p-4">
+                <p className="text-[12px] font-bold text-zinc-700 dark:text-zinc-300 mb-2">{dict.guideTitle}</p>
+                <ol className="space-y-1.5">
+                  {dict.guideSteps.map((step, i) => (
+                    <li key={i} className="flex gap-2.5 text-[12px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                      <span className="shrink-0 w-4 h-4 mt-0.5 rounded-full bg-green-500/15 text-green-600 dark:text-green-400 text-[10px] font-bold flex items-center justify-center">
+                        {i + 1}
+                      </span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
               </div>
 
               <div className="flex gap-3 mt-7">

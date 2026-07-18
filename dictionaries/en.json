@@ -8,6 +8,7 @@
       "about": "About",
       "academic": "Academic",
       "skills": "Skills",
+      "projects": "Projects",
       "certifications": "Certifications",
       "experience": "Experience",
       "contact": "Contact"
@@ -471,7 +472,15 @@
         "copy": "Copy",
         "copied": "Copied",
         "close": "Close",
-        "scanSoon": "Scanning coming soon"
+        "scanSoon": "Scanning coming soon",
+        "guideTitle": "How to add it (works with any provider)",
+        "guideSteps": [
+          "Open your domain provider dashboard (Cloudflare, GoDaddy, Namecheap, Hostinger, Google Domains, etc.) and go to the DNS section.",
+          "Create a new record of type TXT.",
+          "In \"Name\" or \"Host\" paste the value below. Note: some providers append your domain automatically, so if it asks only for the subdomain use \"_sentra-challenge\".",
+          "In \"Value\" or \"Content\" paste the sentra-verify string. Leave TTL on automatic.",
+          "Save and come back here in 1–2 minutes to click Verify (DNS propagation is not instant)."
+        ]
       }
     }
   }

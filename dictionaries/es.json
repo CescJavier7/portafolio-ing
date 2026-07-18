@@ -8,6 +8,7 @@
       "about": "Sobre mí",
       "academic": "Académico",
       "skills": "Habilidades",
+      "projects": "Proyectos",
       "certifications": "Certificados",
       "experience": "Experiencia",
       "contact": "Contacto"
@@ -471,7 +472,15 @@
         "copy": "Copiar",
         "copied": "Copiado",
         "close": "Cerrar",
-        "scanSoon": "El escaneo llegará pronto"
+        "scanSoon": "El escaneo llegará pronto",
+        "guideTitle": "Cómo agregarlo (sirve para cualquier proveedor)",
+        "guideSteps": [
+          "Entra al panel de tu proveedor de dominio (Cloudflare, GoDaddy, Namecheap, Hostinger, Google Domains, etc.) y abre la sección DNS.",
+          "Crea un registro nuevo de tipo TXT.",
+          "En \"Nombre\" o \"Host\" pega el valor de abajo. Ojo: algunos proveedores agregan tu dominio solo, así que si te pide solo el subdominio usa \"_sentra-challenge\".",
+          "En \"Valor\" o \"Contenido\" pega la cadena sentra-verify. Deja el TTL en automático.",
+          "Guarda y vuelve aquí en 1–2 minutos para pulsar Verificar (la propagación DNS no es instantánea)."
+        ]
       }
     }
   }

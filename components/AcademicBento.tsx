@@ -69,14 +69,26 @@ const DegreeCard = ({ degree, t, index }: { degree: any, t: any, index: number }
   const isEngineering = degree.icon === 'shield';
 
   return (
-    <div className="relative w-full h-[420px] sm:h-[380px] perspective-1000 group cursor-pointer" onClick={() => setIsFlipped(!isFlipped)}>
+    <div
+      className="relative w-full h-[420px] sm:h-[380px] group cursor-pointer"
+      onClick={() => setIsFlipped(!isFlipped)}
+      // Safari necesita el prefijo -webkit- para perspective; sin él el flip
+      // no tiene profundidad 3D y las caras se ven planas/espejadas.
+      style={{ perspective: '1000px', WebkitPerspective: '1000px' }}
+    >
       <motion.div
-        className="w-full h-full relative [transform-style:preserve-3d]"
+        className="w-full h-full relative"
+        style={{ transformStyle: 'preserve-3d', WebkitTransformStyle: 'preserve-3d' }}
         animate={{ rotateY: isFlipped ? 180 : 0 }}
         transition={{ duration: 0.7, type: "spring", stiffness: 260, damping: 20 }}
       >
         {/* ================= FRENTE DE LA TARJETA ================= */}
-        <div className="absolute inset-0 w-full h-full [backface-visibility:hidden] overflow-hidden rounded-3xl bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800/50 p-8 md:p-10 flex flex-col shadow-sm hover:shadow-xl dark:hover:bg-zinc-900/80 transition-all duration-300">
+        <div
+          className="absolute inset-0 w-full h-full overflow-hidden rounded-3xl bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800/50 p-8 md:p-10 flex flex-col shadow-sm hover:shadow-xl dark:hover:bg-zinc-900/80 transition-all duration-300"
+          // -webkit-backface-visibility: SIN esto Safari no oculta la cara
+          // trasera y el frente se transparenta espejado (bug reportado).
+          style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+        >
           
           {/* Marca de agua (Icono gigante de fondo) */}
           <div className="absolute top-6 right-6 opacity-5 dark:opacity-10 transition-opacity">
@@ -116,7 +128,15 @@ const DegreeCard = ({ degree, t, index }: { degree: any, t: any, index: number }
         </div>
 
         {/* ================= DORSO DE LA TARJETA ================= */}
-        <div className="absolute inset-0 w-full h-full [backface-visibility:hidden] [transform:rotateY(180deg)] overflow-hidden rounded-3xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-8 md:p-10 flex flex-col shadow-inner">
+        <div
+          className="absolute inset-0 w-full h-full overflow-hidden rounded-3xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-8 md:p-10 flex flex-col shadow-inner"
+          style={{
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+            transform: 'rotateY(180deg)',
+            WebkitTransform: 'rotateY(180deg)',
+          }}
+        >
           <div className="relative z-10 flex flex-col h-full justify-between">
             
             <div className="flex items-center justify-between mb-4 pb-4 border-b border-zinc-200 dark:border-zinc-800">

@@ -15,6 +15,7 @@ interface AboutMeItems {
   about: string;
   academic: string;
   skills: string;
+  projects: string;
   certifications: string;
   experience: string;
   contact: string;
@@ -74,6 +75,7 @@ export default function NavBar({ dict, lang }: NavBarProps) {
       { name: dict.aboutMeItems.about, href: `/${lang}/#sobre-mi` },
       { name: dict.aboutMeItems.academic, href: `/${lang}/#academico` },
       { name: dict.aboutMeItems.skills, href: `/${lang}/#habilidades` },
+      { name: dict.aboutMeItems.projects, href: `/${lang}/#proyectos` },
       { name: dict.aboutMeItems.certifications, href: `/${lang}/#certificados` },
       { name: dict.aboutMeItems.experience, href: `/${lang}/#experiencia` },
       { name: dict.aboutMeItems.contact, href: `/${lang}/#contacto` },
