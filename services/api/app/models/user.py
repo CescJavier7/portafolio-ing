@@ -21,6 +21,12 @@ class User(Base):
     # Evita registros con emails ajenos/falsos y reduce spam de cuentas.
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    # Token de verificación (hasheado SHA-256, ver security.py para el porqué
+    # de SHA-256 y no Argon2 aquí). Indexado: el link del correo solo trae el
+    # token y hay que encontrar al usuario por él.
+    email_verification_token_hash: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
+    email_verification_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     # ── Mitigación de fuerza bruta a nivel de cuenta ──────────
     # Complementa el rate limiting por IP (que se puede evadir con proxies):
     # esto limita intentos contra UNA cuenta específica sin importar el origen.

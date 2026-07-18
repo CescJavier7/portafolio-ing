@@ -18,6 +18,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi.responses import HTMLResponse
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,7 +26,9 @@ from app.core.config import get_settings
 from app.core.rate_limit import limiter
 from app.core.security import (
     create_access_token,
+    generate_email_verification_token,
     generate_refresh_token_raw,
+    hash_email_verification_token,
     hash_password,
     hash_refresh_token,
     verify_password,
@@ -35,7 +38,14 @@ from app.db.session import get_db
 from app.models.organization import Organization
 from app.models.refresh_token import RefreshToken
 from app.models.user import User
-from app.schemas.auth import AccessTokenResponse, LoginRequest, MessageResponse, RegisterRequest
+from app.schemas.auth import (
+    AccessTokenResponse,
+    LoginRequest,
+    MessageResponse,
+    RegisterRequest,
+    ResendVerificationRequest,
+)
+from app.services.email_service import send_verification_email
 
 settings = get_settings()
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -98,6 +108,7 @@ async def register(request: Request, payload: RegisterRequest, db: AsyncSession 
     # Squeezy lo crea/asocia solo al completar el primer Checkout, y lo
     # enlazamos a esta Organization vía el webhook (ver billing.py).
 
+    raw_token = generate_email_verification_token()
 
     user = User(
         email=payload.email,
@@ -105,13 +116,101 @@ async def register(request: Request, payload: RegisterRequest, db: AsyncSession 
         organization_id=organization.id,
         role="OWNER",
         email_verified=False,
+        email_verification_token_hash=hash_email_verification_token(raw_token),
+        email_verification_expires_at=datetime.now(timezone.utc)
+        + timedelta(hours=settings.EMAIL_VERIFICATION_EXPIRE_HOURS),
     )
     db.add(user)
     await db.commit()
 
-    # TODO: integrar proveedor de email real (Resend/SES) para el link de
-    # verificación. Por ahora, no bloqueamos el desarrollo del resto del
-    # flujo, pero login exige email_verified=True — ver endpoint /login.
+    # El envío va DESPUÉS del commit: si Resend falla, el usuario ya existe
+    # y puede pedir el reenvío con /auth/resend-verification. No revertimos
+    # el registro por un fallo del proveedor de email.
+    try:
+        send_verification_email(payload.email, raw_token)
+    except Exception as exc:
+        print(f"[EMAIL] Fallo al enviar verificación a {payload.email}: {exc}")
+
+    return generic_response
+
+
+def _verify_result_page(title: str, body: str) -> HTMLResponse:
+    # El link del correo se abre en un navegador: una mini página legible
+    # es mejor UX que JSON crudo. Cuando exista el frontend de Sentra,
+    # VERIFY_URL_BASE apuntará allá y esto quedará solo como fallback.
+    return HTMLResponse(f"""
+    <!doctype html>
+    <html lang="es"><head><meta charset="utf-8"><title>Sentra</title></head>
+    <body style="background:#0a0a0a;color:#e5e5e5;font-family:-apple-system,Segoe UI,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;">
+      <div style="text-align:center;max-width:420px;padding:24px;">
+        <h1 style="color:#fff;">{title}</h1>
+        <p style="color:#a3a3a3;">{body}</p>
+      </div>
+    </body></html>
+    """)
+
+
+@router.get("/verify-email")
+@limiter.limit("10/minute")
+async def verify_email(request: Request, token: str = "", db: AsyncSession = Depends(get_db)):
+    # Mensaje de fallo IDÉNTICO para token inexistente, expirado o vacío:
+    # no le decimos a un atacante en cuál de los tres casos cayó.
+    failure = _verify_result_page(
+        "Enlace inválido o expirado",
+        "Pide un nuevo correo de verificación desde la página de login.",
+    )
+
+    if not token:
+        return failure
+
+    token_hash = hash_email_verification_token(token)
+    result = await db.execute(select(User).where(User.email_verification_token_hash == token_hash))
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        return failure
+
+    if user.email_verification_expires_at is None or user.email_verification_expires_at < datetime.now(timezone.utc):
+        return failure
+
+    user.email_verified = True
+    # Un solo uso: se limpia el token para que el mismo link no sirva dos veces.
+    user.email_verification_token_hash = None
+    user.email_verification_expires_at = None
+    await db.commit()
+
+    return _verify_result_page(
+        "Correo verificado",
+        "Tu cuenta de Sentra está activa. Ya puedes iniciar sesión.",
+    )
+
+
+@router.post("/resend-verification", response_model=MessageResponse)
+@limiter.limit("3/minute")
+async def resend_verification(request: Request, payload: ResendVerificationRequest, db: AsyncSession = Depends(get_db)):
+    # Respuesta SIEMPRE idéntica: no filtra si el email existe ni si ya
+    # estaba verificado (mismo principio anti-enumeración que /register).
+    generic_response = MessageResponse(
+        message="Si la cuenta existe y está pendiente de verificar, enviamos un nuevo correo."
+    )
+
+    result = await db.execute(select(User).where(User.email == payload.email))
+    user = result.scalar_one_or_none()
+
+    if user is None or user.email_verified:
+        return generic_response
+
+    raw_token = generate_email_verification_token()
+    user.email_verification_token_hash = hash_email_verification_token(raw_token)
+    user.email_verification_expires_at = datetime.now(timezone.utc) + timedelta(
+        hours=settings.EMAIL_VERIFICATION_EXPIRE_HOURS
+    )
+    await db.commit()
+
+    try:
+        send_verification_email(payload.email, raw_token)
+    except Exception as exc:
+        print(f"[EMAIL] Fallo al reenviar verificación a {payload.email}: {exc}")
 
     return generic_response
 

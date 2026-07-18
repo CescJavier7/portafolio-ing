@@ -84,9 +84,16 @@ El "Signing secret" que te dan ahí es tu `LEMONSQUEEZY_WEBHOOK_SECRET`.
 - [ ] Implementar el envío real del correo de verificación (`TODO` en `auth.py` — hoy el usuario queda `email_verified=False` sin forma de verificarse todavía; falta ese endpoint + proveedor de email).
 - [ ] Confirmar que Traefik SÍ reenvía `X-Forwarded-For` real (afecta tanto el rate limiting como los logs).
 
-## 7. Lo que falta para que el flujo esté 100% cerrado
+## 7. Verificación de email (Resend)
 
-1. Endpoint `POST /auth/verify-email` (falta implementar).
-2. Envío de email real (Resend, SES, Postmark — tú eliges).
-3. Conectar esto con el frontend de `/sentinel` (formulario de registro/login).
-4. Crear el producto/plan Pro en Lemon Squeezy y confirmar el Variant ID en `.env`.
+Ya implementado: `/register` genera un token de un solo uso (24h, hasheado
+SHA-256 en DB) y envía el link por Resend. `GET /auth/verify-email?token=...`
+activa la cuenta; `POST /auth/resend-verification` reenvía el correo con
+respuesta genérica anti-enumeración. Requiere `RESEND_API_KEY` en `.env`
+(la misma key del portafolio Next.js).
+
+## 8. Lo que falta para que el flujo esté 100% cerrado
+
+1. Conectar esto con el frontend de `/sentinel` (formulario de registro/login).
+2. Probar el checkout de Lemon Squeezy end-to-end cuando la cuenta salga de revisión.
+3. Apuntar `VERIFY_URL_BASE` al frontend cuando exista la página de verificación.

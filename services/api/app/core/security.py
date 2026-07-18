@@ -10,6 +10,7 @@ core/security.py
   se filtra, no se pueden usar directamente (rainbow table inútil, hay que
   romper el hash).
 """
+import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
 
@@ -57,6 +58,21 @@ def generate_refresh_token_raw() -> str:
     # Token opaco de alta entropía (256 bits). No es JWT: no lleva
     # información codificada, solo es un identificador impredecible.
     return secrets.token_urlsafe(64)
+
+
+def generate_email_verification_token() -> str:
+    # Mismo principio que el refresh token: valor opaco impredecible.
+    return secrets.token_urlsafe(32)
+
+
+def hash_email_verification_token(raw_token: str) -> str:
+    # OJO: aquí SHA-256 a propósito, NO Argon2. El link del correo solo trae
+    # el token, así que necesitamos ENCONTRAR al usuario por él: un hash
+    # determinístico permite `WHERE token_hash = sha256(recibido)` con índice.
+    # Con Argon2 (salt aleatorio) habría que iterar TODAS las filas. Es seguro
+    # porque el token tiene 256 bits de entropía: no existe diccionario ni
+    # fuerza bruta viable contra eso, a diferencia de una contraseña humana.
+    return hashlib.sha256(raw_token.encode()).hexdigest()
 
 
 def hash_refresh_token(raw_token: str) -> str:

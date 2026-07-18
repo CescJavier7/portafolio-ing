@@ -32,6 +32,15 @@ class Settings(BaseSettings):
     LEMONSQUEEZY_VARIANT_ID_PRO: str
     LEMONSQUEEZY_WEBHOOK_SECRET: str
 
+    # ── Email (Resend — mismo dominio/key que usa el portafolio) ──
+    RESEND_API_KEY: str
+    EMAIL_FROM: str = "Sentra <admin@cescjavier.dev>"
+    # Base del link de verificación que va en el correo. Apunta a la propia
+    # API por ahora; cuando exista el frontend de Sentra, cambiar aquí para
+    # que el link aterrice en una página bonita que llame a la API.
+    VERIFY_URL_BASE: str = "https://api.cescjavier.dev/api/v1/auth/verify-email"
+    EMAIL_VERIFICATION_EXPIRE_HOURS: int = 24
+
     # ── CORS ─────────────────────────────────────────────────
     ALLOWED_ORIGINS: list[str] = [
         "https://sentinel.cescjavier.dev",
