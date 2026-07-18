@@ -302,3 +302,39 @@ export async function sentraScanTarget(targetId: string): Promise<SentraScan> {
 export async function sentraListScans(targetId: string): Promise<SentraScan[]> {
   return request(`/api/v1/targets/${targetId}/scans`, { method: 'GET' }, true);
 }
+
+export interface SentraReport {
+  technical: string;
+  executive: string;
+}
+
+// Reporte con IA: OJO, esta ruta es del PROPIO Next.js (mismo origen), no
+// de la API de Sentra — reutiliza el Groq del portafolio. Por eso no pasa
+// por `request` (que apunta a api.cescjavier.dev), sino fetch directo.
+export async function sentraGenerateReport(payload: {
+  domain: string;
+  score: number;
+  grade: string;
+  findings: SentraFinding[];
+  lang: string;
+}): Promise<SentraReport> {
+  const token = getToken();
+  const res = await fetch('/api/sentra/report', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    let detail = 'No se pudo generar el reporte.';
+    try {
+      detail = (await res.json()).error ?? detail;
+    } catch {
+      /* sin JSON */
+    }
+    throw new SentraApiError(res.status, detail);
+  }
+  return res.json() as Promise<SentraReport>;
+}

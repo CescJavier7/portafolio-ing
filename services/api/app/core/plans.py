@@ -18,16 +18,20 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class PlanConfig:
     max_targets: int          # dominios registrables
-    scans_per_day: int        # escaneos por ventana de 24h
+    scans_per_day: int        # escaneos por ventana de 24h (si limitado)
+    limited_scans: bool       # True: aplica y muestra el contador de 24h
     show_score_detail: bool   # desglose de la ponderación del score
-    ai_reports: bool          # reportes con IA (futuro)
+    ai_reports: bool          # reportes con IA
 
 
+# limited_scans=False => escaneos ilimitados (coherente con "ilimitados" del
+# modal de upgrade). El rate limit por endpoint (10/min) sigue protegiendo
+# contra abuso incluso en planes ilimitados.
 PLANS: dict[str, PlanConfig] = {
-    "FREE": PlanConfig(max_targets=3, scans_per_day=3, show_score_detail=False, ai_reports=False),
-    "PRO": PlanConfig(max_targets=10, scans_per_day=100, show_score_detail=True, ai_reports=True),
-    "TEAM": PlanConfig(max_targets=50, scans_per_day=500, show_score_detail=True, ai_reports=True),
-    "ENTERPRISE": PlanConfig(max_targets=1000, scans_per_day=10000, show_score_detail=True, ai_reports=True),
+    "FREE": PlanConfig(max_targets=3, scans_per_day=3, limited_scans=True, show_score_detail=False, ai_reports=False),
+    "PRO": PlanConfig(max_targets=10, scans_per_day=0, limited_scans=False, show_score_detail=True, ai_reports=True),
+    "TEAM": PlanConfig(max_targets=50, scans_per_day=0, limited_scans=False, show_score_detail=True, ai_reports=True),
+    "ENTERPRISE": PlanConfig(max_targets=1000, scans_per_day=0, limited_scans=False, show_score_detail=True, ai_reports=True),
 }
 
 

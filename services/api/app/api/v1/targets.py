@@ -213,28 +213,28 @@ async def scan_target(
     org = await db.get(Organization, current_user.organization_id)
     config = plan_for(org.plan if org else None)
 
-    # ── Límite anti-abuso por ventana de 24h (solo se aplica el contador al
-    # plan FREE; PRO tiene un tope alto). El contador vive en la org, así que
-    # borrar dominios no lo reinicia. ──
-    now = datetime.now(timezone.utc)
-    window_start = org.free_scan_window_start
-    if window_start is None or (now - window_start) >= SCAN_WINDOW:
-        # Nueva ventana: se reinician los intentos.
-        org.free_scan_window_start = now
-        org.free_scan_count = 0
+    # ── Límite anti-abuso SOLO para planes con escaneos limitados (FREE).
+    # El contador vive en la org (no por dominio): borrar/recrear dominios
+    # no lo reinicia. Los planes ilimitados (PRO+) saltan todo esto. ──
+    remaining: int | None = None
+    if config.limited_scans:
+        now = datetime.now(timezone.utc)
+        window_start = org.free_scan_window_start
+        if window_start is None or (now - window_start) >= SCAN_WINDOW:
+            org.free_scan_window_start = now
+            org.free_scan_count = 0
 
-    if org.free_scan_count >= config.scans_per_day:
-        # Cuándo recupera intentos (fin de la ventana actual).
-        resets_at = (org.free_scan_window_start or now) + SCAN_WINDOW
-        await db.commit()  # persistir el posible reset de ventana de arriba
-        raise HTTPException(
-            status_code=status.HTTP_402_PAYMENT_REQUIRED,
-            detail=(
-                "Agotaste tus escaneos disponibles. "
-                f"Recuperarás {config.scans_per_day} escaneos el {resets_at.strftime('%d/%m %H:%M')} UTC, "
-                "o mejora a Pro para escanear sin esperar."
-            ),
-        )
+        if org.free_scan_count >= config.scans_per_day:
+            resets_at = (org.free_scan_window_start or now) + SCAN_WINDOW
+            await db.commit()  # persistir el posible reset de ventana de arriba
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail=(
+                    "Agotaste tus escaneos disponibles. "
+                    f"Recuperarás {config.scans_per_day} escaneos el {resets_at.strftime('%d/%m %H:%M')} UTC, "
+                    "o mejora a Pro para escanear sin esperar."
+                ),
+            )
 
     # Escaneo real (bloqueante → threadpool para no frenar el event loop).
     result = await run_in_threadpool(scan_domain, target.domain)
@@ -248,11 +248,13 @@ async def scan_target(
     )
     db.add(scan)
 
-    org.free_scan_count += 1
+    if config.limited_scans:
+        org.free_scan_count += 1
+        remaining = max(0, config.scans_per_day - org.free_scan_count)
+
     await db.commit()
     await db.refresh(scan)
 
-    remaining = max(0, config.scans_per_day - org.free_scan_count)
     return _scan_to_result(scan, target.domain, config.show_score_detail, remaining)
 
 

@@ -2,18 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
-  Globe, Plus, ShieldCheck, ShieldAlert, Trash2, Copy, Check, X, Radar, Lock, ChevronDown,
+  Globe, Plus, ShieldCheck, ShieldAlert, Trash2, Copy, Check, X, Radar, Lock, ChevronDown, Sparkles, FileText, Briefcase,
 } from 'lucide-react';
 import {
   sentraCreateTarget,
   sentraDeleteTarget,
+  sentraGenerateReport,
   sentraGetInstructions,
   sentraListScans,
   sentraListTargets,
   sentraScanTarget,
   sentraVerifyTarget,
   SentraApiError,
+  type SentraReport,
   type SentraScan,
   type SentraTarget,
   type SentraTargetCreated,
@@ -43,6 +47,12 @@ interface ScanDict {
   scansLeft: string;
   verifyFirst: string;
   severity: SeverityDict;
+  reportBtn: string;
+  reportGenerating: string;
+  reportTechnical: string;
+  reportExecutive: string;
+  reportError: string;
+  reportRegenerate: string;
 }
 
 export interface TargetsDict {
@@ -106,7 +116,79 @@ function ScoreRing({ score, grade }: { score: number; grade: string }) {
   );
 }
 
-function ScanResultPanel({ scan, dict, onUpgrade }: { scan: SentraScan; dict: ScanDict; onUpgrade: () => void }) {
+function AiReport({ scan, dict, lang }: { scan: SentraScan; dict: ScanDict; lang: string }) {
+  const [report, setReport] = useState<SentraReport | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function generate() {
+    if (!scan.findings) return;
+    setBusy(true);
+    setError(null);
+    try {
+      setReport(
+        await sentraGenerateReport({
+          domain: scan.domain,
+          score: scan.score,
+          grade: scan.grade,
+          findings: scan.findings,
+          lang,
+        }),
+      );
+    } catch (err) {
+      setError(err instanceof SentraApiError ? err.detail : dict.reportError);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-4">
+      {!report && (
+        <button
+          onClick={generate}
+          disabled={busy}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-600 text-white text-[13px] font-bold hover:brightness-105 active:scale-[0.98] transition-all disabled:opacity-60 shadow-lg shadow-amber-500/20"
+        >
+          <Sparkles className={`w-4 h-4 ${busy ? 'animate-pulse' : ''}`} />
+          {busy ? dict.reportGenerating : dict.reportBtn}
+        </button>
+      )}
+      {error && <p className="mt-3 text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">{error}</p>}
+
+      {report && (
+        <div className="space-y-4">
+          <div className="rounded-2xl bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 p-5">
+            <p className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white mb-3">
+              <Briefcase className="w-4 h-4 text-amber-500" /> {dict.reportExecutive}
+            </p>
+            <div className="prose prose-sm dark:prose-invert max-w-none text-zinc-600 dark:text-zinc-300 text-[13px] leading-relaxed">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{report.executive}</ReactMarkdown>
+            </div>
+          </div>
+          <div className="rounded-2xl bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 p-5">
+            <p className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white mb-3">
+              <FileText className="w-4 h-4 text-green-500" /> {dict.reportTechnical}
+            </p>
+            <div className="prose prose-sm dark:prose-invert max-w-none text-zinc-600 dark:text-zinc-300 text-[13px] leading-relaxed prose-code:text-[12px] prose-pre:bg-zinc-100 dark:prose-pre:bg-black/40">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{report.technical}</ReactMarkdown>
+            </div>
+          </div>
+          <button
+            onClick={generate}
+            disabled={busy}
+            className="inline-flex items-center gap-2 text-[12px] font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors disabled:opacity-60"
+          >
+            <Sparkles className={`w-3.5 h-3.5 ${busy ? 'animate-pulse' : ''}`} />
+            {busy ? dict.reportGenerating : dict.reportRegenerate}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ScanResultPanel({ scan, dict, lang, onUpgrade }: { scan: SentraScan; dict: ScanDict; lang: string; onUpgrade: () => void }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="mt-4 rounded-2xl bg-zinc-50 dark:bg-black/30 border border-zinc-200 dark:border-zinc-800 p-5">
@@ -173,6 +255,8 @@ function ScanResultPanel({ scan, dict, onUpgrade }: { scan: SentraScan; dict: Sc
               </motion.ul>
             )}
           </AnimatePresence>
+
+          <AiReport scan={scan} dict={dict} lang={lang} />
         </div>
       ) : null}
     </div>
@@ -205,7 +289,7 @@ function CopyField({ label, value, copyLabel, copiedLabel }: { label: string; va
   );
 }
 
-export default function TargetsCard({ dict, upgradeDict }: { dict: TargetsDict; upgradeDict: UpgradeDict }) {
+export default function TargetsCard({ dict, upgradeDict, lang }: { dict: TargetsDict; upgradeDict: UpgradeDict; lang: string }) {
   const s = dict.scanUI;
   const [targets, setTargets] = useState<SentraTarget[]>([]);
   const [loading, setLoading] = useState(true);
@@ -377,7 +461,7 @@ export default function TargetsCard({ dict, upgradeDict }: { dict: TargetsDict; 
               </div>
 
               {scans[t.id] && (
-                <ScanResultPanel scan={scans[t.id]} dict={s} onUpgrade={() => setUpgrade({ open: true })} />
+                <ScanResultPanel scan={scans[t.id]} dict={s} lang={lang} onUpgrade={() => setUpgrade({ open: true })} />
               )}
               {scans[t.id]?.scans_remaining != null && (
                 <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-2 text-right">

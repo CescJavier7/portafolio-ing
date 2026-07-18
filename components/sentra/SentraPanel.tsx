@@ -301,7 +301,7 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
             </button>
           </div>
 
-          <TargetsCard dict={dict.targets} upgradeDict={dict.upgrade_modal} />
+          <TargetsCard dict={dict.targets} upgradeDict={dict.upgrade_modal} lang={lang} />
 
           <PlanCard dict={dict} />
 

@@ -501,7 +501,13 @@
             "alta": "Alta",
             "media": "Media",
             "baja": "Baja"
-          }
+          },
+          "reportBtn": "Generar reporte con IA",
+          "reportGenerating": "Generando reporte…",
+          "reportTechnical": "Informe técnico",
+          "reportExecutive": "Resumen ejecutivo",
+          "reportError": "No se pudo generar el reporte. Inténtalo de nuevo.",
+          "reportRegenerate": "Regenerar"
         }
       },
       "upgrade_modal": {
