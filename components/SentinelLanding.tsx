@@ -22,6 +22,8 @@ interface SentinelProps {
     features: Feature[];
     ctaWaitlist: string;
     ctaBack: string;
+    ctaRegister?: string;
+    ctaLogin?: string;
   };
 }
 
@@ -98,16 +100,16 @@ export default function SentinelLanding({ lang, dict }: SentinelProps) {
             <p className="text-sm font-bold uppercase tracking-widest text-green-400 mb-3">{dict.statusLabel}</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
-                href={`/${lang}/#contacto`}
+                href={`/${lang}/sentinel/register`}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-105 transition-transform"
               >
-                {dict.ctaWaitlist} <ArrowUpRight className="w-4 h-4" />
+                {dict.ctaRegister ?? dict.ctaWaitlist} <ArrowUpRight className="w-4 h-4" />
               </Link>
               <Link
-                href={`/${lang}/services`}
+                href={`/${lang}/sentinel/login`}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-zinc-700 text-zinc-300 text-sm font-bold hover:bg-white/5 transition-colors"
               >
-                {dict.ctaBack}
+                {dict.ctaLogin ?? dict.ctaBack}
               </Link>
             </div>
           </div>

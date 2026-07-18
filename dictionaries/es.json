@@ -89,7 +89,9 @@
       }
     ],
     "ctaWaitlist": "Quiero probarla primero",
-    "ctaBack": "Ver todos los servicios"
+    "ctaBack": "Ver todos los servicios",
+    "ctaRegister": "Crear mi cuenta",
+    "ctaLogin": "Ya tengo cuenta"
   },
   "skills": {
     "tag": "Tech Stack",
@@ -97,38 +99,38 @@
     "subtitle": "Fullstack, Infraestructura & Ciberseguridad",
     "description": "Un ecosistema de herramientas dominadas a través de la práctica real. Desde la arquitectura en el frontend hasta el despliegue seguro en servidores privados, priorizando el rendimiento y la seguridad.",
     "cards": {
-      "cyber": { 
-        "title": "Ciberseguridad & DevSecOps", 
-        "desc": "Auditoría de redes, pentesting y arquitecturas Zero-Trust. Experiencia desplegando escáneres perimetrales y protegiendo infraestructura crítica." 
+      "cyber": {
+        "title": "Ciberseguridad & DevSecOps",
+        "desc": "Auditoría de redes, pentesting y arquitecturas Zero-Trust. Experiencia desplegando escáneres perimetrales y protegiendo infraestructura crítica."
       },
-      "cloud": { 
-        "title": "Cloud & DevOps", 
-        "desc": "Gestión absoluta de servidores VPS Linux. Orquestación con Docker, proxy inverso con Traefik y gestión de zonas DNS en Cloudflare." 
+      "cloud": {
+        "title": "Cloud & DevOps",
+        "desc": "Gestión absoluta de servidores VPS Linux. Orquestación con Docker, proxy inverso con Traefik y gestión de zonas DNS en Cloudflare."
       },
-      "fullstack": { 
-        "title": "Fullstack Moderno", 
-        "desc": "Desarrollo de interfaces reactivas y APIs de alto rendimiento con renderizado híbrido, tipado estricto y diseño utilitario." 
+      "fullstack": {
+        "title": "Fullstack Moderno",
+        "desc": "Desarrollo de interfaces reactivas y APIs de alto rendimiento con renderizado híbrido, tipado estricto y diseño utilitario."
       },
-      "languages": { 
-        "title": "Core Languages & Mobile", 
-        "desc": "Dominio de lenguajes fuertemente tipados, programación orientada a objetos y desarrollo nativo." 
+      "languages": {
+        "title": "Core Languages & Mobile",
+        "desc": "Dominio de lenguajes fuertemente tipados, programación orientada a objetos y desarrollo nativo."
       },
-      "data": { 
-        "title": "Data & Arquitectura", 
-        "desc": "Modelado relacional, ORMs modernos y bases de datos en memoria para caché de latencia ultra baja." 
+      "data": {
+        "title": "Data & Arquitectura",
+        "desc": "Modelado relacional, ORMs modernos y bases de datos en memoria para caché de latencia ultra baja."
       },
-      "quant": { 
-        "title": "Algoritmia & Finanzas", 
-        "desc": "Desarrollo de sistemas de trading automatizado (MQL4), análisis de datos matemáticos y automatización con Python." 
+      "quant": {
+        "title": "Algoritmia & Finanzas",
+        "desc": "Desarrollo de sistemas de trading automatizado (MQL4), análisis de datos matemáticos y automatización con Python."
       },
-      "uiux": { 
-        "title": "UX/UI & Observabilidad", 
-        "desc": "Diseño de interfaces centradas en el usuario (Figma) y monitorización de sistemas en tiempo real (Grafana/Loki)." 
+      "uiux": {
+        "title": "UX/UI & Observabilidad",
+        "desc": "Diseño de interfaces centradas en el usuario (Figma) y monitorización de sistemas en tiempo real (Grafana/Loki)."
       },
-      "soft": { 
-        "title": "Mentoría STEM", 
-        "desc": "Liderazgo técnico, transferencia de conocimiento y consultoría académica de alto nivel.", 
-        "tag": "Soft Skills" 
+      "soft": {
+        "title": "Mentoría STEM",
+        "desc": "Liderazgo técnico, transferencia de conocimiento y consultoría académica de alto nivel.",
+        "tag": "Soft Skills"
       }
     }
   },
@@ -285,42 +287,75 @@
         "company": "Independiente",
         "period": "Ene 2024 - Actualidad",
         "description": "Desarrollo web integral y soluciones ecommerce. Optimización de bases de datos SQL (mejora del 40% en consultas) y creación de bots de trading automatizados con análisis técnico de baja latencia.",
-        "tags": ["SQL", "Trading Bots", "Low Latency", "E-commerce", "Fullstack"]
+        "tags": [
+          "SQL",
+          "Trading Bots",
+          "Low Latency",
+          "E-commerce",
+          "Fullstack"
+        ]
       },
       {
         "title": "Data Engineer & Support Specialist",
         "company": "Universidad Central del Ecuador",
         "period": "Ene 2023 - Dic 2023",
         "description": "Administración de bases de datos y gobernanza de datos (RBAC, cifrado). Gestión de incidentes bajo SLAs y soporte a infraestructura crítica (DMS/LMS/ERP) con protocolos de Disaster Recovery.",
-        "tags": ["Data Governance", "Disaster Recovery", "RBAC", "SLA", "ERP"]
+        "tags": [
+          "Data Governance",
+          "Disaster Recovery",
+          "RBAC",
+          "SLA",
+          "ERP"
+        ]
       },
       {
         "title": "Proyecto de Competencias Digitales",
         "company": "Fajardo - Sangolquí",
         "period": "Sep 2022 - Dic 2022",
         "description": "Implementación de red Wi-Fi pública comunitaria con segmentación de tráfico segura. Liderazgo en talleres de alfabetización digital y productividad aplicada para la comunidad.",
-        "tags": ["Redes Seguras", "Wi-Fi", "Liderazgo", "Alfabetización Digital"]
+        "tags": [
+          "Redes Seguras",
+          "Wi-Fi",
+          "Liderazgo",
+          "Alfabetización Digital"
+        ]
       },
       {
         "title": "Profesor de Informática y Matemáticas",
         "company": "Unidad Educativa 13 de Abril",
         "period": "Sep 2021 - Ago 2022",
         "description": "Instrucción en algoritmos, lógica de programación y desarrollo web (Python, PHP, JavaScript). Supervisión de proyectos técnicos estudiantiles orientados a la resolución de problemas.",
-        "tags": ["Python", "PHP", "JavaScript", "Lógica de Programación", "Docencia"]
+        "tags": [
+          "Python",
+          "PHP",
+          "JavaScript",
+          "Lógica de Programación",
+          "Docencia"
+        ]
       },
       {
         "title": "Docente de Matemáticas (Proyecto Transformar)",
         "company": "Universidad Central del Ecuador",
         "period": "Mar 2022 - Ago 2022",
         "description": "Capacitación intensiva en razonamiento numérico y abstracto para ingreso a la educación superior. Diseño de estrategias pedagógicas para asegurar el éxito académico de los aspirantes.",
-        "tags": ["Matemáticas", "Razonamiento Abstracto", "Pedagogía", "Estrategia"]
+        "tags": [
+          "Matemáticas",
+          "Razonamiento Abstracto",
+          "Pedagogía",
+          "Estrategia"
+        ]
       },
       {
         "title": "Docente Matemáticas",
         "company": "Universidad Central del Ecuador",
         "period": "Oct 2020 - Jun 2021",
         "description": "Cátedra de cálculo integral y diferencial en entornos virtuales. Uso de herramientas de visualización matemática (GeoGebra, Python) y administración de contenidos en plataformas LMS.",
-        "tags": ["Cálculo Integral", "GeoGebra", "Python", "LMS"]
+        "tags": [
+          "Cálculo Integral",
+          "GeoGebra",
+          "Python",
+          "LMS"
+        ]
       }
     ]
   },
@@ -329,12 +364,24 @@
     "title": "Iniciemos un proyecto seguro.",
     "description": "Si tu organización necesita asegurar su infraestructura, desarrollar plataformas de alta disponibilidad o consultoría en DevSecOps, mis bandejas están abiertas.",
     "methods": [
-      { "title": "Correo Electrónico", "description": "javiercaiza220158@gmail.com" },
-      { "title": "LinkedIn", "description": "Conectemos profesionalmente" },
-      { "title": "GitHub", "description": "Explora mis repositorios y código" },
-      { "title": "Currículum Vitae", "description": "Descarga mi perfil técnico detallado" }
+      {
+        "title": "Correo Electrónico",
+        "description": "javiercaiza220158@gmail.com"
+      },
+      {
+        "title": "LinkedIn",
+        "description": "Conectemos profesionalmente"
+      },
+      {
+        "title": "GitHub",
+        "description": "Explora mis repositorios y código"
+      },
+      {
+        "title": "Currículum Vitae",
+        "description": "Descarga mi perfil técnico detallado"
+      }
     ]
-  }, 
+  },
   "chat": {
     "title": "MEKA_JAVIER_OS",
     "ready": "Listo para procesar datos.",
@@ -342,5 +389,43 @@
     "placeholder": "Ingresa tu parámetro de consulta...",
     "calculating": "Calculando variables...",
     "error": "Error: Colapso en el núcleo lógico."
+  },
+  "sentraAuth": {
+    "register": {
+      "title": "Crea tu cuenta",
+      "subtitle": "Empieza a auditar la seguridad de tu dominio.",
+      "emailLabel": "Correo electrónico",
+      "passwordLabel": "Contraseña",
+      "passwordHint": "Mínimo 12 caracteres, con al menos un número o símbolo.",
+      "orgLabel": "Nombre de tu organización",
+      "orgPlaceholder": "Mi empresa",
+      "submit": "Crear cuenta",
+      "submitting": "Creando cuenta…",
+      "successTitle": "Revisa tu correo",
+      "successBody": "Si los datos son válidos, te enviamos un enlace para verificar la cuenta. Revisa también la carpeta de spam.",
+      "haveAccount": "¿Ya tienes cuenta?",
+      "loginLink": "Inicia sesión"
+    },
+    "login": {
+      "title": "Inicia sesión",
+      "subtitle": "Accede a tu panel de Sentra.",
+      "emailLabel": "Correo electrónico",
+      "passwordLabel": "Contraseña",
+      "submit": "Entrar",
+      "submitting": "Entrando…",
+      "noAccount": "¿No tienes cuenta?",
+      "registerLink": "Créala aquí",
+      "unverifiedTitle": "Falta verificar tu correo",
+      "resend": "Reenviar correo de verificación",
+      "resent": "Correo reenviado. Revisa tu bandeja (y spam).",
+      "genericError": "No se pudo iniciar sesión. Verifica tus datos."
+    },
+    "panel": {
+      "title": "Panel de Sentra",
+      "wip": "El panel está en construcción. Tu cuenta ya está activa y lista para cuando lancemos los primeros escaneos.",
+      "sessionAs": "Sesión iniciada como",
+      "logout": "Cerrar sesión",
+      "loading": "Verificando sesión…"
+    }
   }
 }

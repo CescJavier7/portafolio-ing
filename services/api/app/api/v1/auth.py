@@ -34,6 +34,7 @@ from app.core.security import (
     verify_password,
     verify_refresh_token,
 )
+from app.api.v1.deps import get_current_user
 from app.db.session import get_db
 from app.models.organization import Organization
 from app.models.refresh_token import RefreshToken
@@ -45,6 +46,7 @@ from app.schemas.auth import (
     RegisterRequest,
     ResendVerificationRequest,
 )
+from app.schemas.user import UserOut
 from app.services.email_service import send_verification_email
 
 settings = get_settings()
@@ -333,3 +335,10 @@ async def logout(request: Request, response: Response, db: AsyncSession = Depend
 
     response.delete_cookie(REFRESH_COOKIE_NAME, domain=settings.COOKIE_DOMAIN, path="/api/v1/auth")
     return MessageResponse(message="Sesión cerrada.")
+
+
+@router.get("/me", response_model=UserOut)
+async def me(current_user: User = Depends(get_current_user)):
+    # El frontend lo usa para saber quién está logueado (panel, navbar, etc.)
+    # sin decodificar el JWT en el cliente.
+    return current_user

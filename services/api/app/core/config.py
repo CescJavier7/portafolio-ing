@@ -42,9 +42,13 @@ class Settings(BaseSettings):
     EMAIL_VERIFICATION_EXPIRE_HOURS: int = 24
 
     # ── CORS ─────────────────────────────────────────────────
+    # www incluido: Traefik sirve el sitio en ambos hosts y el navegador
+    # manda el Origin exacto. localhost:3000 para desarrollo del frontend.
     ALLOWED_ORIGINS: list[str] = [
         "https://sentinel.cescjavier.dev",
         "https://cescjavier.dev",
+        "https://www.cescjavier.dev",
+        "http://localhost:3000",
     ]
 
     # ── Redis (rate limiting) ────────────────────────────────

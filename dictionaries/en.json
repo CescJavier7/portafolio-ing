@@ -89,7 +89,9 @@
       }
     ],
     "ctaWaitlist": "I want early access",
-    "ctaBack": "See all services"
+    "ctaBack": "See all services",
+    "ctaRegister": "Create my account",
+    "ctaLogin": "I have an account"
   },
   "skills": {
     "tag": "Tech Stack",
@@ -97,38 +99,38 @@
     "subtitle": "Fullstack, Infrastructure & Cybersecurity",
     "description": "An ecosystem of tools mastered through real-world practice. From frontend architecture to secure deployment on private servers, prioritizing performance and security.",
     "cards": {
-      "cyber": { 
-        "title": "Cybersecurity & DevSecOps", 
-        "desc": "Network auditing, pentesting, and Zero-Trust architectures. Experience deploying perimeter scanners and protecting critical infrastructure." 
+      "cyber": {
+        "title": "Cybersecurity & DevSecOps",
+        "desc": "Network auditing, pentesting, and Zero-Trust architectures. Experience deploying perimeter scanners and protecting critical infrastructure."
       },
-      "cloud": { 
-        "title": "Cloud & DevOps", 
-        "desc": "Absolute management of Linux VPS servers. Orchestration with Docker, reverse proxy with Traefik, and DNS zone management in Cloudflare." 
+      "cloud": {
+        "title": "Cloud & DevOps",
+        "desc": "Absolute management of Linux VPS servers. Orchestration with Docker, reverse proxy with Traefik, and DNS zone management in Cloudflare."
       },
-      "fullstack": { 
-        "title": "Modern Fullstack", 
-        "desc": "Development of reactive interfaces and high-performance APIs with hybrid rendering, strict typing, and utility-first design." 
+      "fullstack": {
+        "title": "Modern Fullstack",
+        "desc": "Development of reactive interfaces and high-performance APIs with hybrid rendering, strict typing, and utility-first design."
       },
-      "languages": { 
-        "title": "Core Languages & Mobile", 
-        "desc": "Mastery of strongly typed languages, object-oriented programming, and native development." 
+      "languages": {
+        "title": "Core Languages & Mobile",
+        "desc": "Mastery of strongly typed languages, object-oriented programming, and native development."
       },
-      "data": { 
-        "title": "Data & Architecture", 
-        "desc": "Relational modeling, modern ORMs, and in-memory databases for ultra-low latency caching." 
+      "data": {
+        "title": "Data & Architecture",
+        "desc": "Relational modeling, modern ORMs, and in-memory databases for ultra-low latency caching."
       },
-      "quant": { 
-        "title": "Algorithms & Quant Finance", 
-        "desc": "Development of automated trading systems (MQL4), mathematical data analysis, and automation with Python." 
+      "quant": {
+        "title": "Algorithms & Quant Finance",
+        "desc": "Development of automated trading systems (MQL4), mathematical data analysis, and automation with Python."
       },
-      "uiux": { 
-        "title": "UX/UI & Observability", 
-        "desc": "User-centric interface design (Figma) and real-time system monitoring (Grafana/Loki)." 
+      "uiux": {
+        "title": "UX/UI & Observability",
+        "desc": "User-centric interface design (Figma) and real-time system monitoring (Grafana/Loki)."
       },
-      "soft": { 
-        "title": "STEM Mentoring", 
-        "desc": "Technical leadership, knowledge transfer, and high-level academic consulting.", 
-        "tag": "Soft Skills" 
+      "soft": {
+        "title": "STEM Mentoring",
+        "desc": "Technical leadership, knowledge transfer, and high-level academic consulting.",
+        "tag": "Soft Skills"
       }
     }
   },
@@ -285,42 +287,75 @@
         "company": "Independent",
         "period": "Jan 2024 - Present",
         "description": "End-to-end web development and e-commerce solutions. SQL database optimization (40% query improvement) and creation of automated trading bots with low-latency technical analysis.",
-        "tags": ["SQL", "Trading Bots", "Low Latency", "E-commerce", "Fullstack"]
+        "tags": [
+          "SQL",
+          "Trading Bots",
+          "Low Latency",
+          "E-commerce",
+          "Fullstack"
+        ]
       },
       {
         "title": "Data Engineer & Support Specialist",
         "company": "Universidad Central del Ecuador",
         "period": "Jan 2023 - Dec 2023",
         "description": "Database administration and data governance (RBAC, encryption). Incident management under SLAs and support for critical infrastructure (DMS/LMS/ERP) with Disaster Recovery protocols.",
-        "tags": ["Data Governance", "Disaster Recovery", "RBAC", "SLA", "ERP"]
+        "tags": [
+          "Data Governance",
+          "Disaster Recovery",
+          "RBAC",
+          "SLA",
+          "ERP"
+        ]
       },
       {
         "title": "Digital Skills Project",
         "company": "Fajardo - Sangolquí",
         "period": "Sep 2022 - Dec 2022",
         "description": "Deployment of a community public Wi-Fi network with secure traffic segmentation. Led digital literacy and applied productivity workshops for the community.",
-        "tags": ["Secure Networking", "Wi-Fi", "Leadership", "Digital Literacy"]
+        "tags": [
+          "Secure Networking",
+          "Wi-Fi",
+          "Leadership",
+          "Digital Literacy"
+        ]
       },
       {
         "title": "Computer Science & Math Teacher",
         "company": "Unidad Educativa 13 de Abril",
         "period": "Sep 2021 - Aug 2022",
         "description": "Instruction in algorithms, programming logic, and web development (Python, PHP, JavaScript). Supervised student technical projects focused on problem-solving.",
-        "tags": ["Python", "PHP", "JavaScript", "Programming Logic", "Teaching"]
+        "tags": [
+          "Python",
+          "PHP",
+          "JavaScript",
+          "Programming Logic",
+          "Teaching"
+        ]
       },
       {
         "title": "Math Teacher (Transformar Project)",
         "company": "Universidad Central del Ecuador",
         "period": "Mar 2022 - Aug 2022",
         "description": "Intensive training in numerical and abstract reasoning for higher education admission. Designed pedagogical strategies to ensure applicants' academic success.",
-        "tags": ["Mathematics", "Abstract Reasoning", "Pedagogy", "Strategy"]
+        "tags": [
+          "Mathematics",
+          "Abstract Reasoning",
+          "Pedagogy",
+          "Strategy"
+        ]
       },
       {
         "title": "Math Teacher",
         "company": "Universidad Central del Ecuador",
         "period": "Oct 2020 - Jun 2021",
         "description": "Taught integral and differential calculus in virtual environments. Used mathematical visualization tools (GeoGebra, Python) and managed content on LMS platforms.",
-        "tags": ["Integral Calculus", "GeoGebra", "Python", "LMS"]
+        "tags": [
+          "Integral Calculus",
+          "GeoGebra",
+          "Python",
+          "LMS"
+        ]
       }
     ]
   },
@@ -329,12 +364,24 @@
     "title": "Let's start a secure project.",
     "description": "If your organization needs to secure its infrastructure, build high-availability platforms, or DevSecOps consulting, my inbox is open.",
     "methods": [
-      { "title": "Email", "description": "javiercaiza220158@gmail.com" },
-      { "title": "LinkedIn", "description": "Let's connect professionally" },
-      { "title": "GitHub", "description": "Explore my repositories and code" },
-      { "title": "Resume / CV", "description": "Download my detailed technical profile" }
+      {
+        "title": "Email",
+        "description": "javiercaiza220158@gmail.com"
+      },
+      {
+        "title": "LinkedIn",
+        "description": "Let's connect professionally"
+      },
+      {
+        "title": "GitHub",
+        "description": "Explore my repositories and code"
+      },
+      {
+        "title": "Resume / CV",
+        "description": "Download my detailed technical profile"
+      }
     ]
-  }, 
+  },
   "chat": {
     "title": "MEKA_JAVIER_OS",
     "ready": "Ready to process data.",
@@ -342,5 +389,43 @@
     "placeholder": "Enter your query parameter...",
     "calculating": "Calculating variables...",
     "error": "Error: Logical core collapse."
+  },
+  "sentraAuth": {
+    "register": {
+      "title": "Create your account",
+      "subtitle": "Start auditing your domain's security.",
+      "emailLabel": "Email",
+      "passwordLabel": "Password",
+      "passwordHint": "At least 12 characters, with a number or symbol.",
+      "orgLabel": "Your organization name",
+      "orgPlaceholder": "My company",
+      "submit": "Create account",
+      "submitting": "Creating account…",
+      "successTitle": "Check your email",
+      "successBody": "If the details are valid, we sent you a verification link. Check your spam folder too.",
+      "haveAccount": "Already have an account?",
+      "loginLink": "Sign in"
+    },
+    "login": {
+      "title": "Sign in",
+      "subtitle": "Access your Sentra panel.",
+      "emailLabel": "Email",
+      "passwordLabel": "Password",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Create one",
+      "unverifiedTitle": "Email verification pending",
+      "resend": "Resend verification email",
+      "resent": "Email sent again. Check your inbox (and spam).",
+      "genericError": "Could not sign in. Check your credentials."
+    },
+    "panel": {
+      "title": "Sentra Panel",
+      "wip": "The panel is under construction. Your account is active and ready for when the first scans launch.",
+      "sessionAs": "Signed in as",
+      "logout": "Sign out",
+      "loading": "Checking session…"
+    }
   }
 }

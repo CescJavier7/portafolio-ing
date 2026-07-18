@@ -187,3 +187,58 @@ mismo monorepo). Vive en `api.cescjavier.dev`. Incluye:
   (`alembic revision --autogenerate` + `alembic upgrade head`), y
   recién ahí probar `uvicorn app.main:app --reload` +
   `POST /auth/register`.
+## Sesión 3 — Lemon Squeezy, deploy de sentra-api, verificación de email (2026-07-18)
+
+### HITO: auth de Sentra funcionando end-to-end EN PRODUCCIÓN
+register → correo (Resend) → verify-email → login con access_token,
+probado contra https://api.cescjavier.dev con el correo real del usuario.
+
+### Qué se hizo
+- **`app/main.py` estaba corrupto en git** (contenía una copia de auth.py,
+  commiteado así en e0777aa; uvicorn fallaba con "Attribute app not found").
+  Reescrito: FastAPI + CORS + slowapi (`_rate_limit_exceeded_handler` es
+  función a nivel de MÓDULO slowapi, no método del Limiter) + routers +
+  /health. Docs ocultas en producción.
+- **Stripe → Lemon Squeezy** (decisión: el usuario no tiene RUC; LS es
+  Merchant of Record y permite vender como individuo). `stripe_service.py`
+  eliminado; `lemonsqueezy_service.py` nuevo (API REST con `requests`,
+  webhook verificado con HMAC-SHA256 del body crudo, header `X-Signature`).
+  `Organization`: columnas renombradas a `lemonsqueezy_customer_id` /
+  `lemonsqueezy_subscription_id` (migración 57d92ffe4b8e). `/register` ya
+  NO crea customer remoto: LS lo asocia al primer checkout vía webhook
+  (`meta.custom_data.organization_id`). Config: `LEMONSQUEEZY_API_KEY`,
+  `LEMONSQUEEZY_STORE_ID`, `LEMONSQUEEZY_VARIANT_ID_PRO` (=1921751, Test
+  Mode), `LEMONSQUEEZY_WEBHOOK_SECRET`.
+- **Cuenta LS**: store "Sentra", producto "Sentra Pro" $30/mes suscripción.
+  Cuenta EN REVISIÓN → todo en Test Mode. Al aprobarse: generar key/variant/
+  webhook de Live (Test y Live no comparten nada).
+- **Deploy en VPS**: `sentra-api` + `sentra-redis` agregados al
+  docker-compose.yml principal (comparten `portfolio-db`, base `sentra`
+  separada). Traefik: Host `api.cescjavier.dev` (DNS A "api" → droplet,
+  proxied por Cloudflare, TLS igual que portfolio-app). `deploy.yml` ahora
+  reconstruye los 3 servicios. Dockerfile copia `alembic/` + `alembic.ini`.
+- **GOTCHA CRÍTICO del VPS**: la contraseña de Postgres contiene `@` crudo.
+  Interpolarla en una URL rompe el parseo (asyncpg lee mal el host →
+  gaierror). Por eso `DATABASE_URL` NO se arma en compose: vive en
+  `services/api/.env` del VPS con la contraseña URL-encodeada (`%40`).
+  Usuario real del Postgres del VPS: `meka_admin` (el local de la Mac es
+  `admin_cesc` — son .env distintos).
+- **Verificación de email** (Resend, misma key del portafolio, remitente
+  `admin@cescjavier.dev`): token opaco de un solo uso, 24h, guardado como
+  SHA-256 en `users` (determinístico a propósito: el link solo trae el
+  token y hay que buscar al usuario por él con índice; seguro por los 256
+  bits de entropía). `GET /auth/verify-email?token=` devuelve página HTML;
+  `POST /auth/resend-verification` con respuesta genérica anti-enumeración.
+  Migración 3e9a1c5b7d24. El primer correo cayó en SPAM de Gmail (remitente
+  nuevo) — el usuario lo marcó como no-spam.
+
+### Pendiente (en orden sugerido)
+1. **Frontend de registro/login** en Next.js conectado a
+   `api.cescjavier.dev` (el usuario ya lo pidió — siguiente paso).
+2. Lemon Squeezy Live cuando aprueben la cuenta + probar checkout completo.
+3. Registro DMARC en Cloudflare (mejoraría la entregabilidad del correo).
+4. `VERIFY_URL_BASE` → apuntar a página del frontend cuando exista.
+5. `_processed_event_ids` del webhook sigue en memoria (TODO de siempre).
+6. Limpieza de repo: `services/api/venv/` está commiteado (5547 archivos).
+7. Verificar/borrar el registro DNS `sentra.cescjavier.dev` que se creó por
+   error (el correcto es `api`).
