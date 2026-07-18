@@ -450,7 +450,29 @@
       "upgrade": "Upgrade to Pro — $30/mo",
       "upgrading": "Opening checkout…",
       "upgradeError": "Could not start the payment. Try again in a moment.",
-      "testModeNote": "Payments run in test mode while Sentra is in early access."
+      "testModeNote": "Payments run in test mode while Sentra is in early access.",
+      "targets": {
+        "title": "Domains",
+        "desc": "Register the domains you want to audit. You must verify ownership before scanning them.",
+        "addPlaceholder": "mydomain.com",
+        "add": "Add domain",
+        "adding": "Adding…",
+        "empty": "You haven't added any domains yet.",
+        "verified": "Verified",
+        "pending": "Unverified",
+        "verify": "Verify",
+        "verifying": "Verifying…",
+        "delete": "Delete",
+        "instructionsTitle": "Verify domain ownership",
+        "instructionsIntro": "Create this TXT record in your domain DNS, then click Verify. Propagation can take a few minutes.",
+        "recordType": "Type",
+        "recordName": "Name / Host",
+        "recordValue": "Value",
+        "copy": "Copy",
+        "copied": "Copied",
+        "close": "Close",
+        "scanSoon": "Scanning coming soon"
+      }
     }
   }
 }

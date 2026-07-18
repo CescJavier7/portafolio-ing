@@ -450,7 +450,29 @@
       "upgrade": "Mejorar a Pro — $30/mes",
       "upgrading": "Abriendo checkout…",
       "upgradeError": "No se pudo iniciar el pago. Inténtalo de nuevo en un momento.",
-      "testModeNote": "Los pagos están en modo de prueba mientras Sentra está en acceso anticipado."
+      "testModeNote": "Los pagos están en modo de prueba mientras Sentra está en acceso anticipado.",
+      "targets": {
+        "title": "Dominios",
+        "desc": "Registra los dominios que quieres auditar. Debes verificar que son tuyos antes de escanearlos.",
+        "addPlaceholder": "midominio.com",
+        "add": "Agregar dominio",
+        "adding": "Agregando…",
+        "empty": "Aún no has agregado ningún dominio.",
+        "verified": "Verificado",
+        "pending": "Sin verificar",
+        "verify": "Verificar",
+        "verifying": "Verificando…",
+        "delete": "Eliminar",
+        "instructionsTitle": "Verifica la propiedad del dominio",
+        "instructionsIntro": "Crea este registro TXT en el DNS de tu dominio y luego pulsa Verificar. La propagación puede tardar unos minutos.",
+        "recordType": "Tipo",
+        "recordName": "Nombre / Host",
+        "recordValue": "Valor",
+        "copy": "Copiar",
+        "copied": "Copiado",
+        "close": "Cerrar",
+        "scanSoon": "El escaneo llegará pronto"
+      }
     }
   }
 }

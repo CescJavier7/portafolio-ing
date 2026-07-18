@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ShieldCheck, LogOut, Construction, KeyRound, Gem } from 'lucide-react';
+import { ShieldCheck, LogOut, KeyRound, Gem } from 'lucide-react';
 import {
   sentraChangePassword,
   sentraCreateCheckout,
@@ -15,6 +15,7 @@ import {
   SentraApiError,
   type SentraUser,
 } from '@/lib/sentra/api';
+import TargetsCard, { type TargetsDict } from '@/components/sentra/TargetsCard';
 
 interface Dict {
   title: string;
@@ -38,6 +39,7 @@ interface Dict {
   upgrading: string;
   upgradeError: string;
   testModeNote: string;
+  targets: TargetsDict;
 }
 
 const inputClass =
@@ -297,14 +299,7 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
             </button>
           </div>
 
-          <div className="rounded-3xl bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 shadow-sm p-10 text-center">
-            <div className="w-14 h-14 mx-auto rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center mb-5">
-              <Construction className="w-7 h-7 text-green-500" />
-            </div>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-md mx-auto">
-              {dict.wip}
-            </p>
-          </div>
+          <TargetsCard dict={dict.targets} />
 
           <PlanCard dict={dict} />
 

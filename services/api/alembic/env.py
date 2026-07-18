@@ -13,6 +13,7 @@ from app.db.base import Base
 import app.models.organization
 import app.models.user
 import app.models.refresh_token
+import app.models.target
 
 # Configuración de logging de Alembic
 config = context.config

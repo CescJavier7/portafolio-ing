@@ -242,3 +242,34 @@ probado contra https://api.cescjavier.dev con el correo real del usuario.
 6. Limpieza de repo: `services/api/venv/` está commiteado (5547 archivos).
 7. Verificar/borrar el registro DNS `sentra.cescjavier.dev` que se creó por
    error (el correcto es `api`).
+
+## Sesión 4 — Billing cerrado end-to-end + inicio de la herramienta (2026-07-18)
+
+### HITO: ciclo SaaS completo validado EN PRODUCCIÓN (test mode)
+registro → verify email → login → checkout Lemon Squeezy → webhook 200
+(firma OK) → organización en PRO (badge en panel + DB `PRO | active`).
+Order de prueba #4339771. La factura la emite LS automáticamente (MoR).
+
+### Config real de Lemon Squeezy (VPS services/api/.env)
+- Store ID: 433977 (OJO: 1229192 es el PRODUCT id — error que costó un 404).
+- Variant Pro: 1921751. Todo en TEST MODE hasta que LS apruebe la cuenta;
+  al aprobar: generar key/webhook/variant de Live y reemplazar en .env.
+- La API key se corrompió una vez al pegarla en nano (espacios) → usar
+  `sed -i '/^KEY=/d' + echo 'KEY=...' >>` para valores largos.
+
+### UI/UX de esta sesión
+- useSentraSession (lib/sentra/useSession.ts) + evento SENTRA_AUTH_EVENT:
+  sesión reactiva en NavBar/landing/login/register (el NavBar persiste
+  entre navegaciones; sin el evento mostraba estado viejo).
+- NavBar: avatar+dropdown en desktop; en mobile la sesión es tarjeta
+  estilo iOS dentro del menú hamburguesa. Landing con CTA según sesión.
+- Panel: tarjeta Plan (GET /billing/subscription + checkout) y Seguridad
+  (change-password que revoca otras sesiones). Chat MekaSenku vinculado a
+  usuarios (ChatSession.sentraUserId/sentraEmail, validación vía
+  SENTRA_API_INTERNAL_URL=http://sentra-api:8000 en red interna).
+- Registro con checkbox marketing_consent (opt-in explícito).
+
+### EN CURSO: la herramienta (empezada al final de esta sesión)
+Modelo Target + verificación de dominio por DNS TXT
+(`_sentra-challenge.<dominio>` TXT `sentra-verify=<token>`), límites por
+plan (FREE=1, PRO=10). Después: scanner pasivo (headers+SSL+DNS) + score.

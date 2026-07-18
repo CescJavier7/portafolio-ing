@@ -26,3 +26,4 @@ class Organization(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     users: Mapped[list["User"]] = relationship(back_populates="organization")
+    targets: Mapped[list["Target"]] = relationship(back_populates="organization")

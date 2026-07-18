@@ -101,6 +101,8 @@ async function request<T>(
     throw new SentraApiError(res.status, detail);
   }
 
+  // 204 No Content (ej. DELETE) no trae body: no intentes parsearlo.
+  if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }
 
@@ -213,4 +215,45 @@ export async function sentraCreateCheckout(): Promise<string> {
     true,
   );
   return res.checkout_url;
+}
+
+// ── Targets (dominios a auditar) ────────────────────────────────────
+
+export interface SentraTarget {
+  id: string;
+  domain: string;
+  verified: boolean;
+  verified_at: string | null;
+  created_at: string;
+}
+
+export interface SentraTargetCreated extends SentraTarget {
+  dns_record_name: string;
+  dns_record_value: string;
+}
+
+export async function sentraListTargets(): Promise<SentraTarget[]> {
+  return request('/api/v1/targets', { method: 'GET' }, true);
+}
+
+export async function sentraCreateTarget(domain: string): Promise<SentraTargetCreated> {
+  return request(
+    '/api/v1/targets',
+    { method: 'POST', body: JSON.stringify({ domain }) },
+    true,
+  );
+}
+
+export async function sentraGetInstructions(targetId: string): Promise<SentraTargetCreated> {
+  return request(`/api/v1/targets/${targetId}/instructions`, { method: 'GET' }, true);
+}
+
+export async function sentraVerifyTarget(
+  targetId: string,
+): Promise<{ verified: boolean; detail: string }> {
+  return request(`/api/v1/targets/${targetId}/verify`, { method: 'POST' }, true);
+}
+
+export async function sentraDeleteTarget(targetId: string): Promise<void> {
+  await request(`/api/v1/targets/${targetId}`, { method: 'DELETE' }, true);
 }

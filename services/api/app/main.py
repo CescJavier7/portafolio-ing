@@ -6,6 +6,7 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from app.api.v1.auth import router as auth_router
 from app.api.v1.billing import router as billing_router
+from app.api.v1.targets import router as targets_router
 from app.core.config import get_settings
 from app.core.rate_limit import limiter
 
@@ -33,6 +34,7 @@ app.add_middleware(
 
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(billing_router, prefix="/api/v1")
+app.include_router(targets_router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["health"])
