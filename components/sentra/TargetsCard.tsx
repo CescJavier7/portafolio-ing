@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
-  Globe, Plus, ShieldCheck, ShieldAlert, Trash2, Copy, Check, X, Radar, Lock, ChevronDown, Sparkles, FileText, Briefcase,
+  Globe, Plus, ShieldCheck, ShieldAlert, Trash2, Copy, Check, X, Radar, Lock, ChevronDown, Sparkles, FileText, Briefcase, Download,
 } from 'lucide-react';
 import {
   sentraCreateTarget,
@@ -23,6 +23,8 @@ import {
   type SentraTargetCreated,
 } from '@/lib/sentra/api';
 import UpgradeModal, { type UpgradeDict } from '@/components/sentra/UpgradeModal';
+import ScoreTrend from '@/components/sentra/ScoreTrend';
+import { openScanReport, type PdfLabels } from '@/lib/sentra/pdfReport';
 
 interface SeverityDict {
   alta: string;
@@ -53,6 +55,10 @@ interface ScanDict {
   reportExecutive: string;
   reportError: string;
   reportRegenerate: string;
+  trendTitle: string;
+  trendEmpty: string;
+  pdfBtn: string;
+  pdf: PdfLabels;
 }
 
 export interface TargetsDict {
@@ -188,19 +194,49 @@ function AiReport({ scan, dict, lang }: { scan: SentraScan; dict: ScanDict; lang
   );
 }
 
-function ScanResultPanel({ scan, dict, lang, onUpgrade }: { scan: SentraScan; dict: ScanDict; lang: string; onUpgrade: () => void }) {
+function ScanResultPanel({
+  scan,
+  history,
+  dict,
+  lang,
+  onUpgrade,
+}: {
+  scan: SentraScan;
+  history: SentraScan[];
+  dict: ScanDict;
+  lang: string;
+  onUpgrade: () => void;
+}) {
   const [open, setOpen] = useState(false);
+  // Historial en orden cronológico ascendente para la tendencia.
+  const trend = [...history].reverse();
   return (
     <div className="mt-4 rounded-2xl bg-zinc-50 dark:bg-black/30 border border-zinc-200 dark:border-zinc-800 p-5">
-      <div className="flex items-center gap-5">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-5">
         <ScoreRing score={scan.score} grade={scan.grade} />
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{dict.scoreLabel}</p>
           <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
             {dict.lastScan}: {new Date(scan.created_at).toLocaleString()}
           </p>
+          {/* PDF disponible cuando hay detalle (Pro): el reporte necesita los findings. */}
+          {scan.findings && (
+            <button
+              onClick={() => openScanReport(scan, dict.pdf)}
+              className="mt-3 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-zinc-300 dark:border-zinc-700 text-[12px] font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" /> {dict.pdfBtn}
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Tendencia del score (aparece con ≥2 escaneos). */}
+      {trend.length >= 2 && (
+        <div className="mt-5 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+          <ScoreTrend scans={trend} title={dict.trendTitle} empty={dict.trendEmpty} />
+        </div>
+      )}
 
       {scan.detail_locked ? (
         <button
@@ -299,7 +335,9 @@ export default function TargetsCard({ dict, upgradeDict, lang }: { dict: Targets
   const [instructions, setInstructions] = useState<SentraTargetCreated | null>(null);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [verifyMsg, setVerifyMsg] = useState<{ id: string; ok: boolean; text: string } | null>(null);
-  const [scans, setScans] = useState<Record<string, SentraScan>>({});
+  // Historial completo por dominio (orden descendente que da la API): el
+  // último escaneo es [0] y el array alimenta la gráfica de tendencia.
+  const [scans, setScans] = useState<Record<string, SentraScan[]>>({});
   const [scanningId, setScanningId] = useState<string | null>(null);
   const [upgrade, setUpgrade] = useState<{ open: boolean; reason?: string }>({ open: false });
 
@@ -307,13 +345,17 @@ export default function TargetsCard({ dict, upgradeDict, lang }: { dict: Targets
     sentraListTargets()
       .then(async (list) => {
         setTargets(list);
-        // Cargar el último escaneo de cada dominio verificado (pocos, ok).
+        // Cargar el historial de cada dominio verificado (pocos, ok).
         const verified = list.filter((t) => t.verified);
         const results = await Promise.all(
-          verified.map((t) => sentraListScans(t.id).then((sc) => [t.id, sc[0]] as const).catch(() => [t.id, undefined] as const)),
+          verified.map((t) =>
+            sentraListScans(t.id)
+              .then((sc) => [t.id, sc] as [string, SentraScan[]])
+              .catch(() => [t.id, [] as SentraScan[]] as [string, SentraScan[]]),
+          ),
         );
-        const map: Record<string, SentraScan> = {};
-        for (const [id, sc] of results) if (sc) map[id] = sc;
+        const map: Record<string, SentraScan[]> = {};
+        for (const [id, sc] of results) if (sc.length) map[id] = sc;
         setScans(map);
       })
       .catch(() => setTargets([]))
@@ -361,7 +403,8 @@ export default function TargetsCard({ dict, upgradeDict, lang }: { dict: Targets
     setScanningId(id);
     try {
       const result = await sentraScanTarget(id);
-      setScans((prev) => ({ ...prev, [id]: result }));
+      // Prepend: el nuevo escaneo pasa a ser el más reciente del historial.
+      setScans((prev) => ({ ...prev, [id]: [result, ...(prev[id] ?? [])] }));
     } catch (err) {
       if (err instanceof SentraApiError && err.status === 402) {
         setUpgrade({ open: true, reason: err.detail });
@@ -444,7 +487,7 @@ export default function TargetsCard({ dict, upgradeDict, lang }: { dict: Targets
                       className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-green-500 text-black text-[12px] font-bold hover:scale-105 transition-transform disabled:opacity-60"
                     >
                       <Radar className={`w-3.5 h-3.5 ${scanningId === t.id ? 'animate-spin' : ''}`} />
-                      {scanningId === t.id ? s.scanning : scans[t.id] ? s.rescan : s.scan}
+                      {scanningId === t.id ? s.scanning : scans[t.id]?.length ? s.rescan : s.scan}
                     </button>
                   ) : (
                     <>
@@ -460,13 +503,21 @@ export default function TargetsCard({ dict, upgradeDict, lang }: { dict: Targets
                 </div>
               </div>
 
-              {scans[t.id] && (
-                <ScanResultPanel scan={scans[t.id]} dict={s} lang={lang} onUpgrade={() => setUpgrade({ open: true })} />
-              )}
-              {scans[t.id]?.scans_remaining != null && (
-                <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-2 text-right">
-                  {s.scansLeft.replace('{n}', String(scans[t.id].scans_remaining))}
-                </p>
+              {scans[t.id]?.length && (
+                <>
+                  <ScanResultPanel
+                    scan={scans[t.id][0]}
+                    history={scans[t.id]}
+                    dict={s}
+                    lang={lang}
+                    onUpgrade={() => setUpgrade({ open: true })}
+                  />
+                  {scans[t.id][0].scans_remaining != null && (
+                    <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-2 text-right">
+                      {s.scansLeft.replace('{n}', String(scans[t.id][0].scans_remaining))}
+                    </p>
+                  )}
+                </>
               )}
             </li>
           ))}

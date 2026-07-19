@@ -507,7 +507,23 @@
           "reportTechnical": "Informe técnico",
           "reportExecutive": "Resumen ejecutivo",
           "reportError": "No se pudo generar el reporte. Inténtalo de nuevo.",
-          "reportRegenerate": "Regenerar"
+          "reportRegenerate": "Regenerar",
+          "trendTitle": "Evolución del score",
+          "trendEmpty": "Escanea al menos dos veces para ver la tendencia.",
+          "pdfBtn": "Descargar PDF",
+          "pdf": {
+            "reportTitle": "Reporte de seguridad",
+            "domain": "Dominio",
+            "date": "Fecha",
+            "scoreLabel": "Security Score",
+            "check": "Verificación",
+            "weight": "Peso",
+            "status": "Estado",
+            "passed": "Cumple",
+            "failed": "Falta",
+            "recommendation": "Recomendación",
+            "generatedBy": "Generado por Sentra"
+          }
         }
       },
       "upgrade_modal": {
