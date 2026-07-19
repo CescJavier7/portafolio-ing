@@ -546,7 +546,61 @@
       },
       "manageBtn": "Gestionar / cancelar suscripción",
       "managing": "Abriendo portal…",
-      "manageError": "No se pudo abrir el portal."
+      "manageError": "No se pudo abrir el portal.",
+      "dashboard": {
+        "nav": {
+          "overview": "Resumen",
+          "tool": "Auditoría",
+          "reports": "Reportes",
+          "account": "Cuenta",
+          "soon": "Próximamente",
+          "dns": "Monitor DNS",
+          "traffic": "Inteligencia de tráfico",
+          "graph": "Grafo de superficie"
+        },
+        "overview": {
+          "title": "Resumen",
+          "subtitle": "Estado de seguridad de tu superficie digital.",
+          "kpiDomains": "Dominios",
+          "kpiVerified": "Verificados",
+          "kpiAvg": "Score promedio",
+          "kpiScans": "Escaneos totales",
+          "gradeDist": "Distribución de notas",
+          "ranking": "Dominios por score",
+          "noData": "Aún no hay datos. Verifica y escanea un dominio en Auditoría.",
+          "empty": "Sin escaneos"
+        },
+        "reports": {
+          "title": "Reportes",
+          "subtitle": "Historial de auditorías y descargas en PDF.",
+          "domain": "Dominio",
+          "date": "Fecha",
+          "score": "Score",
+          "pdf": "PDF",
+          "download": "Descargar",
+          "locked": "PDF disponible en Pro",
+          "upgrade": "Mejorar a Pro",
+          "empty": "Aún no has generado ningún reporte. Escanea un dominio en Auditoría.",
+          "countLabel": "reportes"
+        },
+        "account": {
+          "title": "Cuenta",
+          "subtitle": "Tu perfil, tu organización y tu seguridad.",
+          "profileTitle": "Perfil",
+          "nameLabel": "Tu nombre",
+          "namePlaceholder": "Ej. Kevin Montatixe",
+          "nameHint": "Cómo te mostramos en la plataforma.",
+          "orgLabel": "Nombre de la organización",
+          "orgHintOwner": "Solo el propietario puede cambiarlo.",
+          "orgHintMember": "Solo el propietario puede cambiar este nombre.",
+          "emailLabel": "Correo",
+          "save": "Guardar cambios",
+          "saving": "Guardando…",
+          "saved": "Perfil actualizado."
+        },
+        "soonTitle": "En construcción",
+        "soonBody": "Esta capa es parte de la infraestructura que viene: descubrimiento continuo, correlación y grafo de tu superficie de ataque. Te avisaremos cuando esté lista."
+      }
     }
   }
 }

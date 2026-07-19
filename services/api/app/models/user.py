@@ -15,6 +15,9 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
 
+    # Nombre para mostrar (opcional; el usuario lo define en su perfil).
+    name: Mapped[str | None] = mapped_column(String(120), nullable=True)
+
     role: Mapped[str] = mapped_column(String(20), default="OWNER")  # OWNER | ADMIN | ANALYST | MEMBER
 
     # Verificación de email: hasta que sea True, la cuenta no puede loguear.

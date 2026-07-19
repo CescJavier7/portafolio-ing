@@ -44,10 +44,19 @@ export function sentraIsKnownUser(): boolean {
 export interface SentraUser {
   id: string;
   email: string;
+  name: string | null;
   role: string;
   organization_id: string;
+  organization_name: string | null;
   email_verified: boolean;
   plan: string;
+}
+
+export async function sentraUpdateProfile(data: {
+  name?: string | null;
+  organization_name?: string;
+}): Promise<SentraUser> {
+  return request('/api/v1/auth/profile', { method: 'PATCH', body: JSON.stringify(data) }, true);
 }
 
 export class SentraApiError extends Error {

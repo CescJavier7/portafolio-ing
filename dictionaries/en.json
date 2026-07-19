@@ -546,7 +546,61 @@
       },
       "manageBtn": "Manage / cancel subscription",
       "managing": "Opening portal…",
-      "manageError": "Could not open the portal."
+      "manageError": "Could not open the portal.",
+      "dashboard": {
+        "nav": {
+          "overview": "Overview",
+          "tool": "Audit",
+          "reports": "Reports",
+          "account": "Account",
+          "soon": "Coming soon",
+          "dns": "DNS Monitor",
+          "traffic": "Traffic Intelligence",
+          "graph": "Surface Graph"
+        },
+        "overview": {
+          "title": "Overview",
+          "subtitle": "Security posture of your digital surface.",
+          "kpiDomains": "Domains",
+          "kpiVerified": "Verified",
+          "kpiAvg": "Average score",
+          "kpiScans": "Total scans",
+          "gradeDist": "Grade distribution",
+          "ranking": "Domains by score",
+          "noData": "No data yet. Verify and scan a domain in Audit.",
+          "empty": "No scans"
+        },
+        "reports": {
+          "title": "Reports",
+          "subtitle": "Audit history and PDF downloads.",
+          "domain": "Domain",
+          "date": "Date",
+          "score": "Score",
+          "pdf": "PDF",
+          "download": "Download",
+          "locked": "PDF available on Pro",
+          "upgrade": "Upgrade to Pro",
+          "empty": "You haven't generated any reports yet. Scan a domain in Audit.",
+          "countLabel": "reports"
+        },
+        "account": {
+          "title": "Account",
+          "subtitle": "Your profile, organization and security.",
+          "profileTitle": "Profile",
+          "nameLabel": "Your name",
+          "namePlaceholder": "e.g. Kevin Montatixe",
+          "nameHint": "How we show you across the platform.",
+          "orgLabel": "Organization name",
+          "orgHintOwner": "Only the owner can change it.",
+          "orgHintMember": "Only the owner can change this name.",
+          "emailLabel": "Email",
+          "save": "Save changes",
+          "saving": "Saving…",
+          "saved": "Profile updated."
+        },
+        "soonTitle": "Under construction",
+        "soonBody": "This layer is part of the infrastructure ahead: continuous discovery, correlation and a graph of your attack surface. We'll let you know when it's ready."
+      }
     }
   }
 }

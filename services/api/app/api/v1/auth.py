@@ -47,7 +47,7 @@ from app.schemas.auth import (
     RegisterRequest,
     ResendVerificationRequest,
 )
-from app.schemas.user import UserOut
+from app.schemas.user import ProfileUpdate, UserOut
 from app.services.email_service import send_verification_email
 
 settings = get_settings()
@@ -348,8 +348,42 @@ async def me(current_user: User = Depends(get_current_user), db: AsyncSession = 
     return UserOut(
         id=current_user.id,
         email=current_user.email,
+        name=current_user.name,
         role=current_user.role,
         organization_id=current_user.organization_id,
+        organization_name=org.name if org else None,
+        email_verified=current_user.email_verified,
+        plan=org.plan if org else "FREE",
+    )
+
+
+@router.patch("/profile", response_model=UserOut)
+@limiter.limit("10/minute")
+async def update_profile(
+    request: Request,
+    payload: ProfileUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    org = await db.get(Organization, current_user.organization_id)
+
+    if payload.name is not None:
+        # Cadena vacía => limpiar el nombre; texto => set. Se normaliza el espaciado.
+        current_user.name = payload.name.strip() or None
+    # Solo el OWNER puede renombrar la organización (los demás roles no).
+    if payload.organization_name is not None and org is not None and current_user.role == "OWNER":
+        org.name = payload.organization_name.strip()
+
+    await db.commit()
+    await db.refresh(current_user)
+
+    return UserOut(
+        id=current_user.id,
+        email=current_user.email,
+        name=current_user.name,
+        role=current_user.role,
+        organization_id=current_user.organization_id,
+        organization_name=org.name if org else None,
         email_verified=current_user.email_verified,
         plan=org.plan if org else "FREE",
     )
