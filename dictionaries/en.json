@@ -527,7 +527,10 @@
         "upgrading": "Opening checkout…",
         "later": "Not now",
         "testModeNote": "Test-mode payments while Sentra is in early access."
-      }
+      },
+      "manageBtn": "Manage / cancel subscription",
+      "managing": "Opening portal…",
+      "manageError": "Could not open the portal."
     }
   }
 }

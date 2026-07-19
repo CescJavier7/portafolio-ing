@@ -85,9 +85,16 @@ const DegreeCard = ({ degree, t, index }: { degree: any, t: any, index: number }
         {/* ================= FRENTE DE LA TARJETA ================= */}
         <div
           className="absolute inset-0 w-full h-full overflow-hidden rounded-3xl bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800/50 p-8 md:p-10 flex flex-col shadow-sm hover:shadow-xl dark:hover:bg-zinc-900/80 transition-all duration-300"
-          // -webkit-backface-visibility: SIN esto Safari no oculta la cara
-          // trasera y el frente se transparenta espejado (bug reportado).
-          style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+          // Safari solo aplica backface-visibility a elementos que están en
+          // un contexto 3D. La cara frontal necesita SU PROPIO transform
+          // (rotateY(0)) para entrar en 3D; sin él, Safari la deja plana y
+          // el dorso se transparenta espejado (el bug reportado).
+          style={{
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+            transform: 'rotateY(0deg)',
+            WebkitTransform: 'rotateY(0deg)',
+          }}
         >
           
           {/* Marca de agua (Icono gigante de fondo) */}

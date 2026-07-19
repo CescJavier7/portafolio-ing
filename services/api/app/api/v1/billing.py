@@ -22,7 +22,7 @@ from app.api.v1.deps import get_current_user
 from app.db.session import get_db
 from app.models.organization import Organization
 from app.models.user import User
-from app.services.lemonsqueezy_service import create_checkout_url, verify_webhook_signature
+from app.services.lemonsqueezy_service import create_checkout_url, get_customer_portal_url, verify_webhook_signature
 
 router = APIRouter(prefix="/billing", tags=["billing"])
 
@@ -64,6 +64,21 @@ async def create_checkout(current_user: User = Depends(get_current_user), db: As
             detail="El proveedor de pagos no aceptó la solicitud. Inténtalo más tarde.",
         )
     return {"checkout_url": checkout_url}
+
+
+@router.get("/portal")
+async def customer_portal(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    org = await db.get(Organization, current_user.organization_id)
+    if org is None or org.lemonsqueezy_subscription_id is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No hay una suscripción activa que gestionar.")
+    try:
+        url = get_customer_portal_url(org.lemonsqueezy_subscription_id)
+    except Exception as exc:
+        print(f"[BILLING] Fallo obteniendo portal para org {org.id}: {exc}")
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="No se pudo abrir el portal de suscripción.")
+    if not url:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portal no disponible.")
+    return {"portal_url": url}
 
 
 @router.post("/webhook")

@@ -231,6 +231,12 @@ export async function sentraCreateCheckout(): Promise<string> {
   return res.checkout_url;
 }
 
+// Portal de cliente de Lemon Squeezy: gestionar método de pago / cancelar.
+export async function sentraGetBillingPortal(): Promise<string> {
+  const res = await request<{ portal_url: string }>('/api/v1/billing/portal', { method: 'GET' }, true);
+  return res.portal_url;
+}
+
 // ── Targets (dominios a auditar) ────────────────────────────────────
 
 export interface SentraTarget {

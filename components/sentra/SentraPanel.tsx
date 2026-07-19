@@ -7,6 +7,7 @@ import { ShieldCheck, LogOut, KeyRound, Gem } from 'lucide-react';
 import {
   sentraChangePassword,
   sentraCreateCheckout,
+  sentraGetBillingPortal,
   sentraGetSubscription,
   sentraHasToken,
   sentraLogout,
@@ -40,6 +41,9 @@ interface Dict {
   upgrading: string;
   upgradeError: string;
   testModeNote: string;
+  manageBtn: string;
+  managing: string;
+  manageError: string;
   targets: TargetsDict;
   upgrade_modal: UpgradeDict;
 }
@@ -68,6 +72,17 @@ function PlanCard({ dict }: { dict: Dict }) {
       window.location.href = url;
     } catch {
       setError(dict.upgradeError);
+      setBusy(false);
+    }
+  }
+
+  async function handlePortal() {
+    setBusy(true);
+    setError(null);
+    try {
+      window.location.href = await sentraGetBillingPortal();
+    } catch {
+      setError(dict.manageError);
       setBusy(false);
     }
   }
@@ -115,6 +130,23 @@ function PlanCard({ dict }: { dict: Dict }) {
             </p>
           )}
           <p className="mt-4 text-[11px] text-zinc-400 dark:text-zinc-500">{dict.testModeNote}</p>
+        </>
+      )}
+
+      {isPro && (
+        <>
+          <button
+            onClick={handlePortal}
+            disabled={busy}
+            className="px-5 py-2.5 rounded-full border border-zinc-300 dark:border-zinc-700 text-sm font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors disabled:opacity-60"
+          >
+            {busy ? dict.managing : dict.manageBtn}
+          </button>
+          {error && (
+            <p className="mt-4 text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+              {error}
+            </p>
+          )}
         </>
       )}
     </div>

@@ -527,7 +527,10 @@
         "upgrading": "Abriendo checkout…",
         "later": "Ahora no",
         "testModeNote": "Pagos en modo de prueba mientras Sentra está en acceso anticipado."
-      }
+      },
+      "manageBtn": "Gestionar / cancelar suscripción",
+      "managing": "Abriendo portal…",
+      "manageError": "No se pudo abrir el portal."
     }
   }
 }

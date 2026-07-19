@@ -75,6 +75,21 @@ def create_checkout_url(email: str, organization_id: str) -> str:
     return response.json()["data"]["attributes"]["url"]
 
 
+def get_customer_portal_url(subscription_id: str) -> str | None:
+    """
+    URL del portal de cliente de Lemon Squeezy para ESA suscripción: ahí el
+    usuario actualiza su método de pago o cancela, sin que nosotros toquemos
+    datos de pago. LS la devuelve en attributes.urls.customer_portal.
+    """
+    response = requests.get(f"{API_BASE}/subscriptions/{subscription_id}", headers=_headers(), timeout=10)
+    if not response.ok:
+        raise RuntimeError(
+            f"Lemon Squeezy no devolvió la suscripción: HTTP {response.status_code} — {response.text[:300]}"
+        )
+    urls = response.json().get("data", {}).get("attributes", {}).get("urls", {})
+    return urls.get("customer_portal")
+
+
 def verify_webhook_signature(payload: bytes, signature_header: str | None) -> bool:
     """
     Lemon Squeezy firma el body crudo con HMAC-SHA256 usando el secreto del
