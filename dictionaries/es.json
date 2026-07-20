@@ -510,7 +510,7 @@
           "reportRegenerate": "Regenerar",
           "trendTitle": "Evolución del score",
           "trendEmpty": "Escanea al menos dos veces para ver la tendencia.",
-          "pdfBtn": "Descargar PDF",
+          "pdfBtn": "Descargar informe PDF",
           "pdf": {
             "reportTitle": "Reporte de seguridad",
             "domain": "Dominio",
@@ -522,8 +522,21 @@
             "passed": "Cumple",
             "failed": "Falta",
             "recommendation": "Recomendación",
-            "generatedBy": "Generado por Sentra"
-          }
+            "generatedBy": "Generado por Sentra",
+            "executiveTitle": "Resumen ejecutivo",
+            "methodologyTitle": "Metodología y ponderación",
+            "methodologyBody": "El Security Score es una suma ponderada: cada control aporta un peso y el puntaje final es (peso obtenido ÷ peso total) × 100. Aquí: {earned} de {total} puntos = {score}/100.",
+            "severityHigh": "Alta",
+            "severityMedium": "Media",
+            "severityLow": "Baja",
+            "pointsLost": "Puntos perdidos por severidad",
+            "findingsTitle": "Desglose detallado",
+            "prioritiesTitle": "Prioridades y decisiones",
+            "technicalTitle": "Análisis técnico",
+            "aiPending": "Genera el informe con IA para incluir el análisis narrativo detallado."
+          },
+          "reportPriorities": "Prioridades y decisiones",
+          "pdfGenerating": "Generando informe…"
         }
       },
       "upgrade_modal": {
@@ -581,7 +594,8 @@
           "locked": "PDF disponible en Pro",
           "upgrade": "Mejorar a Pro",
           "empty": "Aún no has generado ningún reporte. Escanea un dominio en Auditoría.",
-          "countLabel": "reportes"
+          "countLabel": "reportes",
+          "downloading": "Generando…"
         },
         "account": {
           "title": "Cuenta",

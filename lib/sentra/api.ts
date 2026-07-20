@@ -319,8 +319,9 @@ export async function sentraListScans(targetId: string): Promise<SentraScan[]> {
 }
 
 export interface SentraReport {
-  technical: string;
   executive: string;
+  priorities: string;
+  technical: string;
 }
 
 // Reporte con IA: OJO, esta ruta es del PROPIO Next.js (mismo origen), no

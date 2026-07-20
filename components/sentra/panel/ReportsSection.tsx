@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { FileText, Download, Lock } from 'lucide-react';
 import { loadDomainData, gradeColor } from '@/lib/sentra/domainData';
 import { openScanReport, type PdfLabels } from '@/lib/sentra/pdfReport';
-import type { SentraScan } from '@/lib/sentra/api';
+import { sentraGenerateReport, type SentraScan } from '@/lib/sentra/api';
 import { SectionHeader } from '@/components/sentra/panel/OverviewSection';
 
 export interface ReportsDict {
@@ -15,6 +15,7 @@ export interface ReportsDict {
   score: string;
   pdf: string;
   download: string;
+  downloading: string;
   locked: string;
   upgrade: string;
   empty: string;
@@ -24,14 +25,17 @@ export interface ReportsDict {
 export default function ReportsSection({
   dict,
   pdfLabels,
+  lang,
   onUpgrade,
 }: {
   dict: ReportsDict;
   pdfLabels: PdfLabels;
+  lang: string;
   onUpgrade: () => void;
 }) {
   const [loading, setLoading] = useState(true);
   const [scans, setScans] = useState<SentraScan[]>([]);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
     loadDomainData()
@@ -44,6 +48,27 @@ export default function ReportsSection({
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  // Descarga = informe COMPLETO: genera la narrativa IA y abre el PDF. Si la
+  // IA falla, se abre igual el informe con la parte estructurada (fallback).
+  async function handleDownload(scan: SentraScan) {
+    if (!scan.findings) return;
+    setDownloadingId(scan.id);
+    try {
+      const report = await sentraGenerateReport({
+        domain: scan.domain,
+        score: scan.score,
+        grade: scan.grade,
+        findings: scan.findings,
+        lang,
+      });
+      openScanReport(scan, pdfLabels, report);
+    } catch {
+      openScanReport(scan, pdfLabels, null);
+    } finally {
+      setDownloadingId(null);
+    }
+  }
 
   return (
     <div>
@@ -79,10 +104,12 @@ export default function ReportsSection({
                   </div>
                   {canPdf ? (
                     <button
-                      onClick={() => openScanReport(scan, pdfLabels)}
-                      className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-zinc-300 dark:border-zinc-700 text-[12px] font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+                      onClick={() => handleDownload(scan)}
+                      disabled={downloadingId === scan.id}
+                      className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-zinc-300 dark:border-zinc-700 text-[12px] font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors disabled:opacity-60"
                     >
-                      <Download className="w-3.5 h-3.5" /> {dict.download}
+                      <Download className={`w-3.5 h-3.5 ${downloadingId === scan.id ? 'animate-pulse' : ''}`} />
+                      {downloadingId === scan.id ? dict.downloading : dict.download}
                     </button>
                   ) : (
                     <button

@@ -413,6 +413,7 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
                 <ReportsSection
                   dict={dict.dashboard.reports}
                   pdfLabels={dict.targets.scanUI.pdf}
+                  lang={lang}
                   onUpgrade={() => setUpgradeOpen(true)}
                 />
               )}

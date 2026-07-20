@@ -5,8 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
-  Globe, Plus, ShieldCheck, ShieldAlert, Trash2, Copy, Check, X, Radar, Lock, ChevronDown, Sparkles, FileText, Briefcase, Download,
+  Globe, Plus, ShieldCheck, ShieldAlert, Trash2, Copy, Check, X, Radar, Lock, ChevronDown, Sparkles, FileText, Briefcase, Download, ListChecks,
 } from 'lucide-react';
+import type React from 'react';
 import {
   sentraCreateTarget,
   sentraDeleteTarget,
@@ -53,11 +54,13 @@ interface ScanDict {
   reportGenerating: string;
   reportTechnical: string;
   reportExecutive: string;
+  reportPriorities: string;
   reportError: string;
   reportRegenerate: string;
   trendTitle: string;
   trendEmpty: string;
   pdfBtn: string;
+  pdfGenerating: string;
   pdf: PdfLabels;
 }
 
@@ -122,6 +125,19 @@ function ScoreRing({ score, grade }: { score: number; grade: string }) {
   );
 }
 
+function ReportBlock({ icon, title, md }: { icon: React.ReactNode; title: string; md: string }) {
+  return (
+    <div className="rounded-2xl bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 p-5">
+      <p className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white mb-3">
+        {icon} {title}
+      </p>
+      <div className="prose prose-sm dark:prose-invert max-w-none text-zinc-600 dark:text-zinc-300 text-[13px] leading-relaxed prose-code:text-[12px] prose-headings:text-zinc-900 dark:prose-headings:text-white prose-pre:bg-zinc-100 dark:prose-pre:bg-black/40">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{md}</ReactMarkdown>
+      </div>
+    </div>
+  );
+}
+
 function AiReport({ scan, dict, lang }: { scan: SentraScan; dict: ScanDict; lang: string }) {
   const [report, setReport] = useState<SentraReport | null>(null);
   const [busy, setBusy] = useState(false);
@@ -164,30 +180,26 @@ function AiReport({ scan, dict, lang }: { scan: SentraScan; dict: ScanDict; lang
 
       {report && (
         <div className="space-y-4">
-          <div className="rounded-2xl bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 p-5">
-            <p className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white mb-3">
-              <Briefcase className="w-4 h-4 text-amber-500" /> {dict.reportExecutive}
-            </p>
-            <div className="prose prose-sm dark:prose-invert max-w-none text-zinc-600 dark:text-zinc-300 text-[13px] leading-relaxed">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{report.executive}</ReactMarkdown>
-            </div>
+          <ReportBlock icon={<Briefcase className="w-4 h-4 text-amber-500" />} title={dict.reportExecutive} md={report.executive} />
+          <ReportBlock icon={<ListChecks className="w-4 h-4 text-teal-500" />} title={dict.reportPriorities} md={report.priorities} />
+          <ReportBlock icon={<FileText className="w-4 h-4 text-green-500" />} title={dict.reportTechnical} md={report.technical} />
+          <div className="flex flex-wrap items-center gap-4">
+            {/* El PDF reutiliza el informe ya generado — sin segunda llamada a la IA. */}
+            <button
+              onClick={() => scan.findings && openScanReport(scan, dict.pdf, report)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-black text-[13px] font-bold hover:opacity-90 active:scale-[0.98] transition-all"
+            >
+              <Download className="w-4 h-4" /> {dict.pdfBtn}
+            </button>
+            <button
+              onClick={generate}
+              disabled={busy}
+              className="inline-flex items-center gap-2 text-[12px] font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors disabled:opacity-60"
+            >
+              <Sparkles className={`w-3.5 h-3.5 ${busy ? 'animate-pulse' : ''}`} />
+              {busy ? dict.reportGenerating : dict.reportRegenerate}
+            </button>
           </div>
-          <div className="rounded-2xl bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 p-5">
-            <p className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white mb-3">
-              <FileText className="w-4 h-4 text-green-500" /> {dict.reportTechnical}
-            </p>
-            <div className="prose prose-sm dark:prose-invert max-w-none text-zinc-600 dark:text-zinc-300 text-[13px] leading-relaxed prose-code:text-[12px] prose-pre:bg-zinc-100 dark:prose-pre:bg-black/40">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{report.technical}</ReactMarkdown>
-            </div>
-          </div>
-          <button
-            onClick={generate}
-            disabled={busy}
-            className="inline-flex items-center gap-2 text-[12px] font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors disabled:opacity-60"
-          >
-            <Sparkles className={`w-3.5 h-3.5 ${busy ? 'animate-pulse' : ''}`} />
-            {busy ? dict.reportGenerating : dict.reportRegenerate}
-          </button>
         </div>
       )}
     </div>
@@ -219,15 +231,6 @@ function ScanResultPanel({
           <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
             {dict.lastScan}: {new Date(scan.created_at).toLocaleString()}
           </p>
-          {/* PDF disponible cuando hay detalle (Pro): el reporte necesita los findings. */}
-          {scan.findings && (
-            <button
-              onClick={() => openScanReport(scan, dict.pdf)}
-              className="mt-3 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-zinc-300 dark:border-zinc-700 text-[12px] font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
-            >
-              <Download className="w-3.5 h-3.5" /> {dict.pdfBtn}
-            </button>
-          )}
         </div>
       </div>
 
