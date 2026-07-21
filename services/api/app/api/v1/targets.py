@@ -28,6 +28,7 @@ from app.models.user import User
 from app.models.organization import Organization
 from app.schemas.scan import ScanResult
 from app.schemas.target import (
+    MonitoringUpdate,
     TargetCreate,
     TargetCreatedOut,
     TargetOut,
@@ -177,6 +178,25 @@ async def delete_target(
     target = await _get_owned_target(target_id, current_user, db)
     await db.delete(target)
     await db.commit()
+
+
+@router.patch("/{target_id}/monitoring", response_model=TargetOut)
+async def set_monitoring(
+    target_id: str,
+    payload: MonitoringUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    target = await _get_owned_target(target_id, current_user, db)
+    if payload.enabled and not target.verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Verifica el dominio antes de activar el monitoreo.",
+        )
+    target.monitoring_enabled = payload.enabled
+    await db.commit()
+    await db.refresh(target)
+    return target
 
 
 def _scan_to_result(scan: Scan, domain: str, show_detail: bool, scans_remaining: int | None) -> ScanResult:

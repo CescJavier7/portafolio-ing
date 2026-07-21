@@ -574,7 +574,7 @@
           "reports": "Reports",
           "account": "Account",
           "soon": "Coming soon",
-          "dns": "DNS Monitor",
+          "dns": "Monitoring",
           "traffic": "Traffic Intelligence",
           "graph": "Surface Graph"
         },
@@ -620,7 +620,18 @@
           "saved": "Profile updated."
         },
         "soonTitle": "Under construction",
-        "soonBody": "This layer is part of the infrastructure ahead: continuous discovery, correlation and a graph of your attack surface. We'll let you know when it's ready."
+        "soonBody": "This layer is part of the infrastructure ahead: continuous discovery, correlation and a graph of your attack surface. We'll let you know when it's ready.",
+        "monitor": {
+          "title": "Continuous monitoring",
+          "subtitle": "Automatic watch over your domains security posture.",
+          "intro": "When you enable monitoring, Sentra re-scans the domain periodically and emails you if its security degrades: the score drops, a control fails (SPF, DMARC, HSTS…) or the certificate nears expiry. You find out before it becomes a problem.",
+          "emailNote": "Alerts are sent to your account email. Monitoring is a Pro feature and applies only to verified domains.",
+          "active": "Monitoring on",
+          "inactive": "Monitoring off",
+          "verifyFirst": "Verify the domain first",
+          "lastScore": "Last",
+          "empty": "You have not added any domains yet. Go to Audit to start."
+        }
       }
     }
   }

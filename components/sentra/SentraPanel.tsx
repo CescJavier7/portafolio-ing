@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, KeyRound, Gem, LayoutDashboard, Radar, FileText, UserCog, Network, Activity, Share2 } from 'lucide-react';
+import { LogOut, KeyRound, Gem, LayoutDashboard, Radar, FileText, UserCog, BellRing, Activity, Share2 } from 'lucide-react';
 import {
   sentraChangePassword,
   sentraCreateCheckout,
@@ -23,6 +23,7 @@ import OverviewSection, { type OverviewDict } from '@/components/sentra/panel/Ov
 import ReportsSection, { type ReportsDict } from '@/components/sentra/panel/ReportsSection';
 import AccountSection, { type AccountDict } from '@/components/sentra/panel/AccountSection';
 import ComingSoon from '@/components/sentra/panel/ComingSoon';
+import MonitorSection, { type MonitorDict } from '@/components/sentra/panel/MonitorSection';
 
 interface DashboardDict {
   nav: {
@@ -32,6 +33,7 @@ interface DashboardDict {
   overview: OverviewDict;
   reports: ReportsDict;
   account: AccountDict;
+  monitor: MonitorDict;
   soonTitle: string;
   soonBody: string;
 }
@@ -328,10 +330,10 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
     { id: 'overview', label: nav.overview, icon: <LayoutDashboard className="w-4 h-4" /> },
     { id: 'tool', label: nav.tool, icon: <Radar className="w-4 h-4" /> },
     { id: 'reports', label: nav.reports, icon: <FileText className="w-4 h-4" /> },
+    { id: 'dns', label: nav.dns, icon: <BellRing className="w-4 h-4" /> },
     { id: 'account', label: nav.account, icon: <UserCog className="w-4 h-4" /> },
   ];
   const soonItems: { id: SectionId; label: string; icon: React.ReactNode }[] = [
-    { id: 'dns', label: nav.dns, icon: <Network className="w-4 h-4" /> },
     { id: 'traffic', label: nav.traffic, icon: <Activity className="w-4 h-4" /> },
     { id: 'graph', label: nav.graph, icon: <Share2 className="w-4 h-4" /> },
   ];
@@ -423,9 +425,7 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
                   <ChangePasswordCard dict={dict} />
                 </AccountSection>
               )}
-              {active === 'dns' && (
-                <ComingSoon icon={<Network className="w-5 h-5" />} title={nav.dns} subtitle={dict.dashboard.soonTitle} bodyTitle={dict.dashboard.soonTitle} body={dict.dashboard.soonBody} />
-              )}
+              {active === 'dns' && <MonitorSection dict={dict.dashboard.monitor} />}
               {active === 'traffic' && (
                 <ComingSoon icon={<Activity className="w-5 h-5" />} title={nav.traffic} subtitle={dict.dashboard.soonTitle} bodyTitle={dict.dashboard.soonTitle} body={dict.dashboard.soonBody} />
               )}

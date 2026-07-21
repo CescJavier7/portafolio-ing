@@ -574,7 +574,7 @@
           "reports": "Reportes",
           "account": "Cuenta",
           "soon": "Próximamente",
-          "dns": "Monitor DNS",
+          "dns": "Monitoreo",
           "traffic": "Inteligencia de tráfico",
           "graph": "Grafo de superficie"
         },
@@ -620,7 +620,18 @@
           "saved": "Perfil actualizado."
         },
         "soonTitle": "En construcción",
-        "soonBody": "Esta capa es parte de la infraestructura que viene: descubrimiento continuo, correlación y grafo de tu superficie de ataque. Te avisaremos cuando esté lista."
+        "soonBody": "Esta capa es parte de la infraestructura que viene: descubrimiento continuo, correlación y grafo de tu superficie de ataque. Te avisaremos cuando esté lista.",
+        "monitor": {
+          "title": "Monitoreo continuo",
+          "subtitle": "Vigilancia automática de la postura de tus dominios.",
+          "intro": "Cuando activas el monitoreo, Sentra reescanea el dominio periódicamente y te avisa por correo si su seguridad empeora: baja el score, se cae un control (SPF, DMARC, HSTS…) o el certificado se acerca a expirar. Así te enteras antes de que sea un problema.",
+          "emailNote": "Las alertas se envían al correo de tu cuenta. El monitoreo es una función Pro y solo aplica a dominios verificados.",
+          "active": "Monitoreo activo",
+          "inactive": "Monitoreo inactivo",
+          "verifyFirst": "Verifica el dominio primero",
+          "lastScore": "Último",
+          "empty": "Aún no has agregado dominios. Ve a Auditoría para empezar."
+        }
       }
     }
   }

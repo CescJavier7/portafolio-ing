@@ -41,6 +41,12 @@ class Settings(BaseSettings):
     VERIFY_URL_BASE: str = "https://api.cescjavier.dev/api/v1/auth/verify-email"
     EMAIL_VERIFICATION_EXPIRE_HOURS: int = 24
 
+    # ── Monitoreo continuo ──────────────────────────────────────
+    # Secreto que protege el endpoint /internal/run-monitoring (lo dispara
+    # un cron del VPS, no un usuario). Vacío = monitoreo deshabilitado
+    # (el endpoint responde 503). Se compara con hmac.compare_digest.
+    MONITORING_INTERNAL_SECRET: str = ""
+
     # ── CORS ─────────────────────────────────────────────────
     # www incluido: Traefik sirve el sitio en ambos hosts y el navegador
     # manda el Origin exacto. localhost:3000 para desarrollo del frontend.

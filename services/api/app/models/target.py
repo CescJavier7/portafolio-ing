@@ -29,6 +29,10 @@ class Target(Base):
     verified: Mapped[bool] = mapped_column(Boolean, default=False)
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
+    # Monitoreo continuo: si está activo, el runner periódico reescanea este
+    # dominio y avisa por correo cuando la postura empeora. Solo verificados.
+    monitoring_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
     # Token que el usuario publica como registro TXT en su DNS. Impredecible
     # (no adivinable) para que nadie verifique un dominio ajeno a ciegas.
     verification_token: Mapped[str] = mapped_column(String(64), nullable=False)

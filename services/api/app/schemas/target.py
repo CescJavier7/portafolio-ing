@@ -38,6 +38,11 @@ class TargetOut(BaseModel):
     verified: bool
     verified_at: datetime | None
     created_at: datetime
+    monitoring_enabled: bool = False
+
+
+class MonitoringUpdate(BaseModel):
+    enabled: bool
 
 
 class TargetCreatedOut(TargetOut):

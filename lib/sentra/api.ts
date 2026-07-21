@@ -254,6 +254,7 @@ export interface SentraTarget {
   verified: boolean;
   verified_at: string | null;
   created_at: string;
+  monitoring_enabled: boolean;
 }
 
 export interface SentraTargetCreated extends SentraTarget {
@@ -285,6 +286,14 @@ export async function sentraVerifyTarget(
 
 export async function sentraDeleteTarget(targetId: string): Promise<void> {
   await request(`/api/v1/targets/${targetId}`, { method: 'DELETE' }, true);
+}
+
+export async function sentraSetMonitoring(targetId: string, enabled: boolean): Promise<SentraTarget> {
+  return request(
+    `/api/v1/targets/${targetId}/monitoring`,
+    { method: 'PATCH', body: JSON.stringify({ enabled }) },
+    true,
+  );
 }
 
 // ── Escaneos ────────────────────────────────────────────────────────

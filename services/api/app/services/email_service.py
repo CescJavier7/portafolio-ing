@@ -38,18 +38,63 @@ def send_verification_email(to_email: str, raw_token: str) -> None:
     </div>
     """
 
+    _send(to_email, "Sentra — Verifica tu correo", html)
+
+
+def _send(to_email: str, subject: str, html: str) -> None:
     response = requests.post(
         RESEND_API_URL,
         headers={
             "Authorization": f"Bearer {settings.RESEND_API_KEY}",
             "Content-Type": "application/json",
         },
-        json={
-            "from": settings.EMAIL_FROM,
-            "to": [to_email],
-            "subject": "Sentra — Verifica tu correo",
-            "html": html,
-        },
+        json={"from": settings.EMAIL_FROM, "to": [to_email], "subject": subject, "html": html},
         timeout=10,
     )
     response.raise_for_status()
+
+
+def send_monitoring_alert(
+    to_email: str,
+    domain: str,
+    old_score: int,
+    new_score: int,
+    old_grade: str,
+    new_grade: str,
+    newly_failed: list[dict],
+) -> None:
+    """
+    Alerta de monitoreo continuo: la postura del dominio empeoró. `newly_failed`
+    son los controles que ANTES pasaban y ahora fallan (con su marco).
+    """
+    items = "".join(
+        f'<li style="margin-bottom:8px;"><strong style="color:#fca5a5;">{f.get("label","")}</strong>'
+        + (f' <span style="color:#94a3b8;font-size:12px;">({", ".join(r.get("framework","")+" "+r.get("ref","") for r in f.get("references",[]))})</span>' if f.get("references") else "")
+        + (f'<br><span style="color:#a3a3a3;font-size:13px;">{f.get("recommendation","")}</span>' if f.get("recommendation") else "")
+        + "</li>"
+        for f in newly_failed
+    )
+    changes = (
+        f'<ul style="padding-left:18px;margin:12px 0;">{items}</ul>'
+        if items
+        else '<p style="color:#a3a3a3;font-size:13px;">El puntaje bajó sin nuevos controles fallidos (revisa el detalle en tu panel).</p>'
+    )
+
+    html = f"""
+    <div style="background-color:#0a0a0a;color:#e5e5e5;padding:32px;font-family:-apple-system,Segoe UI,sans-serif;border-radius:12px;max-width:560px;margin:0 auto;">
+      <p style="color:#f59e0b;font-weight:700;letter-spacing:.05em;font-size:12px;text-transform:uppercase;margin:0 0 8px;">Alerta de seguridad · Sentra</p>
+      <h2 style="color:#ffffff;margin:0 0 12px;">La postura de <span style="color:#22c55e;">{domain}</span> empeoró</h2>
+      <p style="font-size:15px;">Tu Security Score bajó de <strong style="color:#86efac;">{old_score} ({old_grade})</strong> a
+      <strong style="color:#fca5a5;">{new_score} ({new_grade})</strong>.</p>
+      <p style="font-size:14px;color:#cbd5e1;margin-top:16px;"><strong>Cambios detectados:</strong></p>
+      {changes}
+      <p style="margin:24px 0 0;">
+        <a href="https://cescjavier.dev/es/sentinel/panel"
+           style="background-color:#22c55e;color:#000;padding:12px 24px;border-radius:999px;text-decoration:none;font-weight:700;display:inline-block;">
+          Ver el informe completo
+        </a>
+      </p>
+      <p style="color:#64748b;font-size:11px;margin-top:20px;">Recibes este correo porque activaste el monitoreo continuo de este dominio en Sentra.</p>
+    </div>
+    """
+    _send(to_email, f"⚠️ Sentra — La seguridad de {domain} bajó ({new_score}/{new_grade})", html)
