@@ -4,6 +4,12 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
+class Reference(BaseModel):
+    framework: str  # OWASP | CWE | NIST | RFC | PCI DSS
+    ref: str        # A05:2021 | CWE-1021 | SP 800-52r2 ...
+    title: str
+
+
 class Finding(BaseModel):
     id: str
     label: str
@@ -11,6 +17,10 @@ class Finding(BaseModel):
     weight: int
     severity: str
     recommendation: str | None = None
+    # Campos nuevos (informe formal). Opcionales: los escaneos guardados
+    # antes de esta versión no los tienen y deben seguir deserializando.
+    category: str | None = None
+    references: list[Reference] = []
 
 
 class ScanResult(BaseModel):

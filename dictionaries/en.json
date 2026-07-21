@@ -533,7 +533,14 @@
             "findingsTitle": "Detailed breakdown",
             "prioritiesTitle": "Priorities & decisions",
             "technicalTitle": "Technical analysis",
-            "aiPending": "Generate the AI report to include the detailed narrative analysis."
+            "aiPending": "Generate the AI report to include the detailed narrative analysis.",
+            "classification": "CONFIDENTIAL",
+            "reportId": "Reference",
+            "preparedBy": "Prepared by",
+            "category": "Category",
+            "frameworksNote": "Findings are classified against recognized industry frameworks: OWASP Top 10, CWE (Common Weakness Enumeration), NIST SP 800 and applicable RFCs. Each control lists its reference(s) for traceability and remediation.",
+            "referencesTitle": "Frameworks & references",
+            "disclaimer": "This report is based on a passive, non-intrusive external analysis of the domain public surface on the stated date. It does not replace an authorized penetration test or an internal audit. Confidential document intended solely for the verified domain owner."
           },
           "reportPriorities": "Priorities & decisions",
           "pdfGenerating": "Generating report…"

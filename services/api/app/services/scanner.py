@@ -50,7 +50,99 @@ DMARC_WEIGHT = 7
 # 6 headers (55) + ssl (20) + tls (5) + spf (8) + dmarc (7) = 100
 
 
+# ── Mapeo a marcos de la industria ────────────────────────────────────
+# Cada check se ancla a categorías/controles reconocidos (OWASP Top 10,
+# CWE, NIST, RFC). Esto convierte el informe en un documento auditable:
+# el hallazgo deja de ser "falta un header" y pasa a "debilidad clase
+# OWASP A05 / CWE-1021". Los identificadores son neutrales al idioma.
+CHECK_META = {
+    "hsts": {
+        "category": "Seguridad de transporte (HTTPS)",
+        "references": [
+            {"framework": "OWASP", "ref": "A05:2021", "title": "Security Misconfiguration"},
+            {"framework": "CWE", "ref": "CWE-319", "title": "Cleartext Transmission of Sensitive Information"},
+            {"framework": "NIST", "ref": "SP 800-52r2", "title": "Guidelines for TLS Implementations"},
+        ],
+    },
+    "csp": {
+        "category": "Inyección / XSS",
+        "references": [
+            {"framework": "OWASP", "ref": "A03:2021", "title": "Injection"},
+            {"framework": "OWASP", "ref": "A05:2021", "title": "Security Misconfiguration"},
+            {"framework": "CWE", "ref": "CWE-79", "title": "Cross-site Scripting (XSS)"},
+        ],
+    },
+    "xfo": {
+        "category": "Clickjacking",
+        "references": [
+            {"framework": "OWASP", "ref": "A05:2021", "title": "Security Misconfiguration"},
+            {"framework": "CWE", "ref": "CWE-1021", "title": "Improper Restriction of Rendered UI Layers (Clickjacking)"},
+        ],
+    },
+    "xcto": {
+        "category": "MIME sniffing",
+        "references": [
+            {"framework": "OWASP", "ref": "A05:2021", "title": "Security Misconfiguration"},
+            {"framework": "CWE", "ref": "CWE-430", "title": "Deployment of Wrong Handler (MIME sniffing)"},
+        ],
+    },
+    "refpol": {
+        "category": "Fuga de información",
+        "references": [
+            {"framework": "OWASP", "ref": "A05:2021", "title": "Security Misconfiguration"},
+            {"framework": "CWE", "ref": "CWE-200", "title": "Exposure of Sensitive Information"},
+        ],
+    },
+    "permpol": {
+        "category": "Superficie del navegador",
+        "references": [
+            {"framework": "OWASP", "ref": "A05:2021", "title": "Security Misconfiguration"},
+        ],
+    },
+    "ssl_valid": {
+        "category": "Fallas criptográficas",
+        "references": [
+            {"framework": "OWASP", "ref": "A02:2021", "title": "Cryptographic Failures"},
+            {"framework": "CWE", "ref": "CWE-295", "title": "Improper Certificate Validation"},
+            {"framework": "NIST", "ref": "SP 800-52r2", "title": "Guidelines for TLS Implementations"},
+        ],
+    },
+    "ssl_expiry": {
+        "category": "Fallas criptográficas",
+        "references": [
+            {"framework": "OWASP", "ref": "A02:2021", "title": "Cryptographic Failures"},
+            {"framework": "NIST", "ref": "SP 800-52r2", "title": "Guidelines for TLS Implementations"},
+        ],
+    },
+    "tls_version": {
+        "category": "Fallas criptográficas",
+        "references": [
+            {"framework": "OWASP", "ref": "A02:2021", "title": "Cryptographic Failures"},
+            {"framework": "CWE", "ref": "CWE-326", "title": "Inadequate Encryption Strength"},
+            {"framework": "PCI DSS", "ref": "v4.0 Req. 4", "title": "Protect Cardholder Data in Transit"},
+        ],
+    },
+    "spf": {
+        "category": "Autenticación de correo",
+        "references": [
+            {"framework": "CWE", "ref": "CWE-290", "title": "Authentication Bypass by Spoofing"},
+            {"framework": "RFC", "ref": "RFC 7208", "title": "Sender Policy Framework (SPF)"},
+            {"framework": "NIST", "ref": "SP 800-177", "title": "Trustworthy Email"},
+        ],
+    },
+    "dmarc": {
+        "category": "Autenticación de correo",
+        "references": [
+            {"framework": "CWE", "ref": "CWE-290", "title": "Authentication Bypass by Spoofing"},
+            {"framework": "RFC", "ref": "RFC 7489", "title": "Domain-based Message Authentication (DMARC)"},
+            {"framework": "NIST", "ref": "SP 800-177", "title": "Trustworthy Email"},
+        ],
+    },
+}
+
+
 def _finding(check_id, label, passed, weight, severity, recommendation):
+    meta = CHECK_META.get(check_id, {})
     return {
         "id": check_id,
         "label": label,
@@ -59,6 +151,9 @@ def _finding(check_id, label, passed, weight, severity, recommendation):
         "severity": severity,
         # La recomendación solo tiene sentido si NO pasó.
         "recommendation": None if passed else recommendation,
+        # Anclaje a marcos de la industria (para el informe formal).
+        "category": meta.get("category"),
+        "references": meta.get("references", []),
     }
 
 

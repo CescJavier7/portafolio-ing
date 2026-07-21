@@ -284,10 +284,26 @@ function ScanResultPanel({
                         {f.passed ? `+${f.weight}` : `0/${f.weight}`}
                       </span>
                     </div>
+                    {f.category && (
+                      <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1.5">{f.category}</p>
+                    )}
                     {!f.passed && f.recommendation && (
                       <p className="text-[12px] text-zinc-500 dark:text-zinc-400 mt-2 leading-relaxed">
                         <span className="font-semibold">{dict.recommendation}:</span> {f.recommendation}
                       </p>
+                    )}
+                    {f.references && f.references.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {f.references.map((r) => (
+                          <span
+                            key={`${r.framework}-${r.ref}`}
+                            title={r.title}
+                            className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400"
+                          >
+                            {r.framework} {r.ref}
+                          </span>
+                        ))}
+                      </div>
                     )}
                   </li>
                 ))}

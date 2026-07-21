@@ -533,7 +533,14 @@
             "findingsTitle": "Desglose detallado",
             "prioritiesTitle": "Prioridades y decisiones",
             "technicalTitle": "Análisis técnico",
-            "aiPending": "Genera el informe con IA para incluir el análisis narrativo detallado."
+            "aiPending": "Genera el informe con IA para incluir el análisis narrativo detallado.",
+            "classification": "CONFIDENCIAL",
+            "reportId": "Referencia",
+            "preparedBy": "Preparado por",
+            "category": "Categoría",
+            "frameworksNote": "Los hallazgos se clasifican según marcos reconocidos de la industria: OWASP Top 10, CWE (Common Weakness Enumeration), NIST SP 800 y RFCs aplicables. Cada control indica su(s) referencia(s) para trazabilidad y remediación.",
+            "referencesTitle": "Marcos y referencias",
+            "disclaimer": "Este informe se basa en un análisis externo pasivo y no intrusivo de la superficie pública del dominio en la fecha indicada. No sustituye una prueba de penetración autorizada ni una auditoría interna. Documento confidencial destinado únicamente al titular del dominio verificado."
           },
           "reportPriorities": "Prioridades y decisiones",
           "pdfGenerating": "Generando informe…"

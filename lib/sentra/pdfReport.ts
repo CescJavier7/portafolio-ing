@@ -34,6 +34,14 @@ export interface PdfLabels {
   prioritiesTitle: string;
   technicalTitle: string;
   aiPending: string;
+  // Formalización del documento
+  classification: string;   // ej. "CONFIDENCIAL"
+  reportId: string;         // etiqueta "Referencia del informe"
+  preparedBy: string;       // "Preparado por"
+  category: string;         // "Categoría"
+  frameworksNote: string;   // nota de metodología sobre marcos
+  referencesTitle: string;  // "Marcos y referencias"
+  disclaimer: string;       // pie legal
 }
 
 function escapeHtml(s: string): string {
@@ -125,14 +133,43 @@ export function openScanReport(scan: SentraScan, labels: PdfLabels, ai?: SentraR
       const statusColor = f.passed ? '#16a34a' : '#dc2626';
       const statusText = f.passed ? labels.passed : labels.failed;
       const rec = !f.passed && f.recommendation ? escapeHtml(f.recommendation) : '';
+      const cat = f.category ? `<div class="cat">${escapeHtml(f.category)}</div>` : '';
+      const tags = (f.references ?? [])
+        .map((r) => `<span class="tag">${escapeHtml(r.framework)} ${escapeHtml(r.ref)}</span>`)
+        .join('');
       return `
         <tr>
-          <td class="chk">${escapeHtml(f.label)}${rec ? `<div class="rec"><b>${escapeHtml(labels.recommendation)}:</b> ${rec}</div>` : ''}</td>
+          <td class="chk">
+            ${escapeHtml(f.label)}
+            ${cat}
+            ${rec ? `<div class="rec"><b>${escapeHtml(labels.recommendation)}:</b> ${rec}</div>` : ''}
+            ${tags ? `<div class="tags">${tags}</div>` : ''}
+          </td>
           <td class="num">${f.passed ? `+${f.weight}` : `0/${f.weight}`}</td>
           <td class="st" style="color:${statusColor}">${escapeHtml(statusText)}</td>
         </tr>`;
     })
     .join('');
+
+  // Referencias únicas citadas en todo el informe (sección formal, estilo bibliografía).
+  const seen = new Set<string>();
+  const uniqueRefs: { framework: string; ref: string; title: string }[] = [];
+  for (const f of findings) {
+    for (const r of f.references ?? []) {
+      const key = `${r.framework}|${r.ref}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueRefs.push(r);
+      }
+    }
+  }
+  uniqueRefs.sort((a, b) => a.framework.localeCompare(b.framework) || a.ref.localeCompare(b.ref));
+  const referencesHtml = uniqueRefs
+    .map((r) => `<li><span class="refkey">${escapeHtml(r.framework)} ${escapeHtml(r.ref)}</span> — ${escapeHtml(r.title)}</li>`)
+    .join('');
+
+  // Identificador del informe: derivado del id del escaneo (trazable, no secreto).
+  const reportRef = `SEN-${scan.id.slice(0, 8).toUpperCase()}`;
 
   const aiSection = (title: string, md: string) =>
     md.trim() ? `<section class="rich"><h2>${escapeHtml(title)}</h2>${mdToSafeHtml(md)}</section>` : '';
@@ -175,6 +212,14 @@ export function openScanReport(scan: SentraScan, labels: PdfLabels, ai?: SentraR
   td.num { font-variant-numeric:tabular-nums; font-weight:700; white-space:nowrap; }
   td.st { font-weight:700; white-space:nowrap; }
   .rec { font-size:12px; color:#475569; margin-top:5px; line-height:1.5; }
+  .cat { font-size:11px; color:#94a3b8; margin-top:3px; font-weight:600; }
+  .tags { margin-top:6px; display:flex; flex-wrap:wrap; gap:4px; }
+  .tag { font-family:ui-monospace,Menlo,monospace; font-size:10px; font-weight:700; color:#475569; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:4px; padding:1px 6px; }
+  .class { display:inline-block; font-family:ui-monospace,Menlo,monospace; font-size:10px; font-weight:700; letter-spacing:.1em; color:#b45309; background:#fffbeb; border:1px solid #fde68a; border-radius:4px; padding:2px 8px; margin-bottom:8px; }
+  .refs { list-style:none; padding:0; margin:0; font-size:12.5px; color:#475569; }
+  .refs li { padding:6px 0; border-bottom:1px solid #f1f5f9; }
+  .refs .refkey { font-family:ui-monospace,Menlo,monospace; font-weight:700; color:#0f172a; }
+  .disc { margin-top:10px; font-size:10.5px; color:#94a3b8; line-height:1.5; }
   .rich { font-size:13.5px; color:#1e293b; }
   .rich h3 { font-size:14px; margin:16px 0 6px; color:#0f172a; }
   .rich p { margin:0 0 10px; }
@@ -190,11 +235,14 @@ export function openScanReport(scan: SentraScan, labels: PdfLabels, ai?: SentraR
 </head>
 <body>
   <button class="btn no-print" onclick="window.print()">${escapeHtml(labels.reportTitle)} → PDF</button>
+  <span class="class">${escapeHtml(labels.classification)}</span>
   <div class="head">
     <div class="brand">Sentra<span>.</span><span class="sub">${escapeHtml(labels.reportTitle)}</span></div>
     <div class="meta">
       <div><b>${escapeHtml(labels.domain)}:</b> ${escapeHtml(scan.domain)}</div>
       <div><b>${escapeHtml(labels.date)}:</b> ${escapeHtml(dateStr)}</div>
+      <div><b>${escapeHtml(labels.reportId)}:</b> ${escapeHtml(reportRef)}</div>
+      <div><b>${escapeHtml(labels.preparedBy)}:</b> Sentra Security Intelligence</div>
     </div>
   </div>
 
@@ -214,6 +262,7 @@ export function openScanReport(scan: SentraScan, labels: PdfLabels, ai?: SentraR
       <span>${escapeHtml(labels.severityMedium)}: <b>${lost('media')}</b></span>
       <span>${escapeHtml(labels.severityLow)}: <b>${lost('baja')}</b></span>
     </div>
+    <div class="disc">${escapeHtml(labels.frameworksNote)}</div>
   </div>
 
   <h2>${escapeHtml(labels.findingsTitle)}</h2>
@@ -224,7 +273,12 @@ export function openScanReport(scan: SentraScan, labels: PdfLabels, ai?: SentraR
 
   ${ai ? aiSection(labels.prioritiesTitle, ai.priorities) + aiSection(labels.technicalTitle, ai.technical) : aiBlocks}
 
-  <div class="foot">${escapeHtml(labels.generatedBy)} — Sentra · ${escapeHtml(dateStr)}</div>
+  ${referencesHtml ? `<h2>${escapeHtml(labels.referencesTitle)}</h2><ul class="refs">${referencesHtml}</ul>` : ''}
+
+  <div class="foot">
+    ${escapeHtml(labels.generatedBy)} — Sentra · ${escapeHtml(reportRef)} · ${escapeHtml(dateStr)}
+    <div class="disc">${escapeHtml(labels.disclaimer)}</div>
+  </div>
 </body>
 </html>`;
 

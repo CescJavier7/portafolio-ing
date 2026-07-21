@@ -19,6 +19,8 @@ interface Finding {
   weight: number;
   severity: string;
   recommendation: string | null;
+  category?: string | null;
+  references?: { framework: string; ref: string; title: string }[];
 }
 
 export async function POST(req: Request) {
@@ -56,7 +58,11 @@ export async function POST(req: Request) {
   }));
 
   const findingsText = findings
-    .map((f) => `- [${f.passed ? 'OK +' + f.weight : 'FALLA -' + f.weight}] ${f.label} (severidad ${f.severity})`)
+    .map((f) => {
+      const refs = (f.references ?? []).map((r) => `${r.framework} ${r.ref}`).join(', ');
+      const cat = f.category ? ` · ${f.category}` : '';
+      return `- [${f.passed ? 'OK +' + f.weight : 'FALLA -' + f.weight}] ${f.label} (severidad ${f.severity}${cat})${refs ? ` · marcos: ${refs}` : ''}`;
+    })
     .join('\n');
 
   const system = isEn
@@ -86,7 +92,7 @@ ${findingsText}`;
 
 - "priorities": A prioritized decision plan titled around business impact. Rank the failed checks by business risk (not just technical weight), and for the top items give: the critical asset/business function at stake, the concrete threat scenario (e.g. email spoofing → phishing of your customers → brand damage), the estimated effort (low/med/high), and the score points recovered if fixed. Use a numbered list. This section must help a decision-maker choose what to fund first.
 
-- "technical": Detailed technical report for engineers. Sections: "## Scoring methodology" (explain the weighted formula and list every check with its weight, earned vs lost). "## Detailed findings" (for EACH failed check: risk, exploitation scenario, and a concrete remediation with an example header value or DNS record). "## Verified controls" (briefly list what passed and why it matters).
+- "technical": Detailed technical report for engineers. Sections: "## Scoring methodology" (explain the weighted formula and list every check with its weight, earned vs lost). "## Detailed findings" (for EACH failed check: cite the industry framework it maps to — the OWASP/CWE/NIST references are provided in the data, use them verbatim — then risk, exploitation scenario, and a concrete remediation with an example header value or DNS record). "## Verified controls" (briefly list what passed and why it matters).
 
 Return ONLY the JSON object.`
     : `Genera un objeto JSON con EXACTAMENTE estos tres campos string en Markdown, cada uno sustancial y detallado:
@@ -95,7 +101,7 @@ Return ONLY the JSON object.`
 
 - "priorities": Plan de decisión priorizado orientado a impacto de negocio. Ordena los checks fallidos por riesgo de negocio (no solo por peso técnico), y para los principales indica: el activo crítico / función de negocio en juego, el escenario de amenaza concreto (ej. suplantación de correo → phishing a tus clientes → daño de marca), el esfuerzo estimado (bajo/medio/alto), y los puntos de score que se recuperan al corregirlo. Usa lista numerada. Esta sección debe ayudar a un tomador de decisiones a elegir qué financiar primero.
 
-- "technical": Informe técnico detallado para ingeniería. Secciones: "## Metodología del score" (explica la fórmula ponderada y lista cada check con su peso, obtenido vs perdido). "## Hallazgos detallados" (para CADA check fallido: riesgo, escenario de explotación, y remediación concreta con ejemplo de valor de header o registro DNS). "## Controles verificados" (lista breve de lo que pasó y por qué importa).
+- "technical": Informe técnico detallado para ingeniería. Secciones: "## Metodología del score" (explica la fórmula ponderada y lista cada check con su peso, obtenido vs perdido). "## Hallazgos detallados" (para CADA check fallido: cita el marco de la industria al que corresponde — las referencias OWASP/CWE/NIST vienen en los datos, úsalas literalmente — luego el riesgo, el escenario de explotación, y una remediación concreta con ejemplo de valor de header o registro DNS). "## Controles verificados" (lista breve de lo que pasó y por qué importa).
 
 Devuelve SOLO el objeto JSON.`;
 

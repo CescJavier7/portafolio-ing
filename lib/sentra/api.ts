@@ -289,6 +289,12 @@ export async function sentraDeleteTarget(targetId: string): Promise<void> {
 
 // ── Escaneos ────────────────────────────────────────────────────────
 
+export interface SentraReference {
+  framework: string;
+  ref: string;
+  title: string;
+}
+
 export interface SentraFinding {
   id: string;
   label: string;
@@ -296,6 +302,8 @@ export interface SentraFinding {
   weight: number;
   severity: string;
   recommendation: string | null;
+  category?: string | null;
+  references?: SentraReference[];
 }
 
 export interface SentraScan {
