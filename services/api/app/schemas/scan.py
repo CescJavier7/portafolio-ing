@@ -38,3 +38,7 @@ class ScanResult(BaseModel):
 
     # Cuántos escaneos le quedan en la ventana actual (para la UI del free).
     scans_remaining: int | None = None
+
+    # Informe IA persistido ({executive, priorities, technical}) si ya se
+    # generó. El frontend lo muestra al instante sin volver a llamar al LLM.
+    ai_report: dict | None = None

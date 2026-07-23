@@ -33,6 +33,11 @@ class Scan(Base):
     # Lista de hallazgos: [{id, label, passed, weight, severity, recommendation}, ...]
     findings: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
 
+    # Informe IA generado para ESTE escaneo ({executive, priorities, technical}).
+    # Se persiste al generarlo la primera vez → en revisitas se muestra al
+    # instante, sin volver a llamar al LLM (evita la espera).
+    ai_report: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True
     )

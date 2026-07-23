@@ -12,6 +12,7 @@ import {
   sentraCreateTarget,
   sentraDeleteTarget,
   sentraGenerateReport,
+  sentraSaveReport,
   sentraGetInstructions,
   sentraListScans,
   sentraListTargets,
@@ -139,7 +140,9 @@ function ReportBlock({ icon, title, md }: { icon: React.ReactNode; title: string
 }
 
 function AiReport({ scan, dict, lang }: { scan: SentraScan; dict: ScanDict; lang: string }) {
-  const [report, setReport] = useState<SentraReport | null>(null);
+  // Si el escaneo ya trae un informe persistido, se muestra al instante
+  // (sin volver a llamar al LLM).
+  const [report, setReport] = useState<SentraReport | null>(scan.ai_report ?? null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -148,15 +151,16 @@ function AiReport({ scan, dict, lang }: { scan: SentraScan; dict: ScanDict; lang
     setBusy(true);
     setError(null);
     try {
-      setReport(
-        await sentraGenerateReport({
-          domain: scan.domain,
-          score: scan.score,
-          grade: scan.grade,
-          findings: scan.findings,
-          lang,
-        }),
-      );
+      const r = await sentraGenerateReport({
+        domain: scan.domain,
+        score: scan.score,
+        grade: scan.grade,
+        findings: scan.findings,
+        lang,
+      });
+      setReport(r);
+      // Persistir para la próxima visita (best-effort: no rompe si falla).
+      sentraSaveReport(scan.target_id, scan.id, r).catch(() => {});
     } catch (err) {
       setError(err instanceof SentraApiError ? err.detail : dict.reportError);
     } finally {

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { FileText, Download, Lock } from 'lucide-react';
 import { loadDomainData, gradeColor } from '@/lib/sentra/domainData';
 import { openScanReport, type PdfLabels } from '@/lib/sentra/pdfReport';
-import { sentraGenerateReport, type SentraScan } from '@/lib/sentra/api';
+import { sentraGenerateReport, sentraSaveReport, type SentraScan } from '@/lib/sentra/api';
 import { SectionHeader } from '@/components/sentra/panel/OverviewSection';
 
 export interface ReportsDict {
@@ -49,10 +49,15 @@ export default function ReportsSection({
       .finally(() => setLoading(false));
   }, []);
 
-  // Descarga = informe COMPLETO: genera la narrativa IA y abre el PDF. Si la
-  // IA falla, se abre igual el informe con la parte estructurada (fallback).
+  // Descarga = informe COMPLETO. Si el escaneo ya tiene el informe IA
+  // persistido, se usa al instante (sin esperar al LLM). Si no, se genera y
+  // se guarda; si la IA falla, se abre con la parte estructurada (fallback).
   async function handleDownload(scan: SentraScan) {
     if (!scan.findings) return;
+    if (scan.ai_report) {
+      openScanReport(scan, pdfLabels, scan.ai_report);
+      return;
+    }
     setDownloadingId(scan.id);
     try {
       const report = await sentraGenerateReport({
@@ -63,6 +68,7 @@ export default function ReportsSection({
         lang,
       });
       openScanReport(scan, pdfLabels, report);
+      sentraSaveReport(scan.target_id, scan.id, report).catch(() => {});
     } catch {
       openScanReport(scan, pdfLabels, null);
     } finally {

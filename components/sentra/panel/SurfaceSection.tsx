@@ -130,7 +130,10 @@ export default function SurfaceSection({ dict, onUpgrade }: { dict: SurfaceDict;
                   {surface.subdomains.length === 0 ? (
                     <p className="text-[13px] text-zinc-400 dark:text-zinc-500">{dict.noSubs}</p>
                   ) : (
-                    <ul className="space-y-1.5 max-h-[26rem] overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin]">
+                    <ul
+                      data-lenis-prevent
+                      className="space-y-1.5 max-h-[26rem] overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin]"
+                    >
                       {surface.subdomains.map((s) => (
                         <li key={s.name} className="flex items-center justify-between gap-3 text-[13px]">
                           <span className="font-mono text-zinc-700 dark:text-zinc-300 truncate">{s.name}</span>

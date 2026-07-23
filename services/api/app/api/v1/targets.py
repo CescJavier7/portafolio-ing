@@ -289,6 +289,7 @@ def _scan_to_result(scan: Scan, domain: str, show_detail: bool, scans_remaining:
         findings=scan.findings if show_detail else None,
         detail_locked=not show_detail,
         scans_remaining=scans_remaining,
+        ai_report=scan.ai_report if show_detail else None,
     )
 
 
@@ -372,3 +373,31 @@ async def list_scans(
     )
     scans = result.scalars().all()
     return [_scan_to_result(s, target.domain, show_detail, None) for s in scans]
+
+
+@router.put("/{target_id}/scans/{scan_id}/report", status_code=status.HTTP_204_NO_CONTENT)
+async def save_scan_report(
+    target_id: str,
+    scan_id: str,
+    payload: dict,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    # Persiste el informe IA en el escaneo, para no regenerarlo en cada visita.
+    target = await _get_owned_target(target_id, current_user, db)
+    org = await db.get(Organization, current_user.organization_id)
+    if not plan_for(org.plan if org else None).ai_reports:
+        raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail="Los informes IA son una función Pro.")
+
+    result = await db.execute(select(Scan).where(Scan.id == scan_id, Scan.target_id == target.id))
+    scan = result.scalar_one_or_none()
+    if scan is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Escaneo no encontrado.")
+
+    # Solo guardamos las claves esperadas (no confiamos en el body crudo).
+    scan.ai_report = {
+        "executive": str(payload.get("executive", "")),
+        "priorities": str(payload.get("priorities", "")),
+        "technical": str(payload.get("technical", "")),
+    }
+    await db.commit()

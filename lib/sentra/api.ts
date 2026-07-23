@@ -360,6 +360,7 @@ export interface SentraScan {
   findings: SentraFinding[] | null;
   detail_locked: boolean;
   scans_remaining: number | null;
+  ai_report?: SentraReport | null;
 }
 
 export async function sentraScanTarget(targetId: string): Promise<SentraScan> {
@@ -405,4 +406,10 @@ export async function sentraGenerateReport(payload: {
     throw new SentraApiError(res.status, detail);
   }
   return res.json() as Promise<SentraReport>;
+}
+
+// Persiste el informe en el escaneo (best-effort): en la próxima visita se
+// carga al instante. Va a la API de Sentra (no a la ruta de Groq).
+export async function sentraSaveReport(targetId: string, scanId: string, report: SentraReport): Promise<void> {
+  await request(`/api/v1/targets/${targetId}/scans/${scanId}/report`, { method: 'PUT', body: JSON.stringify(report) }, true);
 }
