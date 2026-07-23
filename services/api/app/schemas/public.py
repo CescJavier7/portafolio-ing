@@ -18,3 +18,12 @@ class PublicFindingsOut(BaseModel):
     grade: str
     scanned_at: datetime
     findings: list[Finding]
+
+
+class PublicGateOut(BaseModel):
+    domain: str
+    score: int
+    grade: str
+    scanned_at: datetime
+    min_score: int
+    passed: bool

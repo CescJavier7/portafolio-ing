@@ -694,7 +694,11 @@
           "docsTitle": "Ejemplo de uso",
           "lockedTitle": "Desbloquea la API",
           "lockedBody": "Consulta tus dominios desde cualquier sistema con una API key.",
-          "lockedCta": "Ver plan Pro"
+          "lockedCta": "Ver plan Pro",
+          "docsGateTitle": "Gate para CI/CD",
+          "docsGateBody": "Falla el pipeline si el Security Score baja de un umbral. El endpoint /gate hace la comparación por ti.",
+          "docsCiTitle": "Ejemplo de GitHub Actions",
+          "docsCiBody": "Agrega tu API key como secret del repo (Settings → Secrets → SENTRA_API_KEY) y usa el script de arriba en tu workflow."
         }
       }
     }

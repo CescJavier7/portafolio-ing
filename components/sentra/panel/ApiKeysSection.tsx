@@ -29,9 +29,33 @@ export interface ApiKeysDict {
   revoke: string;
   revoked: string;
   docsTitle: string;
+  docsGateTitle: string;
+  docsGateBody: string;
+  docsCiTitle: string;
+  docsCiBody: string;
   lockedTitle: string;
   lockedBody: string;
   lockedCta: string;
+}
+
+function CodeBlock({ code, copyLabel, copiedLabel }: { code: string; copyLabel: string; copiedLabel: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        onClick={() => {
+          navigator.clipboard.writeText(code);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        }}
+        className="absolute top-2.5 right-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-800 border border-zinc-700 text-[11px] font-semibold text-zinc-300 hover:bg-zinc-700 transition-colors"
+      >
+        {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+        {copied ? copiedLabel : copyLabel}
+      </button>
+      <pre className="text-[12.5px] font-mono text-zinc-300 overflow-x-auto leading-relaxed pr-20">{code}</pre>
+    </div>
+  );
 }
 
 export default function ApiKeysSection({ dict, onUpgrade }: { dict: ApiKeysDict; onUpgrade: () => void }) {
@@ -174,19 +198,74 @@ export default function ApiKeysSection({ dict, onUpgrade }: { dict: ApiKeysDict;
         </ul>
       )}
 
-      {/* Documentación mínima: lo que hace de esto "infraestructura" es que
-          se pueda integrar sin hablar con nadie. */}
-      <div className="rounded-2xl bg-zinc-950 dark:bg-black border border-zinc-800 p-5">
-        <p className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider text-zinc-400 mb-3">
-          <Terminal className="w-3.5 h-3.5" /> {dict.docsTitle}
-        </p>
-        <pre className="text-[12.5px] font-mono text-zinc-300 overflow-x-auto leading-relaxed">
-{`curl -H "Authorization: Bearer sentra_..." \\
+      {/* Documentación: lo que hace de esto "infraestructura" es que se
+          pueda integrar sin hablar con nadie. */}
+      <div className="space-y-4">
+        <div className="rounded-2xl bg-zinc-950 dark:bg-black border border-zinc-800 p-5">
+          <p className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider text-zinc-400 mb-3">
+            <Terminal className="w-3.5 h-3.5" /> {dict.docsTitle}
+          </p>
+          <CodeBlock
+            copyLabel={dict.copy}
+            copiedLabel={dict.copied}
+            code={`curl -H "Authorization: Bearer sentra_..." \\
   https://api.cescjavier.dev/api/v1/public/domains/tudominio.com/score
 
 curl -H "Authorization: Bearer sentra_..." \\
   https://api.cescjavier.dev/api/v1/public/domains/tudominio.com/findings`}
-        </pre>
+          />
+        </div>
+
+        <div className="rounded-2xl bg-zinc-950 dark:bg-black border border-zinc-800 p-5">
+          <p className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider text-zinc-400 mb-1.5">
+            <Terminal className="w-3.5 h-3.5" /> {dict.docsGateTitle}
+          </p>
+          <p className="text-[12px] text-zinc-500 mb-3">{dict.docsGateBody}</p>
+          <CodeBlock
+            copyLabel={dict.copy}
+            copiedLabel={dict.copied}
+            code={`#!/bin/bash
+# sentra-gate.sh — falla el pipeline si el score baja del umbral.
+DOMAIN="tudominio.com"
+MIN_SCORE=80
+
+RESULT=$(curl -s -H "Authorization: Bearer $SENTRA_API_KEY" \\
+  "https://api.cescjavier.dev/api/v1/public/domains/$DOMAIN/gate?min_score=$MIN_SCORE")
+
+PASSED=$(echo "$RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['passed'])")
+
+echo "$RESULT"
+if [ "$PASSED" != "True" ]; then
+  echo "Security gate FAILED: score por debajo de $MIN_SCORE"
+  exit 1
+fi
+echo "Security gate OK"`}
+          />
+        </div>
+
+        <div className="rounded-2xl bg-zinc-950 dark:bg-black border border-zinc-800 p-5">
+          <p className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider text-zinc-400 mb-1.5">
+            <Terminal className="w-3.5 h-3.5" /> {dict.docsCiTitle}
+          </p>
+          <p className="text-[12px] text-zinc-500 mb-3">{dict.docsCiBody}</p>
+          <CodeBlock
+            copyLabel={dict.copy}
+            copiedLabel={dict.copied}
+            code={`# .github/workflows/security-gate.yml
+name: Sentra Security Gate
+on: [push]
+jobs:
+  security-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Sentra Security Score
+        env:
+          SENTRA_API_KEY: \${{ secrets.SENTRA_API_KEY }}
+        run: |
+          chmod +x ./sentra-gate.sh
+          ./sentra-gate.sh`}
+          />
+        </div>
       </div>
     </div>
   );

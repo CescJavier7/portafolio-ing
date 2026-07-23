@@ -694,7 +694,11 @@
           "docsTitle": "Usage example",
           "lockedTitle": "Unlock the API",
           "lockedBody": "Query your domains from any system with an API key.",
-          "lockedCta": "See Pro plan"
+          "lockedCta": "See Pro plan",
+          "docsGateTitle": "CI/CD gate",
+          "docsGateBody": "Fail the pipeline if the Security Score drops below a threshold. The /gate endpoint does the comparison for you.",
+          "docsCiTitle": "GitHub Actions example",
+          "docsCiBody": "Add your API key as a repo secret (Settings → Secrets → SENTRA_API_KEY) and use the script above in your workflow."
         }
       }
     }
