@@ -16,6 +16,7 @@ import {
   type SentraApiKeyCreated,
   type SentraWebhook,
   type SentraWebhookCreated,
+  type SentraUser,
 } from '@/lib/sentra/api';
 import { SectionHeader } from '@/components/sentra/panel/OverviewSection';
 
@@ -29,6 +30,7 @@ export interface WebhooksDict {
   create: string;
   creating: string;
   empty: string;
+  emptyNoneYet: string;
   created: string;
   secretLabel: string;
   never: string;
@@ -49,6 +51,7 @@ export interface ApiKeysDict {
   create: string;
   creating: string;
   empty: string;
+  emptyNoneYet: string;
   created: string;
   never: string;
   lastUsed: string;
@@ -70,7 +73,15 @@ export interface ApiKeysDict {
 
 const EVENT_TYPES = ['scan_completed', 'monitoring_alert', 'exposure_alert'] as const;
 
-function WebhooksBlock({ dict, onUpgrade }: { dict: WebhooksDict; onUpgrade: () => void }) {
+function WebhooksBlock({
+  dict,
+  hasAccess,
+  onUpgrade,
+}: {
+  dict: WebhooksDict;
+  hasAccess: boolean;
+  onUpgrade: () => void;
+}) {
   const [hooks, setHooks] = useState<SentraWebhook[]>([]);
   const [loading, setLoading] = useState(true);
   const [url, setUrl] = useState('');
@@ -226,13 +237,17 @@ function WebhooksBlock({ dict, onUpgrade }: { dict: WebhooksDict; onUpgrade: () 
         <p className="text-sm text-zinc-400 dark:text-zinc-500 animate-pulse py-4">…</p>
       ) : hooks.length === 0 ? (
         <div className="rounded-2xl bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 p-8 text-center">
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">{dict.empty}</p>
-          <button
-            onClick={onUpgrade}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-amber-500/30 text-[13px] font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors"
-          >
-            <Lock className="w-3.5 h-3.5" /> {dict.lockedCta}
-          </button>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+            {hasAccess ? dict.emptyNoneYet : dict.empty}
+          </p>
+          {!hasAccess && (
+            <button
+              onClick={onUpgrade}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-amber-500/30 text-[13px] font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors"
+            >
+              <Lock className="w-3.5 h-3.5" /> {dict.lockedCta}
+            </button>
+          )}
         </div>
       ) : (
         <ul className="rounded-2xl bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 divide-y divide-zinc-100 dark:divide-zinc-800 overflow-hidden">
@@ -300,7 +315,15 @@ function CodeBlock({ code, copyLabel, copiedLabel }: { code: string; copyLabel: 
   );
 }
 
-export default function ApiKeysSection({ dict, onUpgrade }: { dict: ApiKeysDict; onUpgrade: () => void }) {
+export default function ApiKeysSection({
+  dict,
+  user,
+  onUpgrade,
+}: {
+  dict: ApiKeysDict;
+  user: SentraUser;
+  onUpgrade: () => void;
+}) {
   const [keys, setKeys] = useState<SentraApiKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
@@ -308,6 +331,11 @@ export default function ApiKeysSection({ dict, onUpgrade }: { dict: ApiKeysDict;
   const [error, setError] = useState<string | null>(null);
   const [justCreated, setJustCreated] = useState<SentraApiKeyCreated | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // FREE es el único plan sin acceso a API/Webhooks (ver core/plans.py en
+  // el backend): un usuario Pro con la lista vacía (ej. borró todo) NO debe
+  // ver el mensaje de "mejora tu plan", solo alguien realmente sin acceso.
+  const hasAccess = user.plan !== 'FREE';
 
   useEffect(() => {
     sentraListApiKeys()
@@ -404,13 +432,17 @@ export default function ApiKeysSection({ dict, onUpgrade }: { dict: ApiKeysDict;
         <p className="text-sm text-zinc-400 dark:text-zinc-500 animate-pulse py-4">…</p>
       ) : keys.length === 0 ? (
         <div className="rounded-2xl bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 p-8 text-center mb-6">
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">{dict.empty}</p>
-          <button
-            onClick={onUpgrade}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-amber-500/30 text-[13px] font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors"
-          >
-            <Lock className="w-3.5 h-3.5" /> {dict.lockedCta}
-          </button>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+            {hasAccess ? dict.emptyNoneYet : dict.empty}
+          </p>
+          {!hasAccess && (
+            <button
+              onClick={onUpgrade}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-amber-500/30 text-[13px] font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors"
+            >
+              <Lock className="w-3.5 h-3.5" /> {dict.lockedCta}
+            </button>
+          )}
         </div>
       ) : (
         <ul className="rounded-2xl bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 divide-y divide-zinc-100 dark:divide-zinc-800 overflow-hidden mb-8">
@@ -510,7 +542,7 @@ jobs:
         </div>
       </div>
 
-      <WebhooksBlock dict={dict.webhooks} onUpgrade={onUpgrade} />
+      <WebhooksBlock dict={dict.webhooks} hasAccess={hasAccess} onUpgrade={onUpgrade} />
     </div>
   );
 }

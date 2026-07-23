@@ -440,7 +440,7 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
               {active === 'dns' && <MonitorSection dict={dict.dashboard.monitor} />}
               {active === 'traffic' && <ExposureSection dict={dict.dashboard.exposure} onUpgrade={() => setUpgradeOpen(true)} />}
               {active === 'graph' && <SurfaceSection dict={dict.dashboard.surface} onUpgrade={() => setUpgradeOpen(true)} />}
-              {active === 'apiKeys' && <ApiKeysSection dict={dict.dashboard.apiKeys} onUpgrade={() => setUpgradeOpen(true)} />}
+              {active === 'apiKeys' && <ApiKeysSection dict={dict.dashboard.apiKeys} user={user} onUpgrade={() => setUpgradeOpen(true)} />}
               {active === 'team' && <TeamSection dict={dict.dashboard.team} user={user} onUpgrade={() => setUpgradeOpen(true)} />}
             </motion.div>
           </AnimatePresence>

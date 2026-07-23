@@ -719,8 +719,10 @@
             "disabled": "Disabled",
             "regenerate": "Regenerate secret",
             "delete": "Delete",
-            "lockedCta": "See Pro plan"
-          }
+            "lockedCta": "See Pro plan",
+            "emptyNoneYet": "You don't have any webhooks yet. Create one above to start receiving events."
+          },
+          "emptyNoneYet": "You don't have any API keys yet. Create one above to start integrating."
         },
         "team": {
           "title": "Team",
