@@ -575,7 +575,7 @@
           "account": "Account",
           "soon": "Coming soon",
           "dns": "Monitoring",
-          "traffic": "Traffic Intelligence",
+          "traffic": "Exposure intelligence",
           "graph": "Surface"
         },
         "overview": {
@@ -651,6 +651,24 @@
           "disclaimer": "Passive discovery over a verified domain. Port checks are limited to common services on the root domain. This is not a penetration test.",
           "empty": "You have no verified domains. Go to Audit, add and verify a domain to map its surface.",
           "legendOthers": "Other IPs"
+        },
+        "exposure": {
+          "title": "Exposure intelligence",
+          "subtitle": "Risk routes derived from what your domain exposes.",
+          "intro": "Sentra correlates audit findings with your surface (subdomains and ports) to surface prioritized EXPOSURE ROUTES: chains of real, observed conditions that together raise your risk. It does not invent attacks — every route cites its evidence and the framework it maps to.",
+          "analyze": "Analyze exposure",
+          "analyzing": "Analyzing…",
+          "empty": "You have no verified domains. Go to Audit, add and verify a domain.",
+          "clean": "No relevant exposure routes detected. Your observable surface is well contained.",
+          "evidence": "Evidence",
+          "impact": "Impact",
+          "recommendation": "Recommendation",
+          "routesLabel": "routes",
+          "sevCritica": "Critical",
+          "sevAlta": "High",
+          "sevMedia": "Medium",
+          "sevBaja": "Low",
+          "disclaimer": "Deterministic analysis over observed external data (findings + surface). It does not replace an authorized penetration test."
         }
       }
     }

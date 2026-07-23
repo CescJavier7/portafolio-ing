@@ -34,12 +34,14 @@ from app.schemas.target import (
     TargetOut,
     VerifyResultOut,
 )
+from app.schemas.exposure import ExposureResult
 from app.schemas.surface import SurfaceResult
 from app.services.dns_verification import (
     challenge_record_name,
     check_dns_txt,
     expected_txt_value,
 )
+from app.services.exposure import compute_exposure
 from app.services.surface import discover_surface
 from app.services.scanner import scan_domain
 
@@ -180,6 +182,56 @@ async def delete_target(
     target = await _get_owned_target(target_id, current_user, db)
     await db.delete(target)
     await db.commit()
+
+
+@router.post("/{target_id}/exposure", response_model=ExposureResult)
+@limiter.limit("5/minute")
+async def analyze_exposure(
+    request: Request,
+    target_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    target = await _get_owned_target(target_id, current_user, db)
+    if not target.verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Debes verificar la propiedad del dominio antes de analizar su exposición.",
+        )
+    org = await db.get(Organization, current_user.organization_id)
+    if not plan_for(org.plan if org else None).show_score_detail:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail="La inteligencia de exposición es una función Pro.",
+        )
+
+    # Usamos el último escaneo (rápido, desde DB). Si no hay, escaneamos una vez.
+    prev = await db.execute(
+        select(Scan).where(Scan.target_id == target.id).order_by(Scan.created_at.desc()).limit(1)
+    )
+    scan = prev.scalar_one_or_none()
+    if scan is not None:
+        findings = scan.findings or []
+    else:
+        scan_data = await run_in_threadpool(scan_domain, target.domain)
+        new_scan = Scan(
+            target_id=target.id,
+            organization_id=current_user.organization_id,
+            score=scan_data["score"],
+            grade=scan_data["grade"],
+            findings=scan_data["findings"],
+        )
+        db.add(new_scan)
+        await db.commit()
+        findings = scan_data["findings"]
+
+    surface = await run_in_threadpool(discover_surface, target.domain)
+    routes = compute_exposure(findings, surface)
+    counts = {
+        sev: sum(1 for r in routes if r["severity"] == sev)
+        for sev in ("critica", "alta", "media", "baja")
+    }
+    return {"domain": target.domain, "routes": routes, "counts": counts}
 
 
 @router.post("/{target_id}/discover", response_model=SurfaceResult)

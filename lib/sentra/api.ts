@@ -309,6 +309,28 @@ export async function sentraDiscoverSurface(targetId: string): Promise<SentraSur
   return request(`/api/v1/targets/${targetId}/discover`, { method: 'POST' }, true);
 }
 
+// ── Inteligencia de exposición ──────────────────────────────────────
+
+export interface SentraExposureRoute {
+  id: string;
+  title: string;
+  severity: string; // critica | alta | media | baja
+  evidence: string[];
+  impact: string;
+  recommendation: string;
+  references: SentraReference[];
+}
+
+export interface SentraExposure {
+  domain: string;
+  routes: SentraExposureRoute[];
+  counts: Record<string, number>;
+}
+
+export async function sentraAnalyzeExposure(targetId: string): Promise<SentraExposure> {
+  return request(`/api/v1/targets/${targetId}/exposure`, { method: 'POST' }, true);
+}
+
 // ── Escaneos ────────────────────────────────────────────────────────
 
 export interface SentraReference {

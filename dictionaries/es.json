@@ -575,7 +575,7 @@
           "account": "Cuenta",
           "soon": "Próximamente",
           "dns": "Monitoreo",
-          "traffic": "Inteligencia de tráfico",
+          "traffic": "Inteligencia de exposición",
           "graph": "Superficie"
         },
         "overview": {
@@ -651,6 +651,24 @@
           "disclaimer": "Descubrimiento pasivo sobre un dominio verificado. El chequeo de puertos se limita a servicios comunes en el dominio raíz. No constituye una prueba de intrusión.",
           "empty": "No tienes dominios verificados. Ve a Auditoría, agrega y verifica un dominio para mapear su superficie.",
           "legendOthers": "Otras IPs"
+        },
+        "exposure": {
+          "title": "Inteligencia de exposición",
+          "subtitle": "Rutas de riesgo derivadas de lo que tu dominio expone.",
+          "intro": "Sentra correlaciona los hallazgos de la auditoría con tu superficie (subdominios y puertos) para mostrar RUTAS DE EXPOSICIÓN priorizadas: cadenas de condiciones reales y observadas que, juntas, elevan tu riesgo. No inventa ataques — cada ruta cita su evidencia y el marco al que corresponde.",
+          "analyze": "Analizar exposición",
+          "analyzing": "Analizando…",
+          "empty": "No tienes dominios verificados. Ve a Auditoría, agrega y verifica un dominio.",
+          "clean": "No se detectaron rutas de exposición relevantes. Tu superficie observable está bien contenida.",
+          "evidence": "Evidencia",
+          "impact": "Impacto",
+          "recommendation": "Recomendación",
+          "routesLabel": "rutas",
+          "sevCritica": "Crítica",
+          "sevAlta": "Alta",
+          "sevMedia": "Media",
+          "sevBaja": "Baja",
+          "disclaimer": "Análisis determinista sobre datos externos observados (hallazgos + superficie). No sustituye una prueba de intrusión autorizada."
         }
       }
     }

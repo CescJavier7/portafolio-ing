@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, KeyRound, Gem, LayoutDashboard, Radar, FileText, UserCog, BellRing, Activity, Share2 } from 'lucide-react';
+import { LogOut, KeyRound, Gem, LayoutDashboard, Radar, FileText, UserCog, BellRing, Route, Share2 } from 'lucide-react';
 import {
   sentraChangePassword,
   sentraCreateCheckout,
@@ -22,9 +22,9 @@ import ProAvatar from '@/components/sentra/ProAvatar';
 import OverviewSection, { type OverviewDict } from '@/components/sentra/panel/OverviewSection';
 import ReportsSection, { type ReportsDict } from '@/components/sentra/panel/ReportsSection';
 import AccountSection, { type AccountDict } from '@/components/sentra/panel/AccountSection';
-import ComingSoon from '@/components/sentra/panel/ComingSoon';
 import MonitorSection, { type MonitorDict } from '@/components/sentra/panel/MonitorSection';
 import SurfaceSection, { type SurfaceDict } from '@/components/sentra/panel/SurfaceSection';
+import ExposureSection, { type ExposureDict } from '@/components/sentra/panel/ExposureSection';
 
 interface DashboardDict {
   nav: {
@@ -36,6 +36,7 @@ interface DashboardDict {
   account: AccountDict;
   monitor: MonitorDict;
   surface: SurfaceDict;
+  exposure: ExposureDict;
   soonTitle: string;
   soonBody: string;
 }
@@ -334,11 +335,10 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
     { id: 'reports', label: nav.reports, icon: <FileText className="w-4 h-4" /> },
     { id: 'dns', label: nav.dns, icon: <BellRing className="w-4 h-4" /> },
     { id: 'graph', label: nav.graph, icon: <Share2 className="w-4 h-4" /> },
+    { id: 'traffic', label: nav.traffic, icon: <Route className="w-4 h-4" /> },
     { id: 'account', label: nav.account, icon: <UserCog className="w-4 h-4" /> },
   ];
-  const soonItems: { id: SectionId; label: string; icon: React.ReactNode }[] = [
-    { id: 'traffic', label: nav.traffic, icon: <Activity className="w-4 h-4" /> },
-  ];
+  const soonItems: { id: SectionId; label: string; icon: React.ReactNode }[] = [];
 
   return (
     <section className="min-h-screen pt-14 bg-zinc-50 dark:bg-[#020617] transition-colors duration-500">
@@ -359,14 +359,18 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
             ))}
           </nav>
 
-          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 px-3 mt-6 mb-2">
-            {nav.soon}
-          </p>
-          <nav className="flex flex-col gap-1">
-            {soonItems.map((it) => (
-              <NavButton key={it.id} item={it} active={active === it.id} onClick={() => setActive(it.id)} soon />
-            ))}
-          </nav>
+          {soonItems.length > 0 && (
+            <>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 px-3 mt-6 mb-2">
+                {nav.soon}
+              </p>
+              <nav className="flex flex-col gap-1">
+                {soonItems.map((it) => (
+                  <NavButton key={it.id} item={it} active={active === it.id} onClick={() => setActive(it.id)} soon />
+                ))}
+              </nav>
+            </>
+          )}
 
           <button
             onClick={handleLogout}
@@ -428,9 +432,7 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
                 </AccountSection>
               )}
               {active === 'dns' && <MonitorSection dict={dict.dashboard.monitor} />}
-              {active === 'traffic' && (
-                <ComingSoon icon={<Activity className="w-5 h-5" />} title={nav.traffic} subtitle={dict.dashboard.soonTitle} bodyTitle={dict.dashboard.soonTitle} body={dict.dashboard.soonBody} />
-              )}
+              {active === 'traffic' && <ExposureSection dict={dict.dashboard.exposure} onUpgrade={() => setUpgradeOpen(true)} />}
               {active === 'graph' && <SurfaceSection dict={dict.dashboard.surface} onUpgrade={() => setUpgradeOpen(true)} />}
             </motion.div>
           </AnimatePresence>
