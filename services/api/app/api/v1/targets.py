@@ -34,11 +34,13 @@ from app.schemas.target import (
     TargetOut,
     VerifyResultOut,
 )
+from app.schemas.surface import SurfaceResult
 from app.services.dns_verification import (
     challenge_record_name,
     check_dns_txt,
     expected_txt_value,
 )
+from app.services.surface import discover_surface
 from app.services.scanner import scan_domain
 
 router = APIRouter(prefix="/targets", tags=["targets"])
@@ -178,6 +180,31 @@ async def delete_target(
     target = await _get_owned_target(target_id, current_user, db)
     await db.delete(target)
     await db.commit()
+
+
+@router.post("/{target_id}/discover", response_model=SurfaceResult)
+@limiter.limit("5/minute")
+async def discover_target(
+    request: Request,
+    target_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    target = await _get_owned_target(target_id, current_user, db)
+    if not target.verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Debes verificar la propiedad del dominio antes de mapear su superficie.",
+        )
+    org = await db.get(Organization, current_user.organization_id)
+    # El descubrimiento de superficie (incluye chequeo de puertos) es Pro:
+    # reutilizamos el gate de detalle. FREE recibe 402 → modal de upgrade.
+    if not plan_for(org.plan if org else None).show_score_detail:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail="El mapa de superficie es una función Pro. Mejora tu plan para descubrir subdominios, puertos y tecnologías.",
+        )
+    return await run_in_threadpool(discover_surface, target.domain)
 
 
 @router.patch("/{target_id}/monitoring", response_model=TargetOut)

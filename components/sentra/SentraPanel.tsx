@@ -24,6 +24,7 @@ import ReportsSection, { type ReportsDict } from '@/components/sentra/panel/Repo
 import AccountSection, { type AccountDict } from '@/components/sentra/panel/AccountSection';
 import ComingSoon from '@/components/sentra/panel/ComingSoon';
 import MonitorSection, { type MonitorDict } from '@/components/sentra/panel/MonitorSection';
+import SurfaceSection, { type SurfaceDict } from '@/components/sentra/panel/SurfaceSection';
 
 interface DashboardDict {
   nav: {
@@ -34,6 +35,7 @@ interface DashboardDict {
   reports: ReportsDict;
   account: AccountDict;
   monitor: MonitorDict;
+  surface: SurfaceDict;
   soonTitle: string;
   soonBody: string;
 }
@@ -331,11 +333,11 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
     { id: 'tool', label: nav.tool, icon: <Radar className="w-4 h-4" /> },
     { id: 'reports', label: nav.reports, icon: <FileText className="w-4 h-4" /> },
     { id: 'dns', label: nav.dns, icon: <BellRing className="w-4 h-4" /> },
+    { id: 'graph', label: nav.graph, icon: <Share2 className="w-4 h-4" /> },
     { id: 'account', label: nav.account, icon: <UserCog className="w-4 h-4" /> },
   ];
   const soonItems: { id: SectionId; label: string; icon: React.ReactNode }[] = [
     { id: 'traffic', label: nav.traffic, icon: <Activity className="w-4 h-4" /> },
-    { id: 'graph', label: nav.graph, icon: <Share2 className="w-4 h-4" /> },
   ];
 
   return (
@@ -429,9 +431,7 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
               {active === 'traffic' && (
                 <ComingSoon icon={<Activity className="w-5 h-5" />} title={nav.traffic} subtitle={dict.dashboard.soonTitle} bodyTitle={dict.dashboard.soonTitle} body={dict.dashboard.soonBody} />
               )}
-              {active === 'graph' && (
-                <ComingSoon icon={<Share2 className="w-5 h-5" />} title={nav.graph} subtitle={dict.dashboard.soonTitle} bodyTitle={dict.dashboard.soonTitle} body={dict.dashboard.soonBody} />
-              )}
+              {active === 'graph' && <SurfaceSection dict={dict.dashboard.surface} onUpgrade={() => setUpgradeOpen(true)} />}
             </motion.div>
           </AnimatePresence>
         </main>

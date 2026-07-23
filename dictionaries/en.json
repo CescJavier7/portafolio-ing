@@ -576,7 +576,7 @@
           "soon": "Coming soon",
           "dns": "Monitoring",
           "traffic": "Traffic Intelligence",
-          "graph": "Surface Graph"
+          "graph": "Surface"
         },
         "overview": {
           "title": "Overview",
@@ -631,6 +631,25 @@
           "verifyFirst": "Verify the domain first",
           "lastScore": "Last",
           "empty": "You have not added any domains yet. Go to Audit to start."
+        },
+        "surface": {
+          "title": "Surface map",
+          "subtitle": "Discover what your domain exposes to the internet.",
+          "intro": "Sentra discovers your external footprint: subdomains (via Certificate Transparency and DNS), open ports and services, and detected technologies. It is the first step to understand your attack surface the way an attacker would — passively and on domains you already verified.",
+          "pick": "Pick a verified domain",
+          "discover": "Discover surface",
+          "discovering": "Exploring…",
+          "subdomains": "Live subdomains",
+          "ports": "Exposed ports & services",
+          "technologies": "Detected technologies",
+          "noSubs": "No resolving subdomains found.",
+          "noPorts": "No common open ports detected.",
+          "noTech": "No technologies detected from headers.",
+          "riskHigh": "High risk",
+          "riskMedium": "Medium risk",
+          "riskLow": "Informational",
+          "disclaimer": "Passive discovery over a verified domain. Port checks are limited to common services on the root domain. This is not a penetration test.",
+          "empty": "You have no verified domains. Go to Audit, add and verify a domain to map its surface."
         }
       }
     }

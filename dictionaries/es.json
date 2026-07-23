@@ -576,7 +576,7 @@
           "soon": "Próximamente",
           "dns": "Monitoreo",
           "traffic": "Inteligencia de tráfico",
-          "graph": "Grafo de superficie"
+          "graph": "Superficie"
         },
         "overview": {
           "title": "Resumen",
@@ -631,6 +631,25 @@
           "verifyFirst": "Verifica el dominio primero",
           "lastScore": "Último",
           "empty": "Aún no has agregado dominios. Ve a Auditoría para empezar."
+        },
+        "surface": {
+          "title": "Mapa de superficie",
+          "subtitle": "Descubre lo que tu dominio expone a internet.",
+          "intro": "Sentra descubre tu huella externa: subdominios (vía Certificate Transparency y DNS), puertos y servicios abiertos, y las tecnologías detectadas. Es el primer paso para entender tu superficie de ataque como un atacante la vería — de forma pasiva y sobre dominios que ya verificaste.",
+          "pick": "Elige un dominio verificado",
+          "discover": "Descubrir superficie",
+          "discovering": "Explorando…",
+          "subdomains": "Subdominios vivos",
+          "ports": "Puertos y servicios expuestos",
+          "technologies": "Tecnologías detectadas",
+          "noSubs": "No se encontraron subdominios que resuelvan.",
+          "noPorts": "No se detectaron puertos comunes abiertos.",
+          "noTech": "No se detectaron tecnologías por cabeceras.",
+          "riskHigh": "Riesgo alto",
+          "riskMedium": "Riesgo medio",
+          "riskLow": "Informativo",
+          "disclaimer": "Descubrimiento pasivo sobre un dominio verificado. El chequeo de puertos se limita a servicios comunes en el dominio raíz. No constituye una prueba de intrusión.",
+          "empty": "No tienes dominios verificados. Ve a Auditoría, agrega y verifica un dominio para mapear su superficie."
         }
       }
     }

@@ -296,6 +296,19 @@ export async function sentraSetMonitoring(targetId: string, enabled: boolean): P
   );
 }
 
+// ── Descubrimiento de superficie ────────────────────────────────────
+
+export interface SentraSurface {
+  domain: string;
+  subdomains: { name: string; ip: string }[];
+  ports: { port: number; service: string; risk: string }[];
+  technologies: string[];
+}
+
+export async function sentraDiscoverSurface(targetId: string): Promise<SentraSurface> {
+  return request(`/api/v1/targets/${targetId}/discover`, { method: 'POST' }, true);
+}
+
 // ── Escaneos ────────────────────────────────────────────────────────
 
 export interface SentraReference {
