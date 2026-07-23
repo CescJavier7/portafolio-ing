@@ -69,16 +69,12 @@ export default function SurfaceGraph({
 
         {/* Nodos subdominio */}
         {nodes.map((nd, i) => (
-          <g key={`n-${i}`} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)} style={{ cursor: 'pointer' }}>
+          <g key={`n-${i}`} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)} onClick={() => setHover(i)} style={{ cursor: 'pointer' }}>
             <circle cx={nd.x} cy={nd.y} r={hover === i ? 7 : 5} fill={nd.color} stroke="#0a0a0a" strokeWidth="1.5" className="[stroke:theme(colors.white)] dark:[stroke:theme(colors.zinc.950)]" />
-            <circle cx={nd.x} cy={nd.y} r="14" fill="transparent">
+            {/* Área de toque más grande que la marca (accesible en táctil). */}
+            <circle cx={nd.x} cy={nd.y} r="16" fill="transparent">
               <title>{nd.name} — {nd.ip}</title>
             </circle>
-            {hover === i && (
-              <text x={nd.x} y={nd.y - 12} textAnchor="middle" className="fill-zinc-900 dark:fill-white" style={{ fontSize: '11px', fontWeight: 700 }}>
-                {nd.name}
-              </text>
-            )}
           </g>
         ))}
 
@@ -88,6 +84,26 @@ export default function SurfaceGraph({
         <text x={cx} y={cy + 34} textAnchor="middle" className="fill-zinc-900 dark:fill-white" style={{ fontSize: '13px', fontWeight: 800 }}>
           {domain}
         </text>
+
+        {/* Tooltip: se dibuja al final para quedar sobre todo. */}
+        {hover !== null && (() => {
+          const nd = nodes[hover];
+          const label = nd.name;
+          const tw = Math.max(label.length, nd.ip.length + 4) * 6.6 + 22;
+          const th = 40;
+          let tx = nd.x - tw / 2;
+          tx = Math.max(6, Math.min(W - tw - 6, tx));
+          let ty = nd.y - th - 14;
+          if (ty < 6) ty = nd.y + 16;
+          return (
+            <g style={{ pointerEvents: 'none' }}>
+              <rect x={tx} y={ty} width={tw} height={th} rx="8" fill="#0f172a" stroke="#334155" strokeWidth="1" />
+              <text x={tx + 12} y={ty + 17} fill="#ffffff" style={{ fontSize: '12px', fontWeight: 700 }}>{label}</text>
+              <circle cx={tx + 14} cy={ty + 29} r="3.5" fill={nd.color} />
+              <text x={tx + 23} y={ty + 32} fill="#94a3b8" style={{ fontSize: '11px', fontFamily: 'ui-monospace, monospace' }}>{nd.ip}</text>
+            </g>
+          );
+        })()}
       </svg>
 
       {/* Leyenda: color → IP */}
