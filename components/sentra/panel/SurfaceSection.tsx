@@ -5,6 +5,7 @@ import { Share2, Globe, Server, Cpu, AlertTriangle, Search } from 'lucide-react'
 import { loadDomainData } from '@/lib/sentra/domainData';
 import { sentraDiscoverSurface, SentraApiError, type SentraSurface, type SentraTarget } from '@/lib/sentra/api';
 import { SectionHeader } from '@/components/sentra/panel/OverviewSection';
+import SurfaceGraph from '@/components/sentra/panel/SurfaceGraph';
 
 export interface SurfaceDict {
   title: string;
@@ -24,6 +25,7 @@ export interface SurfaceDict {
   riskLow: string;
   disclaimer: string;
   empty: string;
+  legendOthers: string;
 }
 
 function riskColor(risk: string): string {
@@ -112,6 +114,11 @@ export default function SurfaceSection({ dict, onUpgrade }: { dict: SurfaceDict;
                   <p className="text-lg font-black text-zinc-900 dark:text-white">{surface.domain}</p>
                 </div>
               </div>
+
+              {/* Grafo visual de la superficie */}
+              {surface.subdomains.length > 0 && (
+                <SurfaceGraph domain={surface.domain} subdomains={surface.subdomains} legendOthers={dict.legendOthers} />
+              )}
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 {/* Subdominios */}

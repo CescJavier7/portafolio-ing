@@ -649,7 +649,8 @@
           "riskMedium": "Medium risk",
           "riskLow": "Informational",
           "disclaimer": "Passive discovery over a verified domain. Port checks are limited to common services on the root domain. This is not a penetration test.",
-          "empty": "You have no verified domains. Go to Audit, add and verify a domain to map its surface."
+          "empty": "You have no verified domains. Go to Audit, add and verify a domain to map its surface.",
+          "legendOthers": "Other IPs"
         }
       }
     }

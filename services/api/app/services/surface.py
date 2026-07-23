@@ -115,7 +115,16 @@ def _scan_ports(domain: str) -> list[dict]:
 
 
 def _fingerprint(domain: str) -> list[str]:
-    tech: set[str] = set()
+    tech: list[str] = []
+    # Dedup case-insensitive: evita "Cloudflare" y "cloudflare" a la vez.
+    seen: set[str] = set()
+
+    def add(value: str) -> None:
+        v = value.strip()
+        if v and v.lower() not in seen:
+            seen.add(v.lower())
+            tech.append(v)
+
     try:
         resp = requests.get(
             f"https://{domain}",
@@ -124,19 +133,21 @@ def _fingerprint(domain: str) -> list[str]:
             headers={"User-Agent": "SentraScanner/1.0 (+https://cescjavier.dev)"},
         )
         h = {k.lower(): v for k, v in resp.headers.items()}
+
+        # Señales normalizadas primero (nombre "bonito"), para que ganen el dedup.
+        if "cf-ray" in h or h.get("server", "").lower() == "cloudflare":
+            add("Cloudflare")
+        if "x-vercel-id" in h:
+            add("Vercel")
+        if h.get("x-powered-by", "").lower().startswith("next"):
+            add("Next.js")
+
         for key in ("server", "x-powered-by", "x-generator", "via", "x-aspnet-version"):
             if h.get(key):
-                tech.add(h[key])
-        # Señales típicas por header.
-        if "cf-ray" in h or (h.get("server", "").lower() == "cloudflare"):
-            tech.add("Cloudflare")
-        if "x-vercel-id" in h:
-            tech.add("Vercel")
-        if h.get("x-powered-by", "").lower().startswith("next"):
-            tech.add("Next.js")
+                add(h[key])
     except requests.RequestException:
         pass
-    return sorted(tech)
+    return tech
 
 
 def discover_surface(domain: str) -> dict:

@@ -649,7 +649,8 @@
           "riskMedium": "Riesgo medio",
           "riskLow": "Informativo",
           "disclaimer": "Descubrimiento pasivo sobre un dominio verificado. El chequeo de puertos se limita a servicios comunes en el dominio raíz. No constituye una prueba de intrusión.",
-          "empty": "No tienes dominios verificados. Ve a Auditoría, agrega y verifica un dominio para mapear su superficie."
+          "empty": "No tienes dominios verificados. Ve a Auditoría, agrega y verifica un dominio para mapear su superficie.",
+          "legendOthers": "Otras IPs"
         }
       }
     }
