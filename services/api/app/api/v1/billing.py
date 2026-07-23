@@ -18,7 +18,7 @@ import json
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.v1.deps import get_current_user
+from app.api.v1.deps import get_current_user, require_role
 from app.db.session import get_db
 from app.models.organization import Organization
 from app.models.user import User
@@ -45,7 +45,7 @@ async def get_subscription(current_user: User = Depends(get_current_user), db: A
 
 
 @router.post("/checkout-session")
-async def create_checkout(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def create_checkout(current_user: User = Depends(require_role("OWNER", "ADMIN")), db: AsyncSession = Depends(get_db)):
     org = await db.get(Organization, current_user.organization_id)
     if org is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Organización no encontrada.")
@@ -67,7 +67,7 @@ async def create_checkout(current_user: User = Depends(get_current_user), db: As
 
 
 @router.get("/portal")
-async def customer_portal(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def customer_portal(current_user: User = Depends(require_role("OWNER", "ADMIN")), db: AsyncSession = Depends(get_db)):
     org = await db.get(Organization, current_user.organization_id)
     if org is None or org.lemonsqueezy_subscription_id is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No hay una suscripción activa que gestionar.")

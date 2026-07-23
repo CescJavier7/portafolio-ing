@@ -454,3 +454,87 @@ export async function sentraCreateApiKey(name: string): Promise<SentraApiKeyCrea
 export async function sentraRevokeApiKey(keyId: string): Promise<void> {
   await request(`/api/v1/api-keys/${keyId}`, { method: 'DELETE' }, true);
 }
+
+// ── Equipo (RBAC) ─────────────────────────────────────────────────────
+
+export interface SentraTeamMember {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+  email_verified: boolean;
+  created_at: string;
+}
+
+export async function sentraListTeam(): Promise<SentraTeamMember[]> {
+  return request('/api/v1/team', { method: 'GET' }, true);
+}
+
+export async function sentraInviteMember(email: string, role: string): Promise<{ message: string }> {
+  return request('/api/v1/team/invite', { method: 'POST', body: JSON.stringify({ email, role }) }, true);
+}
+
+export async function sentraChangeRole(userId: string, role: string): Promise<SentraTeamMember> {
+  return request(`/api/v1/team/${userId}/role`, { method: 'PATCH', body: JSON.stringify({ role }) }, true);
+}
+
+export async function sentraRemoveMember(userId: string): Promise<void> {
+  await request(`/api/v1/team/${userId}`, { method: 'DELETE' }, true);
+}
+
+// Sin auth: se llama desde la página pública de aceptar invitación, antes
+// de que la persona invitada tenga ninguna sesión.
+export async function sentraAcceptInvite(data: {
+  token: string;
+  name: string;
+  password: string;
+}): Promise<{ message: string }> {
+  return request('/api/v1/team/accept-invite', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+// ── Webhooks salientes ──────────────────────────────────────────────
+
+export interface SentraWebhook {
+  id: string;
+  url: string;
+  event_types: string[];
+  enabled: boolean;
+  last_triggered_at: string | null;
+  last_status_code: number | null;
+  created_at: string;
+}
+
+export interface SentraWebhookCreated extends SentraWebhook {
+  secret: string; // valor crudo — solo viaja en la respuesta de creación/regeneración
+}
+
+export async function sentraListWebhooks(): Promise<SentraWebhook[]> {
+  return request('/api/v1/webhooks', { method: 'GET' }, true);
+}
+
+export async function sentraCreateWebhook(url: string, eventTypes: string[]): Promise<SentraWebhookCreated> {
+  return request(
+    '/api/v1/webhooks',
+    { method: 'POST', body: JSON.stringify({ url, event_types: eventTypes }) },
+    true,
+  );
+}
+
+export async function sentraToggleWebhook(webhookId: string, enabled: boolean): Promise<SentraWebhook> {
+  return request(
+    `/api/v1/webhooks/${webhookId}`,
+    { method: 'PATCH', body: JSON.stringify({ enabled }) },
+    true,
+  );
+}
+
+export async function sentraRegenerateWebhookSecret(webhookId: string): Promise<SentraWebhookCreated> {
+  return request(`/api/v1/webhooks/${webhookId}/regenerate-secret`, { method: 'POST' }, true);
+}
+
+export async function sentraDeleteWebhook(webhookId: string): Promise<void> {
+  await request(`/api/v1/webhooks/${webhookId}`, { method: 'DELETE' }, true);
+}

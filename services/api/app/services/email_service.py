@@ -41,6 +41,30 @@ def send_verification_email(to_email: str, raw_token: str) -> None:
     _send(to_email, "Sentra — Verifica tu correo", html)
 
 
+def send_team_invite_email(to_email: str, raw_token: str, org_name: str, inviter_name: str | None) -> None:
+    accept_url = f"{settings.INVITE_ACCEPT_URL_BASE}?token={raw_token}"
+    inviter = inviter_name or "un administrador"
+
+    html = f"""
+    <div style="background-color:#0a0a0a;color:#e5e5e5;padding:32px;font-family:-apple-system,Segoe UI,sans-serif;border-radius:12px;max-width:520px;margin:0 auto;">
+      <h2 style="color:#ffffff;margin-top:0;">Te invitaron a un equipo en Sentra</h2>
+      <p><strong>{inviter}</strong> te invitó a unirte a la organización <strong>{org_name}</strong> en Sentra.</p>
+      <p style="margin:28px 0;">
+        <a href="{accept_url}"
+           style="background-color:#22c55e;color:#000000;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;display:inline-block;">
+          Aceptar invitación
+        </a>
+      </p>
+      <p style="color:#a3a3a3;font-size:13px;">
+        El enlace expira en {settings.INVITE_EXPIRE_HOURS} horas.
+        Si no esperabas esta invitación, ignora este correo.
+      </p>
+    </div>
+    """
+
+    _send(to_email, f"Sentra — Invitación de {org_name}", html)
+
+
 def _send(to_email: str, subject: str, html: str) -> None:
     response = requests.post(
         RESEND_API_URL,

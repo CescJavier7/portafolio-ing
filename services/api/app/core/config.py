@@ -41,6 +41,12 @@ class Settings(BaseSettings):
     VERIFY_URL_BASE: str = "https://api.cescjavier.dev/api/v1/auth/verify-email"
     EMAIL_VERIFICATION_EXPIRE_HOURS: int = 24
 
+    # Invitación de equipo: a diferencia de la verificación de email, esta SÍ
+    # apunta al FRONTEND (necesita un formulario — nombre + contraseña — no
+    # un simple GET), no a la propia API.
+    INVITE_ACCEPT_URL_BASE: str = "https://cescjavier.dev/es/sentinel/accept-invite"
+    INVITE_EXPIRE_HOURS: int = 72
+
     # ── Monitoreo continuo ──────────────────────────────────────
     # Secreto que protege el endpoint /internal/run-monitoring (lo dispara
     # un cron del VPS, no un usuario). Vacío = monitoreo deshabilitado

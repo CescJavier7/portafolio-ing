@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.v1.deps import get_current_user
+from app.api.v1.deps import get_current_user, require_role
 from app.core.plans import plan_for
 from app.core.security import generate_api_key
 from app.db.session import get_db
@@ -46,7 +46,7 @@ async def list_api_keys(
 @router.post("", response_model=ApiKeyCreatedOut, status_code=status.HTTP_201_CREATED)
 async def create_api_key(
     payload: ApiKeyCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role("OWNER", "ADMIN")),
     db: AsyncSession = Depends(get_db),
 ):
     await _require_api_access(current_user, db)
@@ -90,7 +90,7 @@ async def create_api_key(
 @router.delete("/{key_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def revoke_api_key(
     key_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role("OWNER", "ADMIN")),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, KeyRound, Gem, LayoutDashboard, Radar, FileText, UserCog, BellRing, Route, Share2, Code2 } from 'lucide-react';
+import { LogOut, KeyRound, Gem, LayoutDashboard, Radar, FileText, UserCog, BellRing, Route, Share2, Code2, Users } from 'lucide-react';
 import {
   sentraChangePassword,
   sentraCreateCheckout,
@@ -26,11 +26,12 @@ import MonitorSection, { type MonitorDict } from '@/components/sentra/panel/Moni
 import SurfaceSection, { type SurfaceDict } from '@/components/sentra/panel/SurfaceSection';
 import ExposureSection, { type ExposureDict } from '@/components/sentra/panel/ExposureSection';
 import ApiKeysSection, { type ApiKeysDict } from '@/components/sentra/panel/ApiKeysSection';
+import TeamSection, { type TeamDict } from '@/components/sentra/panel/TeamSection';
 
 interface DashboardDict {
   nav: {
     overview: string; tool: string; reports: string; account: string; soon: string;
-    dns: string; traffic: string; graph: string; apiKeys: string;
+    dns: string; traffic: string; graph: string; apiKeys: string; team: string;
   };
   overview: OverviewDict;
   reports: ReportsDict;
@@ -39,6 +40,7 @@ interface DashboardDict {
   surface: SurfaceDict;
   exposure: ExposureDict;
   apiKeys: ApiKeysDict;
+  team: TeamDict;
   soonTitle: string;
   soonBody: string;
 }
@@ -73,7 +75,7 @@ interface Dict {
   dashboard: DashboardDict;
 }
 
-type SectionId = 'overview' | 'tool' | 'reports' | 'account' | 'dns' | 'traffic' | 'graph' | 'apiKeys';
+type SectionId = 'overview' | 'tool' | 'reports' | 'account' | 'dns' | 'traffic' | 'graph' | 'apiKeys' | 'team';
 
 const inputClass =
   'w-full rounded-xl bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-4 py-3 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition';
@@ -339,6 +341,7 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
     { id: 'graph', label: nav.graph, icon: <Share2 className="w-4 h-4" /> },
     { id: 'traffic', label: nav.traffic, icon: <Route className="w-4 h-4" /> },
     { id: 'apiKeys', label: nav.apiKeys, icon: <Code2 className="w-4 h-4" /> },
+    { id: 'team', label: nav.team, icon: <Users className="w-4 h-4" /> },
     { id: 'account', label: nav.account, icon: <UserCog className="w-4 h-4" /> },
   ];
   const soonItems: { id: SectionId; label: string; icon: React.ReactNode }[] = [];
@@ -438,6 +441,7 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
               {active === 'traffic' && <ExposureSection dict={dict.dashboard.exposure} onUpgrade={() => setUpgradeOpen(true)} />}
               {active === 'graph' && <SurfaceSection dict={dict.dashboard.surface} onUpgrade={() => setUpgradeOpen(true)} />}
               {active === 'apiKeys' && <ApiKeysSection dict={dict.dashboard.apiKeys} onUpgrade={() => setUpgradeOpen(true)} />}
+              {active === 'team' && <TeamSection dict={dict.dashboard.team} user={user} onUpgrade={() => setUpgradeOpen(true)} />}
             </motion.div>
           </AnimatePresence>
         </main>

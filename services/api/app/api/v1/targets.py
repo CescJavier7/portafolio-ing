@@ -18,7 +18,7 @@ from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.v1.deps import get_current_user
+from app.api.v1.deps import get_current_user, require_role
 from app.core.plans import plan_for
 from app.core.rate_limit import limiter
 from app.db.session import get_db
@@ -46,6 +46,7 @@ from app.services.dns_verification import (
 from app.services.exposure import compute_exposure
 from app.services.surface import discover_surface
 from app.services.scanner import scan_domain
+from app.services.webhook_service import trigger_webhooks
 
 router = APIRouter(prefix="/targets", tags=["targets"])
 
@@ -79,7 +80,7 @@ async def list_targets(current_user: User = Depends(get_current_user), db: Async
 async def create_target(
     request: Request,
     payload: TargetCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role("OWNER", "ADMIN")),
     db: AsyncSession = Depends(get_db),
 ):
     org = await db.get(Organization, current_user.organization_id)
@@ -151,7 +152,7 @@ async def get_instructions(
 async def verify_target(
     request: Request,
     target_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role("OWNER", "ADMIN", "ANALYST")),
     db: AsyncSession = Depends(get_db),
 ):
     target = await _get_owned_target(target_id, current_user, db)
@@ -178,7 +179,7 @@ async def verify_target(
 @router.delete("/{target_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_target(
     target_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role("OWNER", "ADMIN")),
     db: AsyncSession = Depends(get_db),
 ):
     target = await _get_owned_target(target_id, current_user, db)
@@ -191,7 +192,7 @@ async def delete_target(
 async def analyze_exposure(
     request: Request,
     target_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role("OWNER", "ADMIN", "ANALYST")),
     db: AsyncSession = Depends(get_db),
 ):
     target = await _get_owned_target(target_id, current_user, db)
@@ -246,6 +247,13 @@ async def analyze_exposure(
     await db.commit()
     await db.refresh(snapshot)
 
+    await trigger_webhooks(
+        db,
+        current_user.organization_id,
+        "exposure_alert",
+        {"domain": target.domain, "routes": routes, "counts": counts},
+    )
+
     return {
         "domain": target.domain,
         "routes": routes,
@@ -287,7 +295,7 @@ async def get_latest_exposure(
 async def discover_target(
     request: Request,
     target_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role("OWNER", "ADMIN", "ANALYST")),
     db: AsyncSession = Depends(get_db),
 ):
     target = await _get_owned_target(target_id, current_user, db)
@@ -350,7 +358,7 @@ async def get_latest_surface(
 async def set_monitoring(
     target_id: str,
     payload: MonitoringUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role("OWNER", "ADMIN")),
     db: AsyncSession = Depends(get_db),
 ):
     target = await _get_owned_target(target_id, current_user, db)
@@ -385,7 +393,7 @@ def _scan_to_result(scan: Scan, domain: str, show_detail: bool, scans_remaining:
 async def scan_target(
     request: Request,
     target_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role("OWNER", "ADMIN", "ANALYST")),
     db: AsyncSession = Depends(get_db),
 ):
     target = await _get_owned_target(target_id, current_user, db)
@@ -442,6 +450,13 @@ async def scan_target(
     await db.commit()
     await db.refresh(scan)
 
+    await trigger_webhooks(
+        db,
+        current_user.organization_id,
+        "scan_completed",
+        {"domain": target.domain, "score": scan.score, "grade": scan.grade, "scan_id": str(scan.id)},
+    )
+
     return _scan_to_result(scan, target.domain, config.show_score_detail, remaining)
 
 
@@ -467,7 +482,7 @@ async def save_scan_report(
     target_id: str,
     scan_id: str,
     payload: dict,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role("OWNER", "ADMIN", "ANALYST")),
     db: AsyncSession = Depends(get_db),
 ):
     # Persiste el informe IA en el escaneo, para no regenerarlo en cada visita.

@@ -22,6 +22,7 @@ from app.models.target import Target
 from app.models.user import User
 from app.services.email_service import send_monitoring_alert
 from app.services.scanner import scan_domain
+from app.services.webhook_service import trigger_webhooks
 
 settings = get_settings()
 router = APIRouter(prefix="/internal", tags=["internal"])
@@ -88,6 +89,20 @@ async def run_monitoring(
 
         if not (newly_failed or score_drop >= SCORE_DROP_ALERT or grade_worse):
             continue  # sin regresión relevante
+
+        await trigger_webhooks(
+            db,
+            target.organization_id,
+            "monitoring_alert",
+            {
+                "domain": target.domain,
+                "old_score": prev.score,
+                "new_score": scan_data["score"],
+                "old_grade": prev.grade,
+                "new_grade": scan_data["grade"],
+                "newly_failed": newly_failed,
+            },
+        )
 
         # Avisar a los usuarios de la organización dueña del dominio.
         users_res = await db.execute(select(User).where(User.organization_id == target.organization_id))

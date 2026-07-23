@@ -35,6 +35,13 @@ class User(Base):
     # (GDPR/LOPD) y de reputación de dominio.
     marketing_consent: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    # Invitación de equipo: mismo patrón que la verificación de email (token
+    # opaco, hasheado SHA-256 para lookup indexado). Un usuario invitado se
+    # crea SIN contraseña utilizable hasta que acepta la invitación — hasta
+    # entonces email_verified=False y no puede loguear.
+    invite_token_hash: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
+    invite_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     # ── Mitigación de fuerza bruta a nivel de cuenta ──────────
     # Complementa el rate limiting por IP (que se puede evadir con proxies):
     # esto limita intentos contra UNA cuenta específica sin importar el origen.

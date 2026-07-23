@@ -87,3 +87,22 @@ async def get_api_key_org(
         raise unauthorized
 
     return org
+
+
+def require_role(*allowed_roles: str):
+    """
+    Gate de RBAC para endpoints del panel (JWT, no API key). Se usa como
+    `Depends(require_role("OWNER", "ADMIN"))` sobre `get_current_user`:
+    reutiliza la sesión ya validada, solo agrega el chequeo de rol encima
+    en vez de duplicar la verificación de token.
+    """
+
+    async def _check(user: User = Depends(get_current_user)) -> User:
+        if user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No tienes permisos suficientes para esta acción.",
+            )
+        return user
+
+    return _check

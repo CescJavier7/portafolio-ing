@@ -577,7 +577,8 @@
           "dns": "Monitoring",
           "traffic": "Exposure intelligence",
           "graph": "Surface",
-          "apiKeys": "API"
+          "apiKeys": "API",
+          "team": "Team"
         },
         "overview": {
           "title": "Overview",
@@ -698,9 +699,64 @@
           "docsGateTitle": "CI/CD gate",
           "docsGateBody": "Fail the pipeline if the Security Score drops below a threshold. The /gate endpoint does the comparison for you.",
           "docsCiTitle": "GitHub Actions example",
-          "docsCiBody": "Add your API key as a repo secret (Settings → Secrets → SENTRA_API_KEY) and use the script above in your workflow."
+          "docsCiBody": "Add your API key as a repo secret (Settings → Secrets → SENTRA_API_KEY) and use the script above in your workflow.",
+          "webhooks": {
+            "title": "Outgoing webhooks",
+            "intro": "Get notified in your own systems the moment a scan finishes, a monitoring alert fires, or a new exposure route is found. Every delivery is signed with HMAC-SHA256 (X-Sentra-Signature header) so you can verify it really came from Sentra.",
+            "urlPlaceholder": "https://your-system.com/webhooks/sentra",
+            "eventScanCompleted": "Scan completed",
+            "eventMonitoringAlert": "Monitoring alert",
+            "eventExposureAlert": "Exposure alert",
+            "create": "Create webhook",
+            "creating": "Creating…",
+            "empty": "Outgoing webhooks are a Pro feature. Get notified in your own systems when something happens.",
+            "created": "Copy your signing secret now — it won't be shown again.",
+            "secretLabel": "Signing secret",
+            "never": "never",
+            "lastTriggered": "Last triggered",
+            "lastStatus": "status",
+            "enabled": "Enabled",
+            "disabled": "Disabled",
+            "regenerate": "Regenerate secret",
+            "delete": "Delete",
+            "lockedCta": "See Pro plan"
+          }
+        },
+        "team": {
+          "title": "Team",
+          "subtitle": "Manage who has access to your organization in Sentra.",
+          "intro": "Invite your team with different access levels: Admin manages domains and billing, Analyst can scan and audit, Member only views results.",
+          "emailPlaceholder": "email@company.com",
+          "roleLabel": "Role",
+          "roleOwner": "Owner",
+          "roleAdmin": "Admin",
+          "roleAnalyst": "Analyst",
+          "roleMember": "Member",
+          "invite": "Invite",
+          "inviting": "Inviting…",
+          "invited": "Invitation sent. They'll receive an email to accept it.",
+          "empty": "No team members yet.",
+          "pending": "Invitation pending",
+          "you": "you",
+          "remove": "Remove",
+          "cannotManage": "Only the owner or an admin can invite or remove members.",
+          "lockedCta": "See Pro plan"
         }
       }
+    },
+    "acceptInvite": {
+      "title": "Accept your invitation",
+      "subtitle": "Set your password to join the team on Sentra.",
+      "nameLabel": "Your name",
+      "namePlaceholder": "First and last name",
+      "passwordLabel": "Password",
+      "passwordHint": "At least 8 characters.",
+      "submit": "Accept invitation",
+      "submitting": "Processing…",
+      "successTitle": "All set!",
+      "successBody": "Your account is active. You can now log in with your email and your new password.",
+      "loginLink": "Go to login",
+      "missingToken": "This invite link isn't valid. Ask whoever invited you for a new one."
     }
   }
 }

@@ -24,16 +24,18 @@ class PlanConfig:
     ai_reports: bool          # reportes con IA
     api_access: bool          # puede crear API keys / usar la API pública
     max_api_keys: int         # tope de llaves activas simultáneas
+    max_team_members: int     # usuarios totales en la organización (incluye OWNER)
+    max_webhooks: int         # webhooks salientes activos simultáneos
 
 
 # limited_scans=False => escaneos ilimitados (coherente con "ilimitados" del
 # modal de upgrade). El rate limit por endpoint (10/min) sigue protegiendo
 # contra abuso incluso en planes ilimitados.
 PLANS: dict[str, PlanConfig] = {
-    "FREE": PlanConfig(max_targets=3, scans_per_day=3, limited_scans=True, show_score_detail=False, ai_reports=False, api_access=False, max_api_keys=0),
-    "PRO": PlanConfig(max_targets=10, scans_per_day=0, limited_scans=False, show_score_detail=True, ai_reports=True, api_access=True, max_api_keys=3),
-    "TEAM": PlanConfig(max_targets=50, scans_per_day=0, limited_scans=False, show_score_detail=True, ai_reports=True, api_access=True, max_api_keys=10),
-    "ENTERPRISE": PlanConfig(max_targets=1000, scans_per_day=0, limited_scans=False, show_score_detail=True, ai_reports=True, api_access=True, max_api_keys=50),
+    "FREE": PlanConfig(max_targets=3, scans_per_day=3, limited_scans=True, show_score_detail=False, ai_reports=False, api_access=False, max_api_keys=0, max_team_members=1, max_webhooks=0),
+    "PRO": PlanConfig(max_targets=10, scans_per_day=0, limited_scans=False, show_score_detail=True, ai_reports=True, api_access=True, max_api_keys=3, max_team_members=3, max_webhooks=1),
+    "TEAM": PlanConfig(max_targets=50, scans_per_day=0, limited_scans=False, show_score_detail=True, ai_reports=True, api_access=True, max_api_keys=10, max_team_members=10, max_webhooks=5),
+    "ENTERPRISE": PlanConfig(max_targets=1000, scans_per_day=0, limited_scans=False, show_score_detail=True, ai_reports=True, api_access=True, max_api_keys=50, max_team_members=50, max_webhooks=20),
 }
 
 

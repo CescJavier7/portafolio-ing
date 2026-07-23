@@ -577,7 +577,8 @@
           "dns": "Monitoreo",
           "traffic": "Inteligencia de exposición",
           "graph": "Superficie",
-          "apiKeys": "API"
+          "apiKeys": "API",
+          "team": "Equipo"
         },
         "overview": {
           "title": "Resumen",
@@ -698,9 +699,64 @@
           "docsGateTitle": "Gate para CI/CD",
           "docsGateBody": "Falla el pipeline si el Security Score baja de un umbral. El endpoint /gate hace la comparación por ti.",
           "docsCiTitle": "Ejemplo de GitHub Actions",
-          "docsCiBody": "Agrega tu API key como secret del repo (Settings → Secrets → SENTRA_API_KEY) y usa el script de arriba en tu workflow."
+          "docsCiBody": "Agrega tu API key como secret del repo (Settings → Secrets → SENTRA_API_KEY) y usa el script de arriba en tu workflow.",
+          "webhooks": {
+            "title": "Webhooks salientes",
+            "intro": "Entérate en tus propios sistemas en el momento en que termina un escaneo, salta una alerta de monitoreo o aparece una nueva ruta de exposición. Cada entrega va firmada con HMAC-SHA256 (header X-Sentra-Signature) para que puedas verificar que realmente vino de Sentra.",
+            "urlPlaceholder": "https://tu-sistema.com/webhooks/sentra",
+            "eventScanCompleted": "Escaneo completado",
+            "eventMonitoringAlert": "Alerta de monitoreo",
+            "eventExposureAlert": "Alerta de exposición",
+            "create": "Crear webhook",
+            "creating": "Creando…",
+            "empty": "Los webhooks salientes son una función Pro. Entérate en tus propios sistemas cuando algo sucede.",
+            "created": "Copia tu secreto de firma ahora — no se volverá a mostrar.",
+            "secretLabel": "Secreto de firma",
+            "never": "nunca",
+            "lastTriggered": "Última entrega",
+            "lastStatus": "estado",
+            "enabled": "Activo",
+            "disabled": "Inactivo",
+            "regenerate": "Regenerar secreto",
+            "delete": "Eliminar",
+            "lockedCta": "Ver plan Pro"
+          }
+        },
+        "team": {
+          "title": "Equipo",
+          "subtitle": "Gestiona quién tiene acceso a tu organización en Sentra.",
+          "intro": "Invita a tu equipo con distintos niveles de acceso: Administrador gestiona dominios y facturación, Analista puede escanear y auditar, Miembro solo consulta resultados.",
+          "emailPlaceholder": "correo@empresa.com",
+          "roleLabel": "Rol",
+          "roleOwner": "Propietario",
+          "roleAdmin": "Administrador",
+          "roleAnalyst": "Analista",
+          "roleMember": "Miembro",
+          "invite": "Invitar",
+          "inviting": "Invitando…",
+          "invited": "Invitación enviada. La persona recibirá un correo para aceptarla.",
+          "empty": "Todavía no hay miembros en tu equipo.",
+          "pending": "Invitación pendiente",
+          "you": "tú",
+          "remove": "Eliminar",
+          "cannotManage": "Solo el propietario o un administrador pueden invitar o eliminar miembros.",
+          "lockedCta": "Ver plan Pro"
         }
       }
+    },
+    "acceptInvite": {
+      "title": "Acepta tu invitación",
+      "subtitle": "Configura tu contraseña para unirte al equipo en Sentra.",
+      "nameLabel": "Tu nombre",
+      "namePlaceholder": "Nombre y apellido",
+      "passwordLabel": "Contraseña",
+      "passwordHint": "Mínimo 8 caracteres.",
+      "submit": "Aceptar invitación",
+      "submitting": "Procesando…",
+      "successTitle": "¡Listo!",
+      "successBody": "Tu cuenta está activa. Ya puedes iniciar sesión con tu correo y tu nueva contraseña.",
+      "loginLink": "Ir a iniciar sesión",
+      "missingToken": "Este enlace de invitación no es válido. Pide uno nuevo a quien te invitó."
     }
   }
 }

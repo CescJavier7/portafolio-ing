@@ -18,6 +18,7 @@ import app.models.scan
 import app.models.surface_snapshot
 import app.models.exposure_snapshot
 import app.models.api_key
+import app.models.webhook
 
 # Configuración de logging de Alembic
 config = context.config
