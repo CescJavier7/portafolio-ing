@@ -427,3 +427,30 @@ export async function sentraGenerateReport(payload: {
 export async function sentraSaveReport(targetId: string, scanId: string, report: SentraReport): Promise<void> {
   await request(`/api/v1/targets/${targetId}/scans/${scanId}/report`, { method: 'PUT', body: JSON.stringify(report) }, true);
 }
+
+// ── API keys (acceso programático a la API pública) ─────────────────
+
+export interface SentraApiKey {
+  id: string;
+  name: string;
+  key_prefix: string;
+  revoked: boolean;
+  last_used_at: string | null;
+  created_at: string;
+}
+
+export interface SentraApiKeyCreated extends SentraApiKey {
+  key: string; // valor crudo — solo viaja en la respuesta de creación
+}
+
+export async function sentraListApiKeys(): Promise<SentraApiKey[]> {
+  return request('/api/v1/api-keys', { method: 'GET' }, true);
+}
+
+export async function sentraCreateApiKey(name: string): Promise<SentraApiKeyCreated> {
+  return request('/api/v1/api-keys', { method: 'POST', body: JSON.stringify({ name }) }, true);
+}
+
+export async function sentraRevokeApiKey(keyId: string): Promise<void> {
+  await request(`/api/v1/api-keys/${keyId}`, { method: 'DELETE' }, true);
+}

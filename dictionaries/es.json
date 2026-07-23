@@ -576,7 +576,8 @@
           "soon": "Próximamente",
           "dns": "Monitoreo",
           "traffic": "Inteligencia de exposición",
-          "graph": "Superficie"
+          "graph": "Superficie",
+          "apiKeys": "API"
         },
         "overview": {
           "title": "Resumen",
@@ -673,6 +674,27 @@
           "disclaimer": "Análisis determinista sobre datos externos observados (hallazgos + superficie). No sustituye una prueba de intrusión autorizada.",
           "lastUpdated": "Última actualización",
           "refresh": "Actualizar"
+        },
+        "apiKeys": {
+          "title": "API",
+          "subtitle": "Integra Sentra en tus propios sistemas.",
+          "intro": "Con una API key puedes consultar el Security Score y el detalle de tus dominios verificados desde cualquier sistema: un pipeline de CI/CD, un script de monitoreo propio, otro backend. La llave solo puede ver los dominios de TU organización.",
+          "namePlaceholder": "Nombre (ej. \"CI de producción\")",
+          "create": "Crear API key",
+          "creating": "Creando…",
+          "empty": "El acceso a la API es una función Pro. Con ella puedes consultar tus dominios desde fuera del panel.",
+          "created": "Copia tu API key ahora — no se volverá a mostrar.",
+          "never": "nunca",
+          "lastUsed": "Último uso",
+          "copy": "Copiar",
+          "copied": "Copiado",
+          "close": "Cerrar",
+          "revoke": "Revocar",
+          "revoked": "Revocada",
+          "docsTitle": "Ejemplo de uso",
+          "lockedTitle": "Desbloquea la API",
+          "lockedBody": "Consulta tus dominios desde cualquier sistema con una API key.",
+          "lockedCta": "Ver plan Pro"
         }
       }
     }

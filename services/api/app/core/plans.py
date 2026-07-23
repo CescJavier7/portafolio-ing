@@ -22,16 +22,18 @@ class PlanConfig:
     limited_scans: bool       # True: aplica y muestra el contador de 24h
     show_score_detail: bool   # desglose de la ponderación del score
     ai_reports: bool          # reportes con IA
+    api_access: bool          # puede crear API keys / usar la API pública
+    max_api_keys: int         # tope de llaves activas simultáneas
 
 
 # limited_scans=False => escaneos ilimitados (coherente con "ilimitados" del
 # modal de upgrade). El rate limit por endpoint (10/min) sigue protegiendo
 # contra abuso incluso en planes ilimitados.
 PLANS: dict[str, PlanConfig] = {
-    "FREE": PlanConfig(max_targets=3, scans_per_day=3, limited_scans=True, show_score_detail=False, ai_reports=False),
-    "PRO": PlanConfig(max_targets=10, scans_per_day=0, limited_scans=False, show_score_detail=True, ai_reports=True),
-    "TEAM": PlanConfig(max_targets=50, scans_per_day=0, limited_scans=False, show_score_detail=True, ai_reports=True),
-    "ENTERPRISE": PlanConfig(max_targets=1000, scans_per_day=0, limited_scans=False, show_score_detail=True, ai_reports=True),
+    "FREE": PlanConfig(max_targets=3, scans_per_day=3, limited_scans=True, show_score_detail=False, ai_reports=False, api_access=False, max_api_keys=0),
+    "PRO": PlanConfig(max_targets=10, scans_per_day=0, limited_scans=False, show_score_detail=True, ai_reports=True, api_access=True, max_api_keys=3),
+    "TEAM": PlanConfig(max_targets=50, scans_per_day=0, limited_scans=False, show_score_detail=True, ai_reports=True, api_access=True, max_api_keys=10),
+    "ENTERPRISE": PlanConfig(max_targets=1000, scans_per_day=0, limited_scans=False, show_score_detail=True, ai_reports=True, api_access=True, max_api_keys=50),
 }
 
 

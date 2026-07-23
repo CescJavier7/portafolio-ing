@@ -82,3 +82,29 @@ def hash_refresh_token(raw_token: str) -> str:
 
 def verify_refresh_token(raw_token: str, hashed_token: str) -> bool:
     return pwd_context.verify(raw_token, hashed_token)
+
+
+API_KEY_PREFIX = "sentra_"
+
+
+def generate_api_key() -> tuple[str, str, str]:
+    """
+    Genera una API key. Devuelve (raw, hash, prefix):
+    - raw: se muestra al usuario UNA sola vez (al crearla), nunca se guarda.
+    - hash: SHA-256 determinístico — igual razón que el token de verificación
+      de email: la llave llega en cada request y hay que ENCONTRAR la fila
+      por ella con un índice, no compararla contra todas (Argon2 obligaría
+      a iterar). Segura por los 256 bits de entropía del token, igual que
+      el refresh token opaco.
+    - prefix: primeros caracteres del raw, se guardan EN CLARO para que el
+      usuario reconozca la llave en la lista sin volver a ver el valor
+      completo (mismo patrón que Stripe/GitHub: "sentra_a1b2c3...").
+    """
+    raw = f"{API_KEY_PREFIX}{secrets.token_urlsafe(32)}"
+    key_hash = hashlib.sha256(raw.encode()).hexdigest()
+    prefix = raw[: len(API_KEY_PREFIX) + 6]
+    return raw, key_hash, prefix
+
+
+def hash_api_key(raw_key: str) -> str:
+    return hashlib.sha256(raw_key.encode()).hexdigest()

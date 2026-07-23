@@ -576,7 +576,8 @@
           "soon": "Coming soon",
           "dns": "Monitoring",
           "traffic": "Exposure intelligence",
-          "graph": "Surface"
+          "graph": "Surface",
+          "apiKeys": "API"
         },
         "overview": {
           "title": "Overview",
@@ -673,6 +674,27 @@
           "disclaimer": "Deterministic analysis over observed external data (findings + surface). It does not replace an authorized penetration test.",
           "lastUpdated": "Last updated",
           "refresh": "Refresh"
+        },
+        "apiKeys": {
+          "title": "API",
+          "subtitle": "Integrate Sentra into your own systems.",
+          "intro": "With an API key you can query the Security Score and full detail of your verified domains from any system: a CI/CD pipeline, your own monitoring script, another backend. The key can only see domains belonging to YOUR organization.",
+          "namePlaceholder": "Name (e.g. \"Production CI\")",
+          "create": "Create API key",
+          "creating": "Creating…",
+          "empty": "API access is a Pro feature. With it you can query your domains from outside the panel.",
+          "created": "Copy your API key now — it will not be shown again.",
+          "never": "never",
+          "lastUsed": "Last used",
+          "copy": "Copy",
+          "copied": "Copied",
+          "close": "Close",
+          "revoke": "Revoke",
+          "revoked": "Revoked",
+          "docsTitle": "Usage example",
+          "lockedTitle": "Unlock the API",
+          "lockedBody": "Query your domains from any system with an API key.",
+          "lockedCta": "See Pro plan"
         }
       }
     }

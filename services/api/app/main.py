@@ -4,9 +4,11 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
+from app.api.v1.api_keys import router as api_keys_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.billing import router as billing_router
 from app.api.v1.internal import router as internal_router
+from app.api.v1.public import router as public_router
 from app.api.v1.targets import router as targets_router
 from app.core.config import get_settings
 from app.core.rate_limit import limiter
@@ -37,6 +39,8 @@ app.include_router(auth_router, prefix="/api/v1")
 app.include_router(billing_router, prefix="/api/v1")
 app.include_router(targets_router, prefix="/api/v1")
 app.include_router(internal_router, prefix="/api/v1")
+app.include_router(api_keys_router, prefix="/api/v1")
+app.include_router(public_router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["health"])
