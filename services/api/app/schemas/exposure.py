@@ -1,3 +1,6 @@
+import uuid
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -21,3 +24,5 @@ class ExposureResult(BaseModel):
     domain: str
     routes: list[ExposureRoute]
     counts: dict[str, int]  # conteo por severidad
+    id: uuid.UUID | None = None
+    created_at: datetime | None = None

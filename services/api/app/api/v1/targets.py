@@ -22,7 +22,9 @@ from app.api.v1.deps import get_current_user
 from app.core.plans import plan_for
 from app.core.rate_limit import limiter
 from app.db.session import get_db
+from app.models.exposure_snapshot import ExposureSnapshot
 from app.models.scan import Scan
+from app.models.surface_snapshot import SurfaceSnapshot
 from app.models.target import Target
 from app.models.user import User
 from app.models.organization import Organization
@@ -231,7 +233,53 @@ async def analyze_exposure(
         sev: sum(1 for r in routes if r["severity"] == sev)
         for sev in ("critica", "alta", "media", "baja")
     }
-    return {"domain": target.domain, "routes": routes, "counts": counts}
+
+    # Persistir: sin esto, el resultado se perdía al cambiar de sección del
+    # panel (el componente se desmonta) y había que re-analizar cada vez.
+    snapshot = ExposureSnapshot(
+        target_id=target.id,
+        organization_id=current_user.organization_id,
+        routes=routes,
+        counts=counts,
+    )
+    db.add(snapshot)
+    await db.commit()
+    await db.refresh(snapshot)
+
+    return {
+        "domain": target.domain,
+        "routes": routes,
+        "counts": counts,
+        "id": snapshot.id,
+        "created_at": snapshot.created_at,
+    }
+
+
+@router.get("/{target_id}/exposure", response_model=ExposureResult | None)
+async def get_latest_exposure(
+    target_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    # Auto-carga: el frontend llama esto al entrar a la sección para mostrar
+    # el último análisis sin esperar ni recalcular.
+    target = await _get_owned_target(target_id, current_user, db)
+    result = await db.execute(
+        select(ExposureSnapshot)
+        .where(ExposureSnapshot.target_id == target.id)
+        .order_by(ExposureSnapshot.created_at.desc())
+        .limit(1)
+    )
+    snap = result.scalar_one_or_none()
+    if snap is None:
+        return None
+    return {
+        "domain": target.domain,
+        "routes": snap.routes,
+        "counts": snap.counts,
+        "id": snap.id,
+        "created_at": snap.created_at,
+    }
 
 
 @router.post("/{target_id}/discover", response_model=SurfaceResult)
@@ -256,7 +304,46 @@ async def discover_target(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
             detail="El mapa de superficie es una función Pro. Mejora tu plan para descubrir subdominios, puertos y tecnologías.",
         )
-    return await run_in_threadpool(discover_surface, target.domain)
+    surface = await run_in_threadpool(discover_surface, target.domain)
+
+    snapshot = SurfaceSnapshot(
+        target_id=target.id,
+        organization_id=current_user.organization_id,
+        subdomains=surface["subdomains"],
+        ports=surface["ports"],
+        technologies=surface["technologies"],
+    )
+    db.add(snapshot)
+    await db.commit()
+    await db.refresh(snapshot)
+
+    return {**surface, "id": snapshot.id, "created_at": snapshot.created_at}
+
+
+@router.get("/{target_id}/discover", response_model=SurfaceResult | None)
+async def get_latest_surface(
+    target_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    target = await _get_owned_target(target_id, current_user, db)
+    result = await db.execute(
+        select(SurfaceSnapshot)
+        .where(SurfaceSnapshot.target_id == target.id)
+        .order_by(SurfaceSnapshot.created_at.desc())
+        .limit(1)
+    )
+    snap = result.scalar_one_or_none()
+    if snap is None:
+        return None
+    return {
+        "domain": target.domain,
+        "subdomains": snap.subdomains,
+        "ports": snap.ports,
+        "technologies": snap.technologies,
+        "id": snap.id,
+        "created_at": snap.created_at,
+    }
 
 
 @router.patch("/{target_id}/monitoring", response_model=TargetOut)

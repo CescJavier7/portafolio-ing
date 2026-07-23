@@ -15,6 +15,8 @@ import app.models.user
 import app.models.refresh_token
 import app.models.target
 import app.models.scan
+import app.models.surface_snapshot
+import app.models.exposure_snapshot
 
 # Configuración de logging de Alembic
 config = context.config

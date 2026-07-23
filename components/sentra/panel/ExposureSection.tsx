@@ -3,7 +3,13 @@
 import { useEffect, useState } from 'react';
 import { Route, Search, ShieldCheck } from 'lucide-react';
 import { loadDomainData } from '@/lib/sentra/domainData';
-import { sentraAnalyzeExposure, SentraApiError, type SentraExposure, type SentraTarget } from '@/lib/sentra/api';
+import {
+  sentraAnalyzeExposure,
+  sentraGetLatestExposure,
+  SentraApiError,
+  type SentraExposure,
+  type SentraTarget,
+} from '@/lib/sentra/api';
 import { SectionHeader } from '@/components/sentra/panel/OverviewSection';
 
 export interface ExposureDict {
@@ -23,6 +29,8 @@ export interface ExposureDict {
   sevMedia: string;
   sevBaja: string;
   disclaimer: string;
+  lastUpdated: string;
+  refresh: string;
 }
 
 function sevStyle(sev: string): { chip: string; bar: string; label: (d: ExposureDict) => string } {
@@ -42,6 +50,7 @@ export default function ExposureSection({ dict, onUpgrade }: { dict: ExposureDic
   const [targets, setTargets] = useState<SentraTarget[]>([]);
   const [selected, setSelected] = useState('');
   const [busy, setBusy] = useState(false);
+  const [loadingLatest, setLoadingLatest] = useState(false);
   const [result, setResult] = useState<SentraExposure | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,11 +64,31 @@ export default function ExposureSection({ dict, onUpgrade }: { dict: ExposureDic
       .catch(() => {});
   }, []);
 
+  // Auto-carga: al elegir un dominio, muestra el ÚLTIMO análisis guardado
+  // sin esperar ni recalcular. Antes se perdía al cambiar de sección.
+  useEffect(() => {
+    if (!selected) return;
+    let cancelled = false;
+    setLoadingLatest(true);
+    setResult(null);
+    setError(null);
+    sentraGetLatestExposure(selected)
+      .then((r) => {
+        if (!cancelled) setResult(r);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoadingLatest(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selected]);
+
   async function analyze() {
     if (!selected) return;
     setBusy(true);
     setError(null);
-    setResult(null);
     try {
       setResult(await sentraAnalyzeExposure(selected));
     } catch (err) {
@@ -93,18 +122,25 @@ export default function ExposureSection({ dict, onUpgrade }: { dict: ExposureDic
             </select>
             <button
               onClick={analyze}
-              disabled={busy}
+              disabled={busy || loadingLatest}
               className="shrink-0 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-60"
             >
               <Search className={`w-4 h-4 ${busy ? 'animate-pulse' : ''}`} />
-              {busy ? dict.analyzing : dict.analyze}
+              {busy ? dict.analyzing : result ? dict.refresh : dict.analyze}
             </button>
           </div>
 
           {error && <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 mb-4">{error}</p>}
 
+          {loadingLatest && <p className="text-sm text-zinc-400 dark:text-zinc-500 animate-pulse py-4">…</p>}
+
           {result && (
             <div className="space-y-5">
+              {result.created_at && (
+                <p className="text-[11px] text-zinc-400 dark:text-zinc-500 text-right -mb-2">
+                  {dict.lastUpdated}: {new Date(result.created_at).toLocaleString()}
+                </p>
+              )}
               {/* Resumen por severidad */}
               <div className="flex flex-wrap gap-2">
                 {(['critica', 'alta', 'media', 'baja'] as const).map((sev) => {

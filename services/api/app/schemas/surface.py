@@ -1,3 +1,6 @@
+import uuid
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -17,3 +20,7 @@ class SurfaceResult(BaseModel):
     subdomains: list[SubdomainOut]
     ports: list[PortOut]
     technologies: list[str]
+    # Presentes cuando el resultado viene de un snapshot persistido (siempre,
+    # desde que existe la tabla); None solo sería posible en datos legacy.
+    id: uuid.UUID | None = None
+    created_at: datetime | None = None

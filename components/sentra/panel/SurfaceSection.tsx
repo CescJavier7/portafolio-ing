@@ -3,7 +3,13 @@
 import { useEffect, useState } from 'react';
 import { Share2, Globe, Server, Cpu, AlertTriangle, Search } from 'lucide-react';
 import { loadDomainData } from '@/lib/sentra/domainData';
-import { sentraDiscoverSurface, SentraApiError, type SentraSurface, type SentraTarget } from '@/lib/sentra/api';
+import {
+  sentraDiscoverSurface,
+  sentraGetLatestSurface,
+  SentraApiError,
+  type SentraSurface,
+  type SentraTarget,
+} from '@/lib/sentra/api';
 import { SectionHeader } from '@/components/sentra/panel/OverviewSection';
 import SurfaceGraph from '@/components/sentra/panel/SurfaceGraph';
 
@@ -26,6 +32,8 @@ export interface SurfaceDict {
   disclaimer: string;
   empty: string;
   legendOthers: string;
+  lastUpdated: string;
+  refresh: string;
 }
 
 function riskColor(risk: string): string {
@@ -38,6 +46,7 @@ export default function SurfaceSection({ dict, onUpgrade }: { dict: SurfaceDict;
   const [targets, setTargets] = useState<SentraTarget[]>([]);
   const [selected, setSelected] = useState<string>('');
   const [busy, setBusy] = useState(false);
+  const [loadingLatest, setLoadingLatest] = useState(false);
   const [surface, setSurface] = useState<SentraSurface | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,11 +60,32 @@ export default function SurfaceSection({ dict, onUpgrade }: { dict: SurfaceDict;
       .catch(() => {});
   }, []);
 
+  // Auto-carga: al elegir un dominio, muestra el ÚLTIMO resultado guardado
+  // (si existe) sin esperar ni volver a descubrir. Antes se perdía al
+  // cambiar de sección del panel.
+  useEffect(() => {
+    if (!selected) return;
+    let cancelled = false;
+    setLoadingLatest(true);
+    setSurface(null);
+    setError(null);
+    sentraGetLatestSurface(selected)
+      .then((s) => {
+        if (!cancelled) setSurface(s);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoadingLatest(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selected]);
+
   async function discover() {
     if (!selected) return;
     setBusy(true);
     setError(null);
-    setSurface(null);
     try {
       setSurface(await sentraDiscoverSurface(selected));
     } catch (err) {
@@ -92,15 +122,17 @@ export default function SurfaceSection({ dict, onUpgrade }: { dict: SurfaceDict;
             </select>
             <button
               onClick={discover}
-              disabled={busy}
+              disabled={busy || loadingLatest}
               className="shrink-0 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-60"
             >
               <Search className={`w-4 h-4 ${busy ? 'animate-pulse' : ''}`} />
-              {busy ? dict.discovering : dict.discover}
+              {busy ? dict.discovering : surface ? dict.refresh : dict.discover}
             </button>
           </div>
 
           {error && <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 mb-4">{error}</p>}
+
+          {loadingLatest && <p className="text-sm text-zinc-400 dark:text-zinc-500 animate-pulse py-4">…</p>}
 
           {surface && (
             <div className="space-y-5">
@@ -113,6 +145,11 @@ export default function SurfaceSection({ dict, onUpgrade }: { dict: SurfaceDict;
                   <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{dict.title}</p>
                   <p className="text-lg font-black text-zinc-900 dark:text-white">{surface.domain}</p>
                 </div>
+                {surface.created_at && (
+                  <p className="ml-auto text-[11px] text-zinc-400 dark:text-zinc-500">
+                    {dict.lastUpdated}: {new Date(surface.created_at).toLocaleString()}
+                  </p>
+                )}
               </div>
 
               {/* Grafo visual de la superficie */}

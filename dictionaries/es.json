@@ -650,7 +650,9 @@
           "riskLow": "Informativo",
           "disclaimer": "Descubrimiento pasivo sobre un dominio verificado. El chequeo de puertos se limita a servicios comunes en el dominio raíz. No constituye una prueba de intrusión.",
           "empty": "No tienes dominios verificados. Ve a Auditoría, agrega y verifica un dominio para mapear su superficie.",
-          "legendOthers": "Otras IPs"
+          "legendOthers": "Otras IPs",
+          "lastUpdated": "Última actualización",
+          "refresh": "Actualizar"
         },
         "exposure": {
           "title": "Inteligencia de exposición",
@@ -668,7 +670,9 @@
           "sevAlta": "Alta",
           "sevMedia": "Media",
           "sevBaja": "Baja",
-          "disclaimer": "Análisis determinista sobre datos externos observados (hallazgos + superficie). No sustituye una prueba de intrusión autorizada."
+          "disclaimer": "Análisis determinista sobre datos externos observados (hallazgos + superficie). No sustituye una prueba de intrusión autorizada.",
+          "lastUpdated": "Última actualización",
+          "refresh": "Actualizar"
         }
       }
     }

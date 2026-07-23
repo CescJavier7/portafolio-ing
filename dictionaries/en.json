@@ -650,7 +650,9 @@
           "riskLow": "Informational",
           "disclaimer": "Passive discovery over a verified domain. Port checks are limited to common services on the root domain. This is not a penetration test.",
           "empty": "You have no verified domains. Go to Audit, add and verify a domain to map its surface.",
-          "legendOthers": "Other IPs"
+          "legendOthers": "Other IPs",
+          "lastUpdated": "Last updated",
+          "refresh": "Refresh"
         },
         "exposure": {
           "title": "Exposure intelligence",
@@ -668,7 +670,9 @@
           "sevAlta": "High",
           "sevMedia": "Medium",
           "sevBaja": "Low",
-          "disclaimer": "Deterministic analysis over observed external data (findings + surface). It does not replace an authorized penetration test."
+          "disclaimer": "Deterministic analysis over observed external data (findings + surface). It does not replace an authorized penetration test.",
+          "lastUpdated": "Last updated",
+          "refresh": "Refresh"
         }
       }
     }

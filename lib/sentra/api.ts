@@ -303,10 +303,18 @@ export interface SentraSurface {
   subdomains: { name: string; ip: string }[];
   ports: { port: number; service: string; risk: string }[];
   technologies: string[];
+  id?: string | null;
+  created_at?: string | null;
 }
 
 export async function sentraDiscoverSurface(targetId: string): Promise<SentraSurface> {
   return request(`/api/v1/targets/${targetId}/discover`, { method: 'POST' }, true);
+}
+
+// Última superficie persistida (o null si nunca se descubrió) — para
+// mostrarla al instante al entrar a la sección, sin re-descubrir.
+export async function sentraGetLatestSurface(targetId: string): Promise<SentraSurface | null> {
+  return request(`/api/v1/targets/${targetId}/discover`, { method: 'GET' }, true);
 }
 
 // ── Inteligencia de exposición ──────────────────────────────────────
@@ -325,10 +333,16 @@ export interface SentraExposure {
   domain: string;
   routes: SentraExposureRoute[];
   counts: Record<string, number>;
+  id?: string | null;
+  created_at?: string | null;
 }
 
 export async function sentraAnalyzeExposure(targetId: string): Promise<SentraExposure> {
   return request(`/api/v1/targets/${targetId}/exposure`, { method: 'POST' }, true);
+}
+
+export async function sentraGetLatestExposure(targetId: string): Promise<SentraExposure | null> {
+  return request(`/api/v1/targets/${targetId}/exposure`, { method: 'GET' }, true);
 }
 
 // ── Escaneos ────────────────────────────────────────────────────────
