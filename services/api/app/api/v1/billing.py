@@ -16,21 +16,18 @@ Por eso:
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.deps import get_current_user, require_role
 from app.db.session import get_db
 from app.models.organization import Organization
+from app.models.processed_webhook_event import ProcessedWebhookEvent
 from app.models.user import User
 from app.services.lemonsqueezy_service import create_checkout_url, get_customer_portal_url, verify_webhook_signature
 
 router = APIRouter(prefix="/billing", tags=["billing"])
-
-# TODO: mover a una tabla `processed_webhook_events` en Postgres.
-# Un set en memoria NO sobrevive un restart ni funciona con >1 réplica.
-# Suficiente para validar el flujo ahora; hay que reemplazarlo antes de
-# escalar horizontalmente la API.
-_processed_event_ids: set[str] = set()
 
 
 @router.get("/subscription")
@@ -100,11 +97,20 @@ async def lemonsqueezy_webhook(request: Request, db: AsyncSession = Depends(get_
     # recurso puede repetirse en varios eventos, pero updated_at cambia en
     # cada transición de estado real.
     event_key = f"{data.get('id')}:{event_name}:{attributes.get('updated_at')}"
-    if event_key in _processed_event_ids:
+
+    # Idempotencia PERSISTENTE (tabla Postgres, no memoria): si ya lo
+    # procesamos, salimos sin re-aplicar el cambio de suscripción.
+    already = await db.execute(
+        select(ProcessedWebhookEvent).where(ProcessedWebhookEvent.event_key == event_key)
+    )
+    if already.scalar_one_or_none() is not None:
         return {"received": True, "idempotent_skip": True}
-    _processed_event_ids.add(event_key)
 
     organization_id = event.get("meta", {}).get("custom_data", {}).get("organization_id")
+
+    # Se marca como procesado Y se aplica el efecto en la MISMA transacción:
+    # o ambos se comitean, o ninguno. Nunca "marcado pero no aplicado".
+    db.add(ProcessedWebhookEvent(event_key=event_key))
 
     if event_name in ("subscription_created", "subscription_updated"):
         if organization_id:
@@ -115,7 +121,6 @@ async def lemonsqueezy_webhook(request: Request, db: AsyncSession = Depends(get_
                 subscription_status = attributes.get("status")
                 org.subscription_status = subscription_status
                 org.plan = "PRO" if subscription_status == "active" else org.plan
-                await db.commit()
 
     elif event_name in ("subscription_cancelled", "subscription_expired"):
         if organization_id:
@@ -123,10 +128,17 @@ async def lemonsqueezy_webhook(request: Request, db: AsyncSession = Depends(get_
             if org:
                 org.plan = "FREE"
                 org.subscription_status = attributes.get("status", "cancelled")
-                await db.commit()
 
     # Otros eventos (order_created, subscription_payment_failed, etc.) se
     # agregan aquí según los necesites — no hace falta manejar todos desde
     # el día uno.
+
+    try:
+        await db.commit()
+    except IntegrityError:
+        # Carrera: dos entregas del mismo evento a la vez. El unique de
+        # event_key hizo su trabajo → la segunda es un duplicado, se ignora.
+        await db.rollback()
+        return {"received": True, "idempotent_skip": True}
 
     return {"received": True}

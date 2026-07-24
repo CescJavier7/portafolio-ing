@@ -96,6 +96,9 @@ GitHub Actions están sin minutos.
 - **ApiKey** — org-scoped, hash SHA-256, prefijo en claro para identificar.
 - **Webhook** — URL + secret (en claro, se necesita para firmar) + tipos de evento.
 - **AuditLog** — registro inmutable de acciones sensibles (quién hizo qué y cuándo).
+- **ScanObservation** — motor de datos append-only: cada escaneo (panel/cron/público)
+  guarda dominio hasheado + score + controles fallidos + origen. Flujo agregado y
+  anónimo para tendencias globales y benchmarks. Aún sin UI.
 
 ---
 
@@ -126,6 +129,13 @@ GitHub Actions están sin minutos.
 13. **Webhooks salientes** — eventos `scan_completed`, `monitoring_alert`,
     `exposure_alert`, cada entrega firmada con HMAC-SHA256 (`X-Sentra-Signature`).
 14. **Registro de auditoría** — trazabilidad inmutable, visible solo para OWNER/ADMIN.
+15. **Escáner público gratis (gancho)** — `/sentinel/scan`, sin login ni verificación,
+    solo info pública, con guard anti-SSRF y rate limit. Convierte a registro.
+16. **Páginas de confianza/venta** — precios públicos, Términos, Privacidad y Seguridad.
+17. **SEO + blog** — metadata bilingüe con keywords, hreflang, JSON-LD, sitemap
+    dinámico, robots, y artículos que enlazan al escáner y a servicios.
+18. **Motor de datos** — `ScanObservation` acumula cada escaneo para inteligencia
+    agregada futura (benchmarks, tendencias).
 
 ---
 
@@ -161,21 +171,26 @@ Freemium con Merchant of Record (Lemon Squeezy emite factura y maneja impuestos)
 
 ## 9. Qué falta para generar ingresos (bloqueadores reales)
 
-En orden de impacto sobre "ganancias":
+En orden de impacto sobre "ganancias" (actualizado: precios/legales/seguridad, escáner
+gancho, SEO y blog YA están hechos):
 
 1. **Cobros reales (BLOQUEADOR #1):** Lemon Squeezy sigue en Test Mode. Hasta que
-   aprueben la cuenta y se pongan las keys Live, literalmente no entra dinero.
-2. **Confianza para vender:** falta página pública de **precios**, y páginas
-   **legales** (Términos, Privacidad) + una de **Seguridad**. En una herramienta de
-   seguridad, las páginas de confianza pesan más que en un SaaS normal.
-3. **Distribución / primeros usuarios:** 0 usuarios. Falta un canal de adquisición
-   repetible (contenido técnico, Product Hunt, comunidades de devs/seguridad, etc.).
-4. **Activación / onboarding:** una primera experiencia que lleve al usuario nuevo al
-   "aha" (primer escaneo + score) en menos de 2 minutos.
-5. **Fiabilidad operativa (antes de escalar):** idempotencia del webhook de billing
-   está en memoria (riesgo de doble cobro si reinicia); un solo VPS sin redundancia;
-   sin monitoreo de errores (tipo Sentry); sin página de estado; verificar backups.
-6. **Métricas de negocio:** no hay panel interno del fundador (altas, conversiones, MRR).
+   aprueben la cuenta y se pongan las keys Live, literalmente no entra dinero. NO es
+   código — es esperar la aprobación de la cuenta.
+2. **Seguridad de cobro antes de Live:** idempotencia del webhook de Lemon Squeezy vive
+   en memoria (billing.py) → riesgo de doble aplicación de suscripción si reinicia el
+   contenedor. Debe pasar a una tabla Postgres ANTES de cobrar dinero real.
+3. **Distribución / primeros usuarios:** 0 usuarios. El SEO y el blog ya están; falta
+   activar Google Search Console (enviar sitemap) + un canal de adquisición repetible
+   (Product Hunt, comunidades de devs/seguridad, backlinks desde LinkedIn/GitHub).
+4. **Activación / onboarding:** llevar al usuario nuevo al "aha" (primer escaneo) rápido.
+   El escáner público ya da valor sin login; falta pulir el puente registro → primer
+   dominio verificado → primer escaneo con detalle.
+5. **Métricas del fundador:** no hay panel interno (altas, conversiones, escaneos, MRR).
+   Sin esto, se vuela a ciegas.
+6. **Primera cosecha del motor de datos:** el `ScanObservation` ya acumula, pero no se
+   usa. Endpoint de stats agregadas + "compárate con tu sector" (requiere volumen para
+   ser útil — barato de construir ahora, valioso cuando haya datos).
 
 **El cuello de botella NO es más features — es lanzar, cobrar y conseguir usuarios.**
 
@@ -193,10 +208,10 @@ En orden de impacto sobre "ganancias":
 
 ## 11. Roadmap sugerido (orientado a ingresos, no a features)
 
-1. **Lemon Squeezy Live** cuando aprueben → desbloquea el dinero.
-2. **Página de precios + legales + seguridad** → desbloquea confianza/venta.
-3. **Onboarding pulido + 1 canal de adquisición** → desbloquea usuarios.
-4. **Endurecimiento operativo** (idempotencia en Postgres, monitoreo de errores,
-   backups verificados) → antes de escalar.
-5. Luego sí, features de retención: escaneos programados configurables, integración
-   con Slack, más scanners.
+1. **Lemon Squeezy Live** cuando aprueben → desbloquea el dinero. (No-código.)
+2. **Idempotencia del webhook en Postgres** → seguridad de cobro antes de Live.
+3. **Google Search Console** (enviar sitemap) + backlinks → activar el SEO ya hecho.
+4. **Onboarding pulido** + **panel del fundador** (métricas) → conversión + visibilidad.
+5. **Cosecha del motor de datos**: stats agregadas + "compárate con tu sector".
+6. Luego, features de retención: escaneos programados configurables, integración con
+   Slack, más scanners.
