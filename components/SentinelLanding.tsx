@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { ShieldCheck, Radar, FileSearch, Sparkles, ArrowUpRight, Clock, PartyPopper } from 'lucide-react';
+import { ShieldCheck, Radar, FileSearch, BellRing, ArrowUpRight, PartyPopper } from 'lucide-react';
 import { useSentraSession } from '@/lib/sentra/useSession';
 
 interface Feature {
@@ -31,7 +31,7 @@ interface SentinelProps {
   };
 }
 
-const featureIcons = [ShieldCheck, Radar, FileSearch, Sparkles];
+const featureIcons = [ShieldCheck, Radar, FileSearch, BellRing];
 
 export default function SentinelLanding({ lang, dict }: SentinelProps) {
   // Sesión de Sentra: si el visitante ya tiene cuenta, el CTA de registro
@@ -52,7 +52,10 @@ export default function SentinelLanding({ lang, dict }: SentinelProps) {
           className="text-center max-w-3xl mx-auto mb-16 md:mb-20"
         >
           <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-500/20 mb-6">
-            <Clock className="w-3.5 h-3.5" />
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+            </span>
             {dict.badge}
           </span>
 
@@ -112,12 +115,18 @@ export default function SentinelLanding({ lang, dict }: SentinelProps) {
                   {dict.ctaLoggedTitle ?? dict.statusLabel}
                 </p>
                 <p className="text-sm text-zinc-400 max-w-md mx-auto mb-6">{dict.ctaLoggedBody}</p>
-                <div className="flex items-center justify-center">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                   <Link
                     href={`/${lang}/sentinel/panel`}
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-105 transition-transform"
                   >
                     {dict.ctaPanel ?? 'Panel'} <ArrowUpRight className="w-4 h-4" />
+                  </Link>
+                  <Link
+                    href={`/${lang}/sentinel/precios`}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-zinc-700 text-zinc-300 text-sm font-bold hover:bg-white/5 transition-colors"
+                  >
+                    {dict.ctaBack ?? 'Precios'}
                   </Link>
                 </div>
               </>
@@ -136,6 +145,14 @@ export default function SentinelLanding({ lang, dict }: SentinelProps) {
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-zinc-700 text-zinc-300 text-sm font-bold hover:bg-white/5 transition-colors"
                   >
                     {dict.ctaLogin ?? dict.ctaBack}
+                  </Link>
+                </div>
+                <div className="mt-5">
+                  <Link
+                    href={`/${lang}/sentinel/precios`}
+                    className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-zinc-400 hover:text-green-400 transition-colors"
+                  >
+                    {dict.ctaBack ?? 'Ver planes y precios'} <ArrowUpRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               </>

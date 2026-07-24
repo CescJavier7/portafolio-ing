@@ -73,38 +73,38 @@
     }
   },
   "sentinel": {
-    "badge": "In development",
+    "badge": "Available now",
     "name": "Sentra",
     "tagline": "Automated web security auditing.",
     "title": "Sentra",
     "subtitle": "Automated web security auditing.",
-    "description": "Sentra is the platform I'm building so any team can understand their domain's external security posture in minutes: passive and authorized active scanning, a clear Security Score, and actionable, AI-backed recommendations.",
-    "statusLabel": "Early access open — secure your spot before launch",
+    "description": "Sentra reveals your domain external security posture in minutes: 100% passive analysis (no attacking your systems), a clear Security Score and actionable, AI-backed recommendations. Verify your domain via DNS and get started.",
+    "statusLabel": "Start free — no card, in minutes",
     "features": [
       {
-        "title": "A clear Security Score",
-        "desc": "A 0-100 score that summarizes your security posture, without the unnecessary jargon."
+        "title": "Clear Security Score",
+        "desc": "A 0–100 score with an A–F grade that sums up your security posture, no unnecessary jargon."
       },
       {
-        "title": "Passive & active scanning",
-        "desc": "SSL/TLS, DNS, headers, and, with explicit authorization, active scanning with tools like Nuclei and ZAP."
+        "title": "100% passive scanning",
+        "desc": "Security headers, TLS/certificate and DNS (SPF/DMARC). We only observe public information: we never attack or put load on your systems."
       },
       {
-        "title": "Technical & executive reports",
-        "desc": "One report for your technical team, one for decision-makers, generated automatically."
+        "title": "AI reports + PDF",
+        "desc": "An executive report for decision-makers and a technical one for your team, mapped to OWASP/CWE/NIST and exportable to PDF."
       },
       {
-        "title": "AI-backed recommendations",
-        "desc": "Prioritized explanations and mitigations, grounded in OWASP, NIST, and CIS Controls."
+        "title": "Continuous monitoring",
+        "desc": "Sentra watches your domain and emails you the moment your security posture worsens. From a one-off scan to permanent vigilance."
       }
     ],
-    "ctaWaitlist": "I want early access",
-    "ctaBack": "See all services",
-    "ctaRegister": "Create my account",
-    "ctaLogin": "I have an account",
-    "ctaLoggedTitle": "Your spot is secured",
-    "ctaLoggedBody": "We'll email you as soon as the first scans go live. Meanwhile, your panel awaits.",
-    "ctaPanel": "Go to my panel"
+    "ctaWaitlist": "Start free",
+    "ctaBack": "See plans and pricing",
+    "ctaRegister": "Start free",
+    "ctaLogin": "I already have an account",
+    "ctaLoggedTitle": "You are in",
+    "ctaLoggedBody": "Your dashboard is ready: add a domain, verify it via DNS and launch your first scan.",
+    "ctaPanel": "Go to my dashboard"
   },
   "skills": {
     "tag": "Tech Stack",

@@ -73,37 +73,37 @@
     }
   },
   "sentinel": {
-    "badge": "En desarrollo",
+    "badge": "Disponible ahora",
     "name": "Sentra",
     "tagline": "Auditoría de seguridad web, automatizada.",
     "title": "Sentra",
     "subtitle": "Auditoría de seguridad web, automatizada.",
-    "description": "Sentra es la plataforma que estoy construyendo para que cualquier equipo pueda conocer la postura de seguridad externa de su dominio en minutos: análisis pasivo y activo autorizado, un Security Score claro y recomendaciones accionables, respaldadas por IA.",
-    "statusLabel": "Acceso anticipado abierto — asegura tu lugar antes del lanzamiento",
+    "description": "Sentra conoce la postura de seguridad externa de tu dominio en minutos: análisis 100% pasivo (sin atacar tus sistemas), un Security Score claro y recomendaciones accionables respaldadas por IA. Verificas tu dominio por DNS y empiezas.",
+    "statusLabel": "Empieza gratis — sin tarjeta, en minutos",
     "features": [
       {
         "title": "Security Score claro",
-        "desc": "Un puntaje de 0 a 100 que resume tu postura de seguridad, sin jerga innecesaria."
+        "desc": "Un puntaje de 0 a 100 con nota A–F que resume tu postura de seguridad, sin jerga innecesaria."
       },
       {
-        "title": "Escaneo pasivo y activo",
-        "desc": "SSL/TLS, DNS, headers y, con autorización explícita, escaneo activo con herramientas como Nuclei y ZAP."
+        "title": "Escaneo 100% pasivo",
+        "desc": "Cabeceras de seguridad, TLS/certificado y DNS (SPF/DMARC). Solo observamos información pública: nunca atacamos ni generamos carga sobre tus sistemas."
       },
       {
-        "title": "Informes técnicos y ejecutivos",
-        "desc": "Un reporte para tu equipo técnico y otro para quien toma decisiones, generados automáticamente."
+        "title": "Informes con IA + PDF",
+        "desc": "Un reporte ejecutivo para quien decide y otro técnico para tu equipo, mapeados a OWASP/CWE/NIST y exportables a PDF."
       },
       {
-        "title": "Recomendaciones con IA",
-        "desc": "Explicaciones y mitigaciones priorizadas, basadas en OWASP, NIST y CIS Controls."
+        "title": "Monitoreo continuo",
+        "desc": "Sentra vigila tu dominio y te alerta por correo en cuanto tu postura de seguridad empeora. De un escaneo puntual a vigilancia permanente."
       }
     ],
-    "ctaWaitlist": "Quiero probarla primero",
-    "ctaBack": "Ver todos los servicios",
-    "ctaRegister": "Crear mi cuenta",
+    "ctaWaitlist": "Empezar gratis",
+    "ctaBack": "Ver planes y precios",
+    "ctaRegister": "Empezar gratis",
     "ctaLogin": "Ya tengo cuenta",
-    "ctaLoggedTitle": "Tu lugar está asegurado",
-    "ctaLoggedBody": "Te escribiremos a tu correo en cuanto los primeros escaneos estén listos. Mientras tanto, tu panel te espera.",
+    "ctaLoggedTitle": "Ya estás dentro",
+    "ctaLoggedBody": "Tu panel te espera: registra un dominio, verifícalo por DNS y lanza tu primer escaneo.",
     "ctaPanel": "Ir a mi panel"
   },
   "skills": {
