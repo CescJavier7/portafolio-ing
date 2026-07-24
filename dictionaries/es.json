@@ -75,27 +75,27 @@
   "sentinel": {
     "badge": "Disponible ahora",
     "name": "Sentra",
-    "tagline": "Auditoría de seguridad web, automatizada.",
+    "tagline": "Vigila tu exposición digital, 24/7.",
     "title": "Sentra",
-    "subtitle": "Auditoría de seguridad web, automatizada.",
-    "description": "Sentra conoce la postura de seguridad externa de tu dominio en minutos: análisis 100% pasivo (sin atacar tus sistemas), un Security Score claro y recomendaciones accionables respaldadas por IA. Verificas tu dominio por DNS y empiezas.",
+    "subtitle": "Vigila tu exposición digital, 24/7.",
+    "description": "Un escaneo te da la foto de hoy; Sentra te da la película. Vigila tu dominio en el tiempo, te avisa en cuanto tu seguridad empeora y te dice qué cambió y por qué — sin agentes, sin pentester, sin contrato enterprise. Verifica tu dominio por DNS y empieza.",
     "statusLabel": "Empieza gratis — sin tarjeta, en minutos",
     "features": [
+      {
+        "title": "Monitoreo continuo",
+        "desc": "Sentra no escanea una vez y se olvida: vigila tu dominio y te alerta por correo en cuanto tu postura de seguridad empeora."
+      },
+      {
+        "title": "Qué cambió y por qué",
+        "desc": "Cada escaneo queda guardado. Ves la evolución de tu Security Score y exactamente qué se rompió entre ayer y hoy — la película, no la foto."
+      },
       {
         "title": "Security Score claro",
         "desc": "Un puntaje de 0 a 100 con nota A–F que resume tu postura de seguridad, sin jerga innecesaria."
       },
       {
-        "title": "Escaneo 100% pasivo",
-        "desc": "Cabeceras de seguridad, TLS/certificado y DNS (SPF/DMARC). Solo observamos información pública: nunca atacamos ni generamos carga sobre tus sistemas."
-      },
-      {
         "title": "Informes con IA + PDF",
         "desc": "Un reporte ejecutivo para quien decide y otro técnico para tu equipo, mapeados a OWASP/CWE/NIST y exportables a PDF."
-      },
-      {
-        "title": "Monitoreo continuo",
-        "desc": "Sentra vigila tu dominio y te alerta por correo en cuanto tu postura de seguridad empeora. De un escaneo puntual a vigilancia permanente."
       }
     ],
     "ctaWaitlist": "Empezar gratis",
@@ -825,6 +825,7 @@
         "features": [
           "Hasta 10 dominios",
           "Escaneos ilimitados",
+          "Historial completo: qué cambió y cuándo",
           "Detalle completo de hallazgos (OWASP/CWE/NIST)",
           "Reportes con IA + exportación a PDF",
           "Monitoreo continuo + alertas por correo",

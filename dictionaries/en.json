@@ -75,27 +75,27 @@
   "sentinel": {
     "badge": "Available now",
     "name": "Sentra",
-    "tagline": "Automated web security auditing.",
+    "tagline": "Watch your digital exposure, 24/7.",
     "title": "Sentra",
-    "subtitle": "Automated web security auditing.",
-    "description": "Sentra reveals your domain external security posture in minutes: 100% passive analysis (no attacking your systems), a clear Security Score and actionable, AI-backed recommendations. Verify your domain via DNS and get started.",
+    "subtitle": "Watch your digital exposure, 24/7.",
+    "description": "A scan gives you today's photo; Sentra gives you the film. It watches your domain over time, warns you the moment your security worsens, and tells you what changed and why — no agents, no pentester, no enterprise contract. Verify your domain via DNS and get started.",
     "statusLabel": "Start free — no card, in minutes",
     "features": [
+      {
+        "title": "Continuous monitoring",
+        "desc": "Sentra doesn't scan once and forget: it watches your domain and emails you the moment your security posture worsens."
+      },
+      {
+        "title": "What changed and why",
+        "desc": "Every scan is saved. You see your Security Score evolve and exactly what broke between yesterday and today — the film, not the photo."
+      },
       {
         "title": "Clear Security Score",
         "desc": "A 0–100 score with an A–F grade that sums up your security posture, no unnecessary jargon."
       },
       {
-        "title": "100% passive scanning",
-        "desc": "Security headers, TLS/certificate and DNS (SPF/DMARC). We only observe public information: we never attack or put load on your systems."
-      },
-      {
         "title": "AI reports + PDF",
         "desc": "An executive report for decision-makers and a technical one for your team, mapped to OWASP/CWE/NIST and exportable to PDF."
-      },
-      {
-        "title": "Continuous monitoring",
-        "desc": "Sentra watches your domain and emails you the moment your security posture worsens. From a one-off scan to permanent vigilance."
       }
     ],
     "ctaWaitlist": "Start free",
@@ -825,6 +825,7 @@
         "features": [
           "Up to 10 domains",
           "Unlimited scans",
+          "Full history: what changed and when",
           "Full findings detail (OWASP/CWE/NIST)",
           "AI reports + PDF export",
           "Continuous monitoring + email alerts",

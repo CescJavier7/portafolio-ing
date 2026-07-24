@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, Radar, FileSearch, BellRing, ArrowUpRight, PartyPopper, Search } from 'lucide-react';
+import { ShieldCheck, History, FileSearch, BellRing, ArrowUpRight, PartyPopper, Search } from 'lucide-react';
 import { useSentraSession } from '@/lib/sentra/useSession';
 
 interface Feature {
@@ -35,7 +35,9 @@ interface SentinelProps {
   };
 }
 
-const featureIcons = [ShieldCheck, Radar, FileSearch, BellRing];
+// Orden alineado a la narrativa: Monitoreo continuo · Historial (qué cambió) ·
+// Security Score · Informes con IA.
+const featureIcons = [BellRing, History, ShieldCheck, FileSearch];
 
 export default function SentinelLanding({ lang, dict }: SentinelProps) {
   // Sesión de Sentra: si el visitante ya tiene cuenta, el CTA de registro
