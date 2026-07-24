@@ -13,12 +13,15 @@ Al ser anónimo y hacer llamadas de red salientes:
 - Guard anti-SSRF: se rechaza cualquier dominio que resuelva a IP no pública.
 - NO se persiste nada: es un resultado puntual, el gancho para registrarse.
 """
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.concurrency import run_in_threadpool
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.rate_limit import limiter
+from app.db.session import get_db
 from app.schemas.public import FreeScanRequest, PublicFindingsOut
 from app.services.net_guard import resolves_to_public_ip
+from app.services.observation_service import record_observation
 from app.services.scanner import scan_domain
 
 router = APIRouter(prefix="/free", tags=["public-free"])
@@ -26,7 +29,7 @@ router = APIRouter(prefix="/free", tags=["public-free"])
 
 @router.post("/scan", response_model=PublicFindingsOut)
 @limiter.limit("5/minute;30/hour")
-async def free_scan(request: Request, payload: FreeScanRequest):
+async def free_scan(request: Request, payload: FreeScanRequest, db: AsyncSession = Depends(get_db)):
     from datetime import datetime, timezone
 
     if not await run_in_threadpool(resolves_to_public_ip, payload.domain):
@@ -38,6 +41,10 @@ async def free_scan(request: Request, payload: FreeScanRequest):
         )
 
     result = await run_in_threadpool(scan_domain, payload.domain)
+
+    # Motor de datos: incluso los escaneos anónimos alimentan el flujo agregado
+    # (dominio hasheado, sin IP ni identidad). Best-effort.
+    await record_observation(db, payload.domain, result, source="free")
 
     return PublicFindingsOut(
         domain=payload.domain,

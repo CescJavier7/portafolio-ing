@@ -44,6 +44,7 @@ from app.services.dns_verification import (
     expected_txt_value,
 )
 from app.services.audit_service import record_audit
+from app.services.observation_service import record_observation
 from app.services.exposure import compute_exposure
 from app.services.surface import discover_surface
 from app.services.scanner import scan_domain
@@ -465,6 +466,9 @@ async def scan_target(
 
     await db.commit()
     await db.refresh(scan)
+
+    # Motor de datos: cada escaneo alimenta el flujo agregado longitudinal.
+    await record_observation(db, target.domain, result, source="panel")
 
     await trigger_webhooks(
         db,

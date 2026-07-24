@@ -1,12 +1,15 @@
 // Archivo: app/[lang]/blog/[slug]/page.tsx
 import fs from 'fs';
 import path from 'path';
+import type { Metadata } from 'next';
 import matter from 'gray-matter';
 import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm'; 
+import remarkGfm from 'remark-gfm';
 import Link from 'next/link';
 import { ArrowLeft, Share2, Bookmark } from 'lucide-react';
 import { notFound } from 'next/navigation'; // 🔴 INYECCIÓN DE SEGURIDAD
+
+const BASE = 'https://cescjavier.dev';
 
 interface BlogPostDictionary {
   back: string;
@@ -34,6 +37,42 @@ function getPostContent(lang: string, slug: string) {
   }
 }
 
+// SEO por artículo: cada post rankea por su propio título y descripción
+// (los del frontmatter), no por el genérico del sitio. hreflang comparte
+// slug entre es/en (mismo patrón que el resto del blog).
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string; slug: string }>;
+}): Promise<Metadata> {
+  const { lang: rawLang, slug } = await params;
+  const lang: 'es' | 'en' = rawLang === 'en' ? 'en' : 'es';
+  const post = getPostContent(lang, slug);
+
+  if (!post) return {};
+
+  const url = `${BASE}/${lang}/blog/${slug}`;
+  const title: string = post.data.title || 'Blog';
+  const description: string = post.data.description || '';
+
+  return {
+    title: { absolute: `${title} | Kevin Montatixe` },
+    description,
+    alternates: {
+      canonical: url,
+      languages: { es: `${BASE}/es/blog/${slug}`, en: `${BASE}/en/blog/${slug}` },
+    },
+    openGraph: {
+      type: 'article',
+      url,
+      siteName: 'Kevin Montatixe',
+      title,
+      description,
+      locale: lang === 'es' ? 'es_EC' : 'en_US',
+    },
+  };
+}
+
 export default async function BlogPost({
   params,
 }: {
@@ -41,7 +80,7 @@ export default async function BlogPost({
 }) {
   const { lang: rawLang, slug } = await params;
   const lang: 'es' | 'en' = rawLang === 'en' ? 'en' : 'es';
-  
+
   const post = getPostContent(lang, slug);
 
   // 🔴 PATRÓN EARLY RETURN: Previene el Error 500 y renderiza el 404 elegantemente
@@ -62,9 +101,25 @@ export default async function BlogPost({
           authorBio: 'Ingeniero en Ciberseguridad y Docente. Enfocado en la rigurosidad técnica y la defensa activa de infraestructuras.',
         };
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.data.title,
+    description: post.data.description,
+    datePublished: post.data.date,
+    inLanguage: lang,
+    author: { '@type': 'Person', name: 'Kevin Javier Montatixe' },
+    publisher: { '@type': 'Person', name: 'Kevin Javier Montatixe' },
+    mainEntityOfPage: `${BASE}/${lang}/blog/${slug}`,
+  };
+
   return (
     <main className="min-h-screen bg-white dark:bg-black transition-colors duration-500 antialiased">
-      
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       {/* NAVEGACIÓN SUPERIOR */}
       <nav className="sticky top-0 z-40 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-zinc-100 dark:border-white/10">
         <div className="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between">

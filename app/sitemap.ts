@@ -1,6 +1,22 @@
+import fs from 'fs';
+import path from 'path';
 import { MetadataRoute } from 'next';
 
 const BASE = 'https://cescjavier.dev';
+
+// Lee los slugs reales de los artículos (content/blog/es/*.md). Así el sitemap
+// se mantiene solo: cada artículo nuevo entra sin tocar este archivo.
+function blogSlugs(): string[] {
+  try {
+    const folder = path.join(process.cwd(), 'content/blog', 'es');
+    return fs
+      .readdirSync(folder)
+      .filter((f) => f.endsWith('.md'))
+      .map((f) => f.replace('.md', ''));
+  } catch {
+    return [];
+  }
+}
 
 // Rutas públicas e indexables. Se excluyen a propósito las privadas o con
 // noindex: panel, login, register, accept-invite.
@@ -40,13 +56,23 @@ export default function sitemap(): MetadataRoute.Sitemap {
     }
   }
 
-  // Artículo de blog existente.
-  entries.push({
-    url: `${BASE}/es/blog/nids-ips-defense`,
-    lastModified: now,
-    changeFrequency: 'yearly',
-    priority: 0.7,
-  });
+  // Artículos del blog (ambos idiomas, con hreflang).
+  for (const slug of blogSlugs()) {
+    for (const lang of ['es', 'en']) {
+      entries.push({
+        url: `${BASE}/${lang}/blog/${slug}`,
+        lastModified: now,
+        changeFrequency: 'monthly',
+        priority: 0.6,
+        alternates: {
+          languages: {
+            es: `${BASE}/es/blog/${slug}`,
+            en: `${BASE}/en/blog/${slug}`,
+          },
+        },
+      });
+    }
+  }
 
   return entries;
 }

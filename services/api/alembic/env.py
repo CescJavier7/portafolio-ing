@@ -20,6 +20,7 @@ import app.models.exposure_snapshot
 import app.models.api_key
 import app.models.webhook
 import app.models.audit_log
+import app.models.scan_observation
 
 # Configuración de logging de Alembic
 config = context.config

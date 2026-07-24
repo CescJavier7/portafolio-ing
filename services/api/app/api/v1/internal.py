@@ -21,6 +21,7 @@ from app.models.scan import Scan
 from app.models.target import Target
 from app.models.user import User
 from app.services.email_service import send_monitoring_alert
+from app.services.observation_service import record_observation
 from app.services.scanner import scan_domain
 from app.services.webhook_service import trigger_webhooks
 
@@ -74,6 +75,9 @@ async def run_monitoring(
         )
         db.add(scan)
         await db.commit()
+
+        # Motor de datos: el cron también alimenta el flujo agregado.
+        await record_observation(db, target.domain, scan_data, source="monitor")
 
         if prev is None:
             continue  # primer escaneo: no hay con qué comparar
