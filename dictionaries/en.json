@@ -1,6 +1,10 @@
 {
   "footer": {
-    "tagline": "Software Engineering & Cybersecurity."
+    "tagline": "Software Engineering & Cybersecurity.",
+    "pricing": "Pricing",
+    "security": "Security",
+    "terms": "Terms",
+    "privacy": "Privacy"
   },
   "navigation": {
     "aboutMe": "About Me",
@@ -787,6 +791,258 @@
       "successBody": "Your account is active. You can now log in with your email and your new password.",
       "loginLink": "Go to login",
       "missingToken": "This invite link isn't valid. Ask whoever invited you for a new one."
+    }
+  },
+  "sentraPricing": {
+    "badge": "Simple pricing",
+    "title": "Continuous security, no surprises",
+    "subtitle": "Start free and upgrade when you need to. No contracts, cancel anytime.",
+    "mostPopular": "Most popular",
+    "plans": [
+      {
+        "id": "free",
+        "name": "Free",
+        "price": "$0",
+        "priceNote": "/ forever",
+        "desc": "To try Sentra and audit your first domains.",
+        "cta": "Start free",
+        "features": [
+          "Up to 3 domains",
+          "3 scans every 24 h",
+          "Security Score and grade (A–F)",
+          "Domain verification via DNS"
+        ]
+      },
+      {
+        "id": "pro",
+        "name": "Pro",
+        "price": "$30",
+        "priceNote": "/ month",
+        "desc": "For those who need their security always in the green.",
+        "cta": "Get Pro",
+        "features": [
+          "Up to 10 domains",
+          "Unlimited scans",
+          "Full findings detail (OWASP/CWE/NIST)",
+          "AI reports + PDF export",
+          "Continuous monitoring + email alerts",
+          "Surface map and exposure intelligence",
+          "Public API + outgoing webhooks",
+          "Up to 3 team members"
+        ]
+      },
+      {
+        "id": "team",
+        "name": "Business",
+        "price": "Let's talk",
+        "priceNote": "",
+        "desc": "For teams and agencies with many domains and clients.",
+        "cta": "Contact us",
+        "features": [
+          "Up to 50 domains (or more)",
+          "Everything in Pro",
+          "Up to 10 members and 5 webhooks",
+          "Team roles and permissions (RBAC)",
+          "Audit log",
+          "Priority support"
+        ]
+      }
+    ],
+    "footnote": "Prices are in USD. Payments are processed by Lemon Squeezy as merchant of record (they issue your invoice and handle taxes). You can cancel or change plans anytime from your dashboard.",
+    "faqTitle": "Frequently asked questions",
+    "faq": [
+      {
+        "q": "Do I need a card for the Free plan?",
+        "a": "No. The Free plan is free forever and never asks for payment details."
+      },
+      {
+        "q": "Can I scan any domain?",
+        "a": "Only domains whose ownership you've verified via DNS. It's an ethical and legal gate: Sentra never audits anything that isn't yours or that you aren't authorized to audit."
+      },
+      {
+        "q": "Does Sentra attack my systems?",
+        "a": "No. All scans are passive: we only observe already-public information (headers, TLS, DNS, certificate transparency). We never exploit vulnerabilities or put load on your infrastructure."
+      },
+      {
+        "q": "Can I cancel anytime?",
+        "a": "Yes. No contracts, no lock-in. You manage your subscription from the customer portal and keep access until the end of the paid period."
+      }
+    ]
+  },
+  "sentraSecurity": {
+    "badge": "Trust",
+    "title": "How we protect Sentra",
+    "subtitle": "We sell security, so we start with our own.",
+    "intro": "Sentra is built following DevSecOps principles and industry standards. This page summarizes, without fluff, how we handle your data and secure the platform.",
+    "practices": [
+      {
+        "title": "Argon2id password hashing",
+        "desc": "We never store passwords in plaintext. We use Argon2id, the hashing algorithm recommended by OWASP, resistant to brute-force attacks with specialized hardware."
+      },
+      {
+        "title": "Short-lived, rotating sessions",
+        "desc": "15-minute access tokens and opaque refresh tokens with rotation and reuse detection: if one is stolen, the entire session family is revoked automatically."
+      },
+      {
+        "title": "Role-based access control (RBAC)",
+        "desc": "Owner/Admin/Analyst/Member roles with permissions enforced on the server, not just hidden in the UI. Every sensitive action is recorded in an immutable audit log."
+      },
+      {
+        "title": "Encryption in transit",
+        "desc": "All traffic travels over HTTPS/TLS. We apply security headers (CSP, HSTS, X-Frame-Options) to mitigate XSS, clickjacking and data leakage."
+      },
+      {
+        "title": "Infrastructure isolation",
+        "desc": "Services run in isolated containers as a non-privileged user. The database is never exposed to the internet: only the application reaches it over an internal network."
+      },
+      {
+        "title": "Passive, verified scans",
+        "desc": "We only audit domains you verify ownership of via DNS, and we never exploit vulnerabilities. We observe already-public information without generating load or risk on your systems."
+      },
+      {
+        "title": "Cross-organization isolation",
+        "desc": "Every query is scoped to your organization at the database level (anti-IDOR protection): it's impossible to see or touch another account's data by changing an identifier."
+      },
+      {
+        "title": "Secrets outside the code",
+        "desc": "Keys and credentials live in server environment variables, never in the repository. Card data never touches our servers: it's processed by Lemon Squeezy's checkout."
+      }
+    ],
+    "disclosureTitle": "Responsible disclosure",
+    "disclosureBody": "Found a vulnerability in Sentra? We'd appreciate a private report before you make it public. We respond to all legitimate reports and credit anyone who wishes.",
+    "disclosureCta": "Report a vulnerability",
+    "updatedLabel": "Last updated:",
+    "updatedDate": "July 23, 2026"
+  },
+  "legal": {
+    "terms": {
+      "title": "Terms of Service",
+      "updatedLabel": "Last updated:",
+      "updatedDate": "July 23, 2026",
+      "intro": "These Terms govern your use of Sentra (\"the Service\"), a security auditing and monitoring platform operated by Kevin Javier Montatixe Caiza. By creating an account or using the Service, you accept these Terms.",
+      "sections": [
+        {
+          "heading": "Service description",
+          "body": [
+            "Sentra performs passive analysis of the security posture of domains you verify as your own, computes a score, generates reports and alerts you to changes. The Service observes public information (HTTP headers, TLS, DNS, certificate transparency) and does not run intrusive tests or exploit vulnerabilities."
+          ]
+        },
+        {
+          "heading": "Acceptable use and authorization",
+          "body": [
+            "You may only audit domains you own or are explicitly authorized to audit, and you must complete DNS verification before scanning.",
+            "Using Sentra to audit third-party systems without permission, bypass their access controls, or for any illegal purpose is prohibited. You are responsible for your use of the Service and for the authorizations you claim to hold."
+          ]
+        },
+        {
+          "heading": "Accounts and team",
+          "body": [
+            "You must provide accurate information and keep your credentials confidential. You are responsible for your organization's activity, including members you invite and the roles you assign them."
+          ]
+        },
+        {
+          "heading": "Plans and payments",
+          "body": [
+            "The free plan requires no payment. Paid plans are billed in advance and renew automatically until you cancel.",
+            "Payments are processed by Lemon Squeezy as Merchant of Record: they issue your invoice and handle applicable taxes. We do not store your card details."
+          ]
+        },
+        {
+          "heading": "Intellectual property",
+          "body": [
+            "The Service, its code, brand and content belong to the operator. The reports and data you generate about your own domains are yours; we grant you a license to use the Service, not ownership of it."
+          ]
+        },
+        {
+          "heading": "Warranties and limitation of liability",
+          "body": [
+            "The Service is provided \"as is\". Sentra helps identify publicly observable configuration weaknesses, but does NOT guarantee detection of all vulnerabilities and does not replace a professional security audit or penetration test.",
+            "To the maximum extent permitted by law, the operator is not liable for indirect damages, data loss or lost profits arising from use of or inability to use the Service."
+          ]
+        },
+        {
+          "heading": "Suspension and termination",
+          "body": [
+            "We may suspend or close accounts that breach these Terms, especially unauthorized scanning. You may cancel your account at any time; you keep paid access until the end of your billing period."
+          ]
+        },
+        {
+          "heading": "Changes to the terms",
+          "body": [
+            "We may update these Terms. If a change is material, we will notify you by reasonable means. Continued use of the Service after the update means you accept it."
+          ]
+        },
+        {
+          "heading": "Governing law and contact",
+          "body": [
+            "These Terms are governed by the laws of the Republic of Ecuador. For any questions, write to javiercaiza220158@gmail.com."
+          ]
+        }
+      ]
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "updatedLabel": "Last updated:",
+      "updatedDate": "July 23, 2026",
+      "intro": "This Policy explains what data Sentra collects, why, and how it protects it. We handle your data with the minimum necessary to operate the Service.",
+      "sections": [
+        {
+          "heading": "Data we collect",
+          "body": [
+            "Account data: name, email, your organization name and password (stored only as an Argon2id hash, never in plaintext).",
+            "Usage data: domains you register, scan results, and technical metadata needed to provide the Service.",
+            "We do not collect card data: it is handled directly by Lemon Squeezy in its checkout."
+          ]
+        },
+        {
+          "heading": "How we use data",
+          "body": [
+            "To operate your account, run scans, generate reports, send you security alerts and transactional emails (verification, invitations), and manage your subscription. We only send marketing communications with your explicit consent, which you can withdraw anytime."
+          ]
+        },
+        {
+          "heading": "Providers (subprocessors)",
+          "body": [
+            "We rely on trusted third parties that process data on our behalf: Lemon Squeezy (payments and billing), Resend (email delivery), Groq (AI report generation), and Cloudflare together with our hosting provider (delivery and infrastructure). Each accesses only the data needed for its function."
+          ]
+        },
+        {
+          "heading": "Scan data",
+          "body": [
+            "Scans analyze only publicly accessible information about domains you verified as your own. We do not access private content of your systems or store sensitive data hosted on them."
+          ]
+        },
+        {
+          "heading": "Cookies",
+          "body": [
+            "We use strictly necessary cookies to keep you securely signed in (httpOnly session cookie). We do not use advertising or third-party tracking cookies."
+          ]
+        },
+        {
+          "heading": "Retention",
+          "body": [
+            "We keep your data while your account is active. If you delete it, we erase or anonymize your personal data within a reasonable period, except what we must retain for legal or accounting obligations."
+          ]
+        },
+        {
+          "heading": "Your rights",
+          "body": [
+            "You can access, rectify, export or request deletion of your personal data, and object to certain processing, under applicable law (including GDPR and Ecuador's LOPDP). To exercise them, contact us."
+          ]
+        },
+        {
+          "heading": "Data security",
+          "body": [
+            "We apply encryption in transit, strong password hashing, role-based access control, infrastructure isolation and audit logging. No system is infallible, but we handle your information with industry standards. See our Security page for details."
+          ]
+        },
+        {
+          "heading": "Changes and contact",
+          "body": [
+            "We may update this Policy; material changes will be notified by reasonable means. For privacy questions, write to javiercaiza220158@gmail.com."
+          ]
+        }
+      ]
     }
   }
 }

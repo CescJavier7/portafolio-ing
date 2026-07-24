@@ -107,7 +107,7 @@ export default async function RootLayout({
               {children}
             </main>
             
-            <Footer dict={dict.footer} />
+            <Footer dict={dict.footer} lang={lang} />
           </SmoothScroll>
         </ThemeProvider>
         
