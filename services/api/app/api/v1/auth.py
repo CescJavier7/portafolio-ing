@@ -48,6 +48,7 @@ from app.schemas.auth import (
     ResendVerificationRequest,
 )
 from app.schemas.user import ProfileUpdate, UserOut
+from app.services.audit_service import record_audit
 from app.services.email_service import send_verification_email
 
 settings = get_settings()
@@ -416,6 +417,13 @@ async def change_password(
     # logueado sin fricción.
     await db.execute(
         update(RefreshToken).where(RefreshToken.user_id == current_user.id).values(revoked=True)
+    )
+
+    record_audit(
+        db,
+        organization_id=current_user.organization_id,
+        actor=current_user,
+        action="password.changed",
     )
 
     access_token = await _issue_tokens(db, response, current_user)

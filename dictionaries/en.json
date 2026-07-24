@@ -579,7 +579,8 @@
           "traffic": "Exposure intelligence",
           "graph": "Surface",
           "apiKeys": "API",
-          "team": "Team"
+          "team": "Team",
+          "audit": "Activity"
         },
         "overview": {
           "title": "Overview",
@@ -747,6 +748,29 @@
           "remove": "Remove",
           "cannotManage": "Only the owner or an admin can invite or remove members.",
           "lockedCta": "See Pro plan"
+        },
+        "audit": {
+          "title": "Activity log",
+          "subtitle": "Who did what and when in your organization.",
+          "intro": "Immutable trail of sensitive team actions: invitations, role changes, domains, API keys and webhooks. Only owner and admins can see it.",
+          "filterAll": "All actions",
+          "empty": "No activity recorded yet.",
+          "loadMore": "Load more",
+          "restricted": "Your role cannot access the activity log. Only the owner and admins can view it.",
+          "by": "by",
+          "actions": {
+            "memberInvited": "invited {target} as {role}",
+            "memberRemoved": "removed {target} from the team",
+            "memberRoleChanged": "changed {target} role from {from} to {to}",
+            "targetCreated": "added the domain {target}",
+            "targetDeleted": "deleted the domain {target}",
+            "apikeyCreated": "created the API key {target}",
+            "apikeyRevoked": "revoked the API key {target}",
+            "webhookCreated": "created a webhook to {target}",
+            "webhookDeleted": "deleted the webhook to {target}",
+            "passwordChanged": "changed their password",
+            "unknown": "{action}"
+          }
         }
       }
     },

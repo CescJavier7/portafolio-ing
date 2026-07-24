@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, KeyRound, Gem, LayoutDashboard, Radar, FileText, UserCog, BellRing, Route, Share2, Code2, Users } from 'lucide-react';
+import { LogOut, KeyRound, Gem, LayoutDashboard, Radar, FileText, UserCog, BellRing, Route, Share2, Code2, Users, ScrollText } from 'lucide-react';
 import {
   sentraChangePassword,
   sentraCreateCheckout,
@@ -27,11 +27,13 @@ import SurfaceSection, { type SurfaceDict } from '@/components/sentra/panel/Surf
 import ExposureSection, { type ExposureDict } from '@/components/sentra/panel/ExposureSection';
 import ApiKeysSection, { type ApiKeysDict } from '@/components/sentra/panel/ApiKeysSection';
 import TeamSection, { type TeamDict } from '@/components/sentra/panel/TeamSection';
+import AuditSection, { type AuditDict } from '@/components/sentra/panel/AuditSection';
+import { canManageTargets } from '@/lib/sentra/permissions';
 
 interface DashboardDict {
   nav: {
     overview: string; tool: string; reports: string; account: string; soon: string;
-    dns: string; traffic: string; graph: string; apiKeys: string; team: string;
+    dns: string; traffic: string; graph: string; apiKeys: string; team: string; audit: string;
   };
   overview: OverviewDict;
   reports: ReportsDict;
@@ -41,6 +43,7 @@ interface DashboardDict {
   exposure: ExposureDict;
   apiKeys: ApiKeysDict;
   team: TeamDict;
+  audit: AuditDict;
   soonTitle: string;
   soonBody: string;
 }
@@ -75,7 +78,7 @@ interface Dict {
   dashboard: DashboardDict;
 }
 
-type SectionId = 'overview' | 'tool' | 'reports' | 'account' | 'dns' | 'traffic' | 'graph' | 'apiKeys' | 'team';
+type SectionId = 'overview' | 'tool' | 'reports' | 'account' | 'dns' | 'traffic' | 'graph' | 'apiKeys' | 'team' | 'audit';
 
 const inputClass =
   'w-full rounded-xl bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-4 py-3 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition';
@@ -333,6 +336,10 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
   }
 
   const nav = dict.dashboard.nav;
+  // El registro de auditoría es solo para OWNER/ADMIN (igual que el backend):
+  // no le mostramos el ítem de nav a un Analista/Miembro, que igual recibiría
+  // 403 al abrirlo.
+  const canSeeAudit = canManageTargets(user.role);
   const mainItems: { id: SectionId; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: nav.overview, icon: <LayoutDashboard className="w-4 h-4" /> },
     { id: 'tool', label: nav.tool, icon: <Radar className="w-4 h-4" /> },
@@ -342,6 +349,7 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
     { id: 'traffic', label: nav.traffic, icon: <Route className="w-4 h-4" /> },
     { id: 'apiKeys', label: nav.apiKeys, icon: <Code2 className="w-4 h-4" /> },
     { id: 'team', label: nav.team, icon: <Users className="w-4 h-4" /> },
+    ...(canSeeAudit ? [{ id: 'audit' as SectionId, label: nav.audit, icon: <ScrollText className="w-4 h-4" /> }] : []),
     { id: 'account', label: nav.account, icon: <UserCog className="w-4 h-4" /> },
   ];
   const soonItems: { id: SectionId; label: string; icon: React.ReactNode }[] = [];
@@ -442,6 +450,7 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
               {active === 'graph' && <SurfaceSection dict={dict.dashboard.surface} role={user.role} onUpgrade={() => setUpgradeOpen(true)} />}
               {active === 'apiKeys' && <ApiKeysSection dict={dict.dashboard.apiKeys} user={user} onUpgrade={() => setUpgradeOpen(true)} />}
               {active === 'team' && <TeamSection dict={dict.dashboard.team} user={user} onUpgrade={() => setUpgradeOpen(true)} />}
+              {active === 'audit' && <AuditSection dict={dict.dashboard.audit} user={user} />}
             </motion.div>
           </AnimatePresence>
         </main>

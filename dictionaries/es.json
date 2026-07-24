@@ -579,7 +579,8 @@
           "traffic": "Inteligencia de exposición",
           "graph": "Superficie",
           "apiKeys": "API",
-          "team": "Equipo"
+          "team": "Equipo",
+          "audit": "Actividad"
         },
         "overview": {
           "title": "Resumen",
@@ -747,6 +748,29 @@
           "remove": "Eliminar",
           "cannotManage": "Solo el propietario o un administrador pueden invitar o eliminar miembros.",
           "lockedCta": "Ver plan Pro"
+        },
+        "audit": {
+          "title": "Registro de actividad",
+          "subtitle": "Quién hizo qué y cuándo en tu organización.",
+          "intro": "Rastro inmutable de las acciones sensibles del equipo: invitaciones, cambios de rol, dominios, API keys y webhooks. Solo lo ven propietario y administradores.",
+          "filterAll": "Todas las acciones",
+          "empty": "Aún no hay actividad registrada.",
+          "loadMore": "Cargar más",
+          "restricted": "Tu rol no tiene acceso al registro de actividad. Solo el propietario y los administradores pueden verlo.",
+          "by": "por",
+          "actions": {
+            "memberInvited": "invitó a {target} como {role}",
+            "memberRemoved": "eliminó a {target} del equipo",
+            "memberRoleChanged": "cambió el rol de {target} de {from} a {to}",
+            "targetCreated": "agregó el dominio {target}",
+            "targetDeleted": "eliminó el dominio {target}",
+            "apikeyCreated": "creó la API key {target}",
+            "apikeyRevoked": "revocó la API key {target}",
+            "webhookCreated": "creó un webhook hacia {target}",
+            "webhookDeleted": "eliminó el webhook hacia {target}",
+            "passwordChanged": "cambió su contraseña",
+            "unknown": "{action}"
+          }
         }
       }
     },

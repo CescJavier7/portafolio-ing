@@ -17,6 +17,7 @@ from app.models.organization import Organization
 from app.models.user import User
 from app.models.webhook import Webhook
 from app.schemas.webhook import ALLOWED_EVENT_TYPES, WebhookCreate, WebhookCreatedOut, WebhookOut, WebhookToggle
+from app.services.audit_service import record_audit
 
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 
@@ -70,6 +71,13 @@ async def create_webhook(
         event_types=payload.event_types,
     )
     db.add(hook)
+    record_audit(
+        db,
+        organization_id=current_user.organization_id,
+        actor=current_user,
+        action="webhook.created",
+        target_label=str(payload.url),
+    )
     await db.commit()
     await db.refresh(hook)
 
@@ -139,5 +147,13 @@ async def delete_webhook(
     db: AsyncSession = Depends(get_db),
 ):
     hook = await _get_owned_webhook(webhook_id, current_user, db)
+    deleted_url = hook.url
     await db.delete(hook)
+    record_audit(
+        db,
+        organization_id=current_user.organization_id,
+        actor=current_user,
+        action="webhook.deleted",
+        target_label=deleted_url,
+    )
     await db.commit()

@@ -538,3 +538,27 @@ export async function sentraRegenerateWebhookSecret(webhookId: string): Promise<
 export async function sentraDeleteWebhook(webhookId: string): Promise<void> {
   await request(`/api/v1/webhooks/${webhookId}`, { method: 'DELETE' }, true);
 }
+
+// ── Registro de auditoría ───────────────────────────────────────────
+
+export interface SentraAuditEntry {
+  id: string;
+  actor_email: string;
+  action: string;
+  target_label: string | null;
+  meta: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export async function sentraListAudit(params?: {
+  action?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<SentraAuditEntry[]> {
+  const qs = new URLSearchParams();
+  if (params?.action) qs.set('action', params.action);
+  if (params?.limit != null) qs.set('limit', String(params.limit));
+  if (params?.offset != null) qs.set('offset', String(params.offset));
+  const suffix = qs.toString() ? `?${qs.toString()}` : '';
+  return request(`/api/v1/audit${suffix}`, { method: 'GET' }, true);
+}

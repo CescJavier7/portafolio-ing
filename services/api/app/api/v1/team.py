@@ -28,6 +28,7 @@ from app.db.session import get_db
 from app.models.organization import Organization
 from app.models.user import User
 from app.schemas.team import TeamInviteAccept, TeamInviteCreate, TeamMemberOut, TeamRoleUpdate
+from app.services.audit_service import record_audit
 from app.services.email_service import send_team_invite_email
 
 settings = get_settings()
@@ -91,6 +92,14 @@ async def invite_member(
         invite_expires_at=datetime.now(timezone.utc) + timedelta(hours=settings.INVITE_EXPIRE_HOURS),
     )
     db.add(invited_user)
+    record_audit(
+        db,
+        organization_id=current_user.organization_id,
+        actor=current_user,
+        action="member.invited",
+        target_label=payload.email,
+        meta={"role": payload.role},
+    )
     await db.commit()
 
     try:
@@ -154,7 +163,16 @@ async def change_role(
             detail="No puedes cambiar tu propio rol ni el del propietario.",
         )
 
+    previous_role = member.role
     member.role = payload.role
+    record_audit(
+        db,
+        organization_id=current_user.organization_id,
+        actor=current_user,
+        action="member.role_changed",
+        target_label=member.email,
+        meta={"from": previous_role, "to": payload.role},
+    )
     await db.commit()
     await db.refresh(member)
     return member
@@ -179,5 +197,13 @@ async def remove_member(
             detail="No puedes eliminarte a ti mismo ni al propietario.",
         )
 
+    removed_email = member.email
     await db.delete(member)
+    record_audit(
+        db,
+        organization_id=current_user.organization_id,
+        actor=current_user,
+        action="member.removed",
+        target_label=removed_email,
+    )
     await db.commit()

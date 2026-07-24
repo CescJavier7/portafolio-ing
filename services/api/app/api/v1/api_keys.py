@@ -17,6 +17,7 @@ from app.models.api_key import ApiKey
 from app.models.organization import Organization
 from app.models.user import User
 from app.schemas.api_key import ApiKeyCreate, ApiKeyCreatedOut, ApiKeyOut
+from app.services.audit_service import record_audit
 
 router = APIRouter(prefix="/api-keys", tags=["api-keys"])
 
@@ -73,6 +74,13 @@ async def create_api_key(
         key_prefix=prefix,
     )
     db.add(key)
+    record_audit(
+        db,
+        organization_id=current_user.organization_id,
+        actor=current_user,
+        action="apikey.created",
+        target_label=payload.name,
+    )
     await db.commit()
     await db.refresh(key)
 
@@ -101,4 +109,11 @@ async def revoke_api_key(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="API key no encontrada.")
 
     key.revoked = True
+    record_audit(
+        db,
+        organization_id=current_user.organization_id,
+        actor=current_user,
+        action="apikey.revoked",
+        target_label=key.name,
+    )
     await db.commit()

@@ -43,6 +43,7 @@ from app.services.dns_verification import (
     check_dns_txt,
     expected_txt_value,
 )
+from app.services.audit_service import record_audit
 from app.services.exposure import compute_exposure
 from app.services.surface import discover_surface
 from app.services.scanner import scan_domain
@@ -116,6 +117,13 @@ async def create_target(
         verification_token=secrets.token_urlsafe(24),
     )
     db.add(target)
+    record_audit(
+        db,
+        organization_id=current_user.organization_id,
+        actor=current_user,
+        action="target.created",
+        target_label=payload.domain,
+    )
     await db.commit()
     await db.refresh(target)
 
@@ -183,7 +191,15 @@ async def delete_target(
     db: AsyncSession = Depends(get_db),
 ):
     target = await _get_owned_target(target_id, current_user, db)
+    deleted_domain = target.domain
     await db.delete(target)
+    record_audit(
+        db,
+        organization_id=current_user.organization_id,
+        actor=current_user,
+        action="target.deleted",
+        target_label=deleted_domain,
+    )
     await db.commit()
 
 
