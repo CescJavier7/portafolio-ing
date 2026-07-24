@@ -9,6 +9,7 @@ from app.api.v1.auth import router as auth_router
 from app.api.v1.billing import router as billing_router
 from app.api.v1.internal import router as internal_router
 from app.api.v1.public import router as public_router
+from app.api.v1.public_free import router as public_free_router
 from app.api.v1.targets import router as targets_router
 from app.api.v1.team import router as team_router
 from app.api.v1.webhooks import router as webhooks_router
@@ -44,6 +45,7 @@ app.include_router(targets_router, prefix="/api/v1")
 app.include_router(internal_router, prefix="/api/v1")
 app.include_router(api_keys_router, prefix="/api/v1")
 app.include_router(public_router, prefix="/api/v1")
+app.include_router(public_free_router, prefix="/api/v1")
 app.include_router(team_router, prefix="/api/v1")
 app.include_router(webhooks_router, prefix="/api/v1")
 app.include_router(audit_router, prefix="/api/v1")

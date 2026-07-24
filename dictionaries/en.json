@@ -104,7 +104,9 @@
     "ctaLogin": "I already have an account",
     "ctaLoggedTitle": "You are in",
     "ctaLoggedBody": "Your dashboard is ready: add a domain, verify it via DNS and launch your first scan.",
-    "ctaPanel": "Go to my dashboard"
+    "ctaPanel": "Go to my dashboard",
+    "heroScanPlaceholder": "yourdomain.com",
+    "heroScanCta": "Scan for free"
   },
   "skills": {
     "tag": "Tech Stack",
@@ -1044,5 +1046,23 @@
         }
       ]
     }
+  },
+  "sentraFreeScan": {
+    "badge": "Free scan · no signup",
+    "title": "How secure is your website?",
+    "subtitle": "Scan any domain in seconds. Public information only (headers, TLS, DNS, SPF/DMARC) — we attack nothing. No account, no card.",
+    "placeholder": "yourdomain.com",
+    "scan": "Scan for free",
+    "scanning": "Scanning…",
+    "scoreLabel": "Security Score",
+    "passed": "checks passed",
+    "failed": "to improve",
+    "ctaTitle": "This is just today's snapshot",
+    "ctaBody": "Sign up free and Sentra watches your domain over time: continuous monitoring, email alerts when something worsens, AI reports, PDF export and API. No card.",
+    "ctaRegister": "Create free account",
+    "ctaPanel": "Go to my dashboard",
+    "disclaimer": "100% passive scan over public information. We never access your systems or put load on them.",
+    "errorGeneric": "The scan could not be completed. Check the domain and try again.",
+    "errorRate": "Too many scans in a row. Wait a moment and try again."
   }
 }

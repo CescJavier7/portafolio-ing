@@ -104,7 +104,9 @@
     "ctaLogin": "Ya tengo cuenta",
     "ctaLoggedTitle": "Ya estás dentro",
     "ctaLoggedBody": "Tu panel te espera: registra un dominio, verifícalo por DNS y lanza tu primer escaneo.",
-    "ctaPanel": "Ir a mi panel"
+    "ctaPanel": "Ir a mi panel",
+    "heroScanPlaceholder": "tudominio.com",
+    "heroScanCta": "Escanear gratis"
   },
   "skills": {
     "tag": "Tech Stack",
@@ -1044,5 +1046,23 @@
         }
       ]
     }
+  },
+  "sentraFreeScan": {
+    "badge": "Escaneo gratis · sin registro",
+    "title": "¿Qué tan segura es tu web?",
+    "subtitle": "Escanea cualquier dominio en segundos. Solo información pública (headers, TLS, DNS, SPF/DMARC) — no atacamos nada. Sin cuenta, sin tarjeta.",
+    "placeholder": "tudominio.com",
+    "scan": "Escanear gratis",
+    "scanning": "Escaneando…",
+    "scoreLabel": "Security Score",
+    "passed": "controles superados",
+    "failed": "por mejorar",
+    "ctaTitle": "Esto es solo la foto de hoy",
+    "ctaBody": "Regístrate gratis y Sentra vigila tu dominio en el tiempo: monitoreo continuo, alertas por correo cuando algo empeora, informes con IA, exportación a PDF y API. Sin tarjeta.",
+    "ctaRegister": "Crear cuenta gratis",
+    "ctaPanel": "Ir a mi panel",
+    "disclaimer": "Escaneo 100% pasivo sobre información pública. No accedemos a tus sistemas ni generamos carga sobre ellos.",
+    "errorGeneric": "No se pudo completar el escaneo. Revisa el dominio e inténtalo de nuevo.",
+    "errorRate": "Demasiados escaneos seguidos. Espera un momento e inténtalo otra vez."
   }
 }

@@ -220,6 +220,22 @@ export function sentraGetAccessToken(): string | null {
   return getToken();
 }
 
+// ── Escaneo público gratuito (el gancho, sin login ni verificación) ──
+
+export interface SentraFreeScan {
+  domain: string;
+  score: number;
+  grade: string;
+  scanned_at: string;
+  findings: SentraFinding[];
+}
+
+// No requiere sesión: es el escáner público. Solo información pública
+// (headers, TLS, DNS/SPF/DMARC), sin verificación de dominio.
+export async function sentraFreeScan(domain: string): Promise<SentraFreeScan> {
+  return request('/api/v1/free/scan', { method: 'POST', body: JSON.stringify({ domain }) });
+}
+
 // ── Billing ─────────────────────────────────────────────────────────
 
 export async function sentraGetSubscription(): Promise<{

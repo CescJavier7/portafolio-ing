@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { ShieldCheck, Radar, FileSearch, BellRing, ArrowUpRight, PartyPopper } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ShieldCheck, Radar, FileSearch, BellRing, ArrowUpRight, PartyPopper, Search } from 'lucide-react';
 import { useSentraSession } from '@/lib/sentra/useSession';
 
 interface Feature {
@@ -28,6 +30,8 @@ interface SentinelProps {
     ctaLoggedTitle?: string;
     ctaLoggedBody?: string;
     ctaPanel?: string;
+    heroScanPlaceholder?: string;
+    heroScanCta?: string;
   };
 }
 
@@ -37,6 +41,8 @@ export default function SentinelLanding({ lang, dict }: SentinelProps) {
   // Sesión de Sentra: si el visitante ya tiene cuenta, el CTA de registro
   // no tiene sentido — se convierte en un "ya estás dentro" + link al panel.
   const { user } = useSentraSession();
+  const router = useRouter();
+  const [heroDomain, setHeroDomain] = useState('');
 
   if (!dict) return null;
 
@@ -69,6 +75,31 @@ export default function SentinelLanding({ lang, dict }: SentinelProps) {
           <p className="text-base md:text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed">
             {dict.description}
           </p>
+
+          {/* Gancho: escanea tu dominio gratis, sin registro. Navega a la
+              página pública de escaneo con el dominio precargado. */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const v = heroDomain.trim();
+              if (v) router.push(`/${lang}/sentinel/scan?domain=${encodeURIComponent(v)}`);
+            }}
+            className="mt-8 flex flex-col sm:flex-row gap-3 max-w-xl mx-auto"
+          >
+            <input
+              type="text"
+              value={heroDomain}
+              onChange={(e) => setHeroDomain(e.target.value)}
+              placeholder={dict.heroScanPlaceholder ?? 'tudominio.com'}
+              className="flex-1 rounded-xl bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-4 py-3.5 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-green-500/50"
+            />
+            <button
+              type="submit"
+              className="shrink-0 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-[1.02] active:scale-[0.98] transition-transform"
+            >
+              <Search className="w-4 h-4" /> {dict.heroScanCta ?? 'Escanear gratis'}
+            </button>
+          </form>
         </motion.div>
 
         {/* FEATURES */}
