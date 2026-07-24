@@ -30,7 +30,7 @@
     "tag": "Servicios",
     "title": "Ingeniería a la medida.",
     "subtitle": "Software, ciberseguridad y docencia.",
-    "description": "Tres frentes en los que trabajo con el mismo estándar: rigor técnico, seguridad desde el diseño y comunicación clara de resultados.",
+    "description": "Tres frentes con el mismo estándar: ingeniería de software con seguridad desde el diseño, auditoría y monitoreo de ciberseguridad, y docencia técnica clara. Rigor, seguridad y resultados medibles.",
     "cards": {
       "dev": {
         "title": "Desarrollo de Software",
@@ -45,14 +45,14 @@
       },
       "cyber": {
         "title": "Ciberseguridad",
-        "desc": "Auditorías de seguridad web, hardening de infraestructura y arquitecturas Zero-Trust. El motor detrás de este servicio es Sentra, mi plataforma de auditoría automatizada.",
+        "desc": "Auditorías de seguridad web, hardening de infraestructura y arquitecturas Zero-Trust. Y mi plataforma propia, Sentra —ya en vivo—: te da un Security Score al instante y vigila tu dominio 24/7.",
         "items": [
-          "Auditoría de postura de seguridad web (pasiva y activa autorizada)",
-          "Pentesting ético y validación de OWASP Top 10",
+          "Auditoría de postura de seguridad web (OWASP, cabeceras, TLS, DNS)",
+          "Pentesting ético y validación del OWASP Top 10",
           "Hardening de servidores Linux, firewalls y segmentación de red",
-          "Observabilidad y respuesta a incidentes (Grafana, Loki, Fail2ban)"
+          "Monitoreo continuo y respuesta a incidentes (Grafana, Loki, Fail2ban)"
         ],
-        "cta": "Conocer Sentra"
+        "cta": "Escanear mi web gratis"
       },
       "teaching": {
         "title": "Docencia Informática",

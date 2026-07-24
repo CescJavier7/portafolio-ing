@@ -29,8 +29,8 @@
   "services": {
     "tag": "Services",
     "title": "Engineering, tailored.",
-    "subtitle": "Software, cybersecurity & teaching.",
-    "description": "Three areas where I work to the same standard: technical rigor, security by design, and clear communication of results.",
+    "subtitle": "Software, cybersecurity and teaching.",
+    "description": "Three fronts with the same standard: software engineering with security by design, cybersecurity auditing and monitoring, and clear technical teaching. Rigor, security and measurable results.",
     "cards": {
       "dev": {
         "title": "Software Development",
@@ -45,14 +45,14 @@
       },
       "cyber": {
         "title": "Cybersecurity",
-        "desc": "Web security audits, infrastructure hardening, and Zero-Trust architectures. The engine behind this service is Sentra, my automated audit platform.",
+        "desc": "Web security audits, infrastructure hardening, and Zero-Trust architectures. Plus my own platform, Sentra —now live—: it gives you an instant Security Score and watches your domain 24/7.",
         "items": [
-          "Web security posture audit (passive and authorized active)",
+          "Web security posture audit (OWASP, headers, TLS, DNS)",
           "Ethical pentesting and OWASP Top 10 validation",
           "Linux server hardening, firewalls and network segmentation",
-          "Observability and incident response (Grafana, Loki, Fail2ban)"
+          "Continuous monitoring and incident response (Grafana, Loki, Fail2ban)"
         ],
-        "cta": "Meet Sentra"
+        "cta": "Scan my website free"
       },
       "teaching": {
         "title": "Computer Science Teaching",

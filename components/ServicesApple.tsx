@@ -117,7 +117,7 @@ export default function ServicesApple({ lang, dict }: ServicesProps) {
                 ))}
               </ul>
               <Link
-                href={`/${lang}/sentinel`}
+                href={`/${lang}/sentinel/scan`}
                 className="inline-flex items-center gap-1.5 text-sm font-bold text-green-400 hover:gap-2.5 transition-all"
               >
                 {dict.cards.cyber.cta} <ArrowUpRight className="w-4 h-4" />
