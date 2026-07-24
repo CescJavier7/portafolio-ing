@@ -544,7 +544,8 @@
           },
           "reportPriorities": "Prioridades y decisiones",
           "pdfGenerating": "Generando informe…"
-        }
+        },
+        "readOnlyNote": "Tu rol es de solo lectura: puedes ver los dominios y sus resultados, pero no crear, escanear ni eliminar. Pide a un administrador los permisos que necesites."
       },
       "upgrade_modal": {
         "title": "Desbloquea Sentra Pro",
@@ -632,7 +633,8 @@
           "inactive": "Monitoreo inactivo",
           "verifyFirst": "Verifica el dominio primero",
           "lastScore": "Último",
-          "empty": "Aún no has agregado dominios. Ve a Auditoría para empezar."
+          "empty": "Aún no has agregado dominios. Ve a Auditoría para empezar.",
+          "readOnlyNote": "Tu rol es de solo lectura: puedes ver el estado del monitoreo, pero no activarlo ni desactivarlo."
         },
         "surface": {
           "title": "Mapa de superficie",
@@ -654,7 +656,8 @@
           "empty": "No tienes dominios verificados. Ve a Auditoría, agrega y verifica un dominio para mapear su superficie.",
           "legendOthers": "Otras IPs",
           "lastUpdated": "Última actualización",
-          "refresh": "Actualizar"
+          "refresh": "Actualizar",
+          "readOnlyEmpty": "Tu rol es de solo lectura. Aún no hay un mapa de superficie guardado para este dominio; un analista o administrador debe generarlo."
         },
         "exposure": {
           "title": "Inteligencia de exposición",
@@ -674,7 +677,8 @@
           "sevBaja": "Baja",
           "disclaimer": "Análisis determinista sobre datos externos observados (hallazgos + superficie). No sustituye una prueba de intrusión autorizada.",
           "lastUpdated": "Última actualización",
-          "refresh": "Actualizar"
+          "refresh": "Actualizar",
+          "readOnlyEmpty": "Tu rol es de solo lectura. Aún no hay un análisis de exposición guardado para este dominio; un analista o administrador debe generarlo."
         },
         "apiKeys": {
           "title": "API",

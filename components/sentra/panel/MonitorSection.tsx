@@ -5,6 +5,7 @@ import { BellRing, ShieldCheck, ShieldAlert, Mail } from 'lucide-react';
 import { loadDomainData, gradeColor } from '@/lib/sentra/domainData';
 import { sentraSetMonitoring, type SentraScan, type SentraTarget } from '@/lib/sentra/api';
 import { SectionHeader } from '@/components/sentra/panel/OverviewSection';
+import { canManageTargets } from '@/lib/sentra/permissions';
 
 export interface MonitorDict {
   title: string;
@@ -16,6 +17,7 @@ export interface MonitorDict {
   verifyFirst: string;
   lastScore: string;
   empty: string;
+  readOnlyNote: string;
 }
 
 function Toggle({ on, disabled, onChange }: { on: boolean; disabled?: boolean; onChange: () => void }) {
@@ -38,11 +40,12 @@ function Toggle({ on, disabled, onChange }: { on: boolean; disabled?: boolean; o
   );
 }
 
-export default function MonitorSection({ dict }: { dict: MonitorDict }) {
+export default function MonitorSection({ dict, role }: { dict: MonitorDict; role: string }) {
   const [loading, setLoading] = useState(true);
   const [targets, setTargets] = useState<SentraTarget[]>([]);
   const [scans, setScans] = useState<Record<string, SentraScan[]>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
+  const canManage = canManageTargets(role); // activar/desactivar monitoreo
 
   useEffect(() => {
     loadDomainData()
@@ -77,6 +80,12 @@ export default function MonitorSection({ dict }: { dict: MonitorDict }) {
         <Mail className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
         <p className="text-[13px] text-zinc-600 dark:text-zinc-300 leading-relaxed">{dict.intro}</p>
       </div>
+
+      {!canManage && (
+        <p className="text-[13px] text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 mb-6">
+          {dict.readOnlyNote}
+        </p>
+      )}
 
       {loading ? (
         <p className="text-sm text-zinc-400 dark:text-zinc-500 animate-pulse py-8">…</p>
@@ -120,7 +129,7 @@ export default function MonitorSection({ dict }: { dict: MonitorDict }) {
                     )}
                   </div>
                 </div>
-                <Toggle on={t.monitoring_enabled} disabled={!t.verified || busyId === t.id} onChange={() => toggle(t)} />
+                <Toggle on={t.monitoring_enabled} disabled={!t.verified || busyId === t.id || !canManage} onChange={() => toggle(t)} />
               </li>
             );
           })}

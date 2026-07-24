@@ -27,6 +27,7 @@ import {
 import UpgradeModal, { type UpgradeDict } from '@/components/sentra/UpgradeModal';
 import ScoreTrend from '@/components/sentra/ScoreTrend';
 import { openScanReport, type PdfLabels } from '@/lib/sentra/pdfReport';
+import { canManageTargets, canRunActions } from '@/lib/sentra/permissions';
 
 interface SeverityDict {
   alta: string;
@@ -68,6 +69,7 @@ interface ScanDict {
 export interface TargetsDict {
   title: string;
   desc: string;
+  readOnlyNote: string;
   addPlaceholder: string;
   add: string;
   adding: string;
@@ -348,8 +350,20 @@ function CopyField({ label, value, copyLabel, copiedLabel }: { label: string; va
   );
 }
 
-export default function TargetsCard({ dict, upgradeDict, lang }: { dict: TargetsDict; upgradeDict: UpgradeDict; lang: string }) {
+export default function TargetsCard({
+  dict,
+  upgradeDict,
+  lang,
+  role,
+}: {
+  dict: TargetsDict;
+  upgradeDict: UpgradeDict;
+  lang: string;
+  role: string;
+}) {
   const s = dict.scanUI;
+  const canManage = canManageTargets(role); // crear/eliminar dominios
+  const canRun = canRunActions(role); // verificar/escanear
   const [targets, setTargets] = useState<SentraTarget[]>([]);
   const [loading, setLoading] = useState(true);
   const [domain, setDomain] = useState('');
@@ -466,16 +480,24 @@ export default function TargetsCard({ dict, upgradeDict, lang }: { dict: Targets
       </div>
       <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">{dict.desc}</p>
 
-      <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-3 mb-6">
-        <input type="text" required placeholder={dict.addPlaceholder} value={domain} onChange={(e) => setDomain(e.target.value)} className={inputClass} />
-        <button
-          type="submit"
-          disabled={adding}
-          className="shrink-0 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-60 disabled:hover:scale-100"
-        >
-          <Plus className="w-4 h-4" /> {adding ? dict.adding : dict.add}
-        </button>
-      </form>
+      {!canRun && (
+        <p className="text-[13px] text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 mb-6">
+          {dict.readOnlyNote}
+        </p>
+      )}
+
+      {canManage && (
+        <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-3 mb-6">
+          <input type="text" required placeholder={dict.addPlaceholder} value={domain} onChange={(e) => setDomain(e.target.value)} className={inputClass} />
+          <button
+            type="submit"
+            disabled={adding}
+            className="shrink-0 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-60 disabled:hover:scale-100"
+          >
+            <Plus className="w-4 h-4" /> {adding ? dict.adding : dict.add}
+          </button>
+        </form>
+      )}
 
       {error && <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 mb-4">{error}</p>}
 
@@ -504,25 +526,31 @@ export default function TargetsCard({ dict, upgradeDict, lang }: { dict: Targets
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {t.verified ? (
-                    <button
-                      onClick={() => handleScan(t.id)}
-                      disabled={scanningId === t.id}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-green-500 text-black text-[12px] font-bold hover:scale-105 transition-transform disabled:opacity-60"
-                    >
-                      <Radar className={`w-3.5 h-3.5 ${scanningId === t.id ? 'animate-spin' : ''}`} />
-                      {scanningId === t.id ? s.scanning : scans[t.id]?.length ? s.rescan : s.scan}
-                    </button>
+                    canRun && (
+                      <button
+                        onClick={() => handleScan(t.id)}
+                        disabled={scanningId === t.id}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-green-500 text-black text-[12px] font-bold hover:scale-105 transition-transform disabled:opacity-60"
+                      >
+                        <Radar className={`w-3.5 h-3.5 ${scanningId === t.id ? 'animate-spin' : ''}`} />
+                        {scanningId === t.id ? s.scanning : scans[t.id]?.length ? s.rescan : s.scan}
+                      </button>
+                    )
                   ) : (
                     <>
                       <button onClick={() => openInstructions(t.id)} className="px-3 py-1.5 rounded-full border border-zinc-300 dark:border-zinc-700 text-[12px] font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors">DNS</button>
-                      <button onClick={() => handleVerify(t.id)} disabled={verifyingId === t.id} className="px-3 py-1.5 rounded-full bg-green-500 text-black text-[12px] font-bold hover:scale-105 transition-transform disabled:opacity-60">
-                        {verifyingId === t.id ? dict.verifying : dict.verify}
-                      </button>
+                      {canRun && (
+                        <button onClick={() => handleVerify(t.id)} disabled={verifyingId === t.id} className="px-3 py-1.5 rounded-full bg-green-500 text-black text-[12px] font-bold hover:scale-105 transition-transform disabled:opacity-60">
+                          {verifyingId === t.id ? dict.verifying : dict.verify}
+                        </button>
+                      )}
                     </>
                   )}
-                  <button onClick={() => handleDelete(t.id)} aria-label={dict.delete} className="p-1.5 rounded-full text-zinc-400 hover:text-red-500 hover:bg-red-500/10 transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {canManage && (
+                    <button onClick={() => handleDelete(t.id)} aria-label={dict.delete} className="p-1.5 rounded-full text-zinc-400 hover:text-red-500 hover:bg-red-500/10 transition-colors">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
 

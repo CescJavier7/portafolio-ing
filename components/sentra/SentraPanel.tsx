@@ -422,7 +422,7 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
               className="max-w-4xl"
             >
               {active === 'overview' && <OverviewSection dict={dict.dashboard.overview} />}
-              {active === 'tool' && <TargetsCard dict={dict.targets} upgradeDict={dict.upgrade_modal} lang={lang} />}
+              {active === 'tool' && <TargetsCard dict={dict.targets} upgradeDict={dict.upgrade_modal} lang={lang} role={user.role} />}
               {active === 'reports' && (
                 <ReportsSection
                   dict={dict.dashboard.reports}
@@ -437,9 +437,9 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
                   <ChangePasswordCard dict={dict} />
                 </AccountSection>
               )}
-              {active === 'dns' && <MonitorSection dict={dict.dashboard.monitor} />}
-              {active === 'traffic' && <ExposureSection dict={dict.dashboard.exposure} onUpgrade={() => setUpgradeOpen(true)} />}
-              {active === 'graph' && <SurfaceSection dict={dict.dashboard.surface} onUpgrade={() => setUpgradeOpen(true)} />}
+              {active === 'dns' && <MonitorSection dict={dict.dashboard.monitor} role={user.role} />}
+              {active === 'traffic' && <ExposureSection dict={dict.dashboard.exposure} role={user.role} onUpgrade={() => setUpgradeOpen(true)} />}
+              {active === 'graph' && <SurfaceSection dict={dict.dashboard.surface} role={user.role} onUpgrade={() => setUpgradeOpen(true)} />}
               {active === 'apiKeys' && <ApiKeysSection dict={dict.dashboard.apiKeys} user={user} onUpgrade={() => setUpgradeOpen(true)} />}
               {active === 'team' && <TeamSection dict={dict.dashboard.team} user={user} onUpgrade={() => setUpgradeOpen(true)} />}
             </motion.div>

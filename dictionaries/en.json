@@ -544,7 +544,8 @@
           },
           "reportPriorities": "Priorities & decisions",
           "pdfGenerating": "Generating report…"
-        }
+        },
+        "readOnlyNote": "Your role is read-only: you can view domains and their results, but not create, scan, or delete. Ask an admin for the permissions you need."
       },
       "upgrade_modal": {
         "title": "Unlock Sentra Pro",
@@ -632,7 +633,8 @@
           "inactive": "Monitoring off",
           "verifyFirst": "Verify the domain first",
           "lastScore": "Last",
-          "empty": "You have not added any domains yet. Go to Audit to start."
+          "empty": "You have not added any domains yet. Go to Audit to start.",
+          "readOnlyNote": "Your role is read-only: you can see the monitoring status, but not turn it on or off."
         },
         "surface": {
           "title": "Surface map",
@@ -654,7 +656,8 @@
           "empty": "You have no verified domains. Go to Audit, add and verify a domain to map its surface.",
           "legendOthers": "Other IPs",
           "lastUpdated": "Last updated",
-          "refresh": "Refresh"
+          "refresh": "Refresh",
+          "readOnlyEmpty": "Your role is read-only. There is no saved surface map for this domain yet; an analyst or admin needs to generate it."
         },
         "exposure": {
           "title": "Exposure intelligence",
@@ -674,7 +677,8 @@
           "sevBaja": "Low",
           "disclaimer": "Deterministic analysis over observed external data (findings + surface). It does not replace an authorized penetration test.",
           "lastUpdated": "Last updated",
-          "refresh": "Refresh"
+          "refresh": "Refresh",
+          "readOnlyEmpty": "Your role is read-only. There is no saved exposure analysis for this domain yet; an analyst or admin needs to generate it."
         },
         "apiKeys": {
           "title": "API",

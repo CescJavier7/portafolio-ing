@@ -12,6 +12,7 @@ import {
 } from '@/lib/sentra/api';
 import { SectionHeader } from '@/components/sentra/panel/OverviewSection';
 import SurfaceGraph from '@/components/sentra/panel/SurfaceGraph';
+import { canRunActions } from '@/lib/sentra/permissions';
 
 export interface SurfaceDict {
   title: string;
@@ -34,6 +35,7 @@ export interface SurfaceDict {
   legendOthers: string;
   lastUpdated: string;
   refresh: string;
+  readOnlyEmpty: string;
 }
 
 function riskColor(risk: string): string {
@@ -42,7 +44,8 @@ function riskColor(risk: string): string {
   return 'text-green-600 dark:text-green-400 border-green-500/30 bg-green-500/10';
 }
 
-export default function SurfaceSection({ dict, onUpgrade }: { dict: SurfaceDict; onUpgrade: () => void }) {
+export default function SurfaceSection({ dict, role, onUpgrade }: { dict: SurfaceDict; role: string; onUpgrade: () => void }) {
+  const canRun = canRunActions(role);
   const [targets, setTargets] = useState<SentraTarget[]>([]);
   const [selected, setSelected] = useState<string>('');
   const [busy, setBusy] = useState(false);
@@ -120,15 +123,23 @@ export default function SurfaceSection({ dict, onUpgrade }: { dict: SurfaceDict;
                 <option key={t.id} value={t.id}>{t.domain}</option>
               ))}
             </select>
-            <button
-              onClick={discover}
-              disabled={busy || loadingLatest}
-              className="shrink-0 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-60"
-            >
-              <Search className={`w-4 h-4 ${busy ? 'animate-pulse' : ''}`} />
-              {busy ? dict.discovering : surface ? dict.refresh : dict.discover}
-            </button>
+            {canRun && (
+              <button
+                onClick={discover}
+                disabled={busy || loadingLatest}
+                className="shrink-0 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-60"
+              >
+                <Search className={`w-4 h-4 ${busy ? 'animate-pulse' : ''}`} />
+                {busy ? dict.discovering : surface ? dict.refresh : dict.discover}
+              </button>
+            )}
           </div>
+
+          {!canRun && !surface && !loadingLatest && (
+            <p className="text-[13px] text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 mb-4">
+              {dict.readOnlyEmpty}
+            </p>
+          )}
 
           {error && <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 mb-4">{error}</p>}
 

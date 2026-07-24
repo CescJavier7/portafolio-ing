@@ -11,6 +11,7 @@ import {
   type SentraTarget,
 } from '@/lib/sentra/api';
 import { SectionHeader } from '@/components/sentra/panel/OverviewSection';
+import { canRunActions } from '@/lib/sentra/permissions';
 
 export interface ExposureDict {
   title: string;
@@ -31,6 +32,7 @@ export interface ExposureDict {
   disclaimer: string;
   lastUpdated: string;
   refresh: string;
+  readOnlyEmpty: string;
 }
 
 function sevStyle(sev: string): { chip: string; bar: string; label: (d: ExposureDict) => string } {
@@ -46,7 +48,8 @@ function sevStyle(sev: string): { chip: string; bar: string; label: (d: Exposure
   }
 }
 
-export default function ExposureSection({ dict, onUpgrade }: { dict: ExposureDict; onUpgrade: () => void }) {
+export default function ExposureSection({ dict, role, onUpgrade }: { dict: ExposureDict; role: string; onUpgrade: () => void }) {
+  const canRun = canRunActions(role);
   const [targets, setTargets] = useState<SentraTarget[]>([]);
   const [selected, setSelected] = useState('');
   const [busy, setBusy] = useState(false);
@@ -120,15 +123,23 @@ export default function ExposureSection({ dict, onUpgrade }: { dict: ExposureDic
                 <option key={t.id} value={t.id}>{t.domain}</option>
               ))}
             </select>
-            <button
-              onClick={analyze}
-              disabled={busy || loadingLatest}
-              className="shrink-0 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-60"
-            >
-              <Search className={`w-4 h-4 ${busy ? 'animate-pulse' : ''}`} />
-              {busy ? dict.analyzing : result ? dict.refresh : dict.analyze}
-            </button>
+            {canRun && (
+              <button
+                onClick={analyze}
+                disabled={busy || loadingLatest}
+                className="shrink-0 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-60"
+              >
+                <Search className={`w-4 h-4 ${busy ? 'animate-pulse' : ''}`} />
+                {busy ? dict.analyzing : result ? dict.refresh : dict.analyze}
+              </button>
+            )}
           </div>
+
+          {!canRun && !result && !loadingLatest && (
+            <p className="text-[13px] text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 mb-4">
+              {dict.readOnlyEmpty}
+            </p>
+          )}
 
           {error && <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 mb-4">{error}</p>}
 
