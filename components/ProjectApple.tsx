@@ -51,11 +51,13 @@ const projectMeta: {
     demo: "https://cescjavier7.github.io/manejo_integrado/"
   },
   {
-    techs: ["HTML5", "CSS3", "JavaScript", "WhatsApp API", "Optimización UX/UI"],
+    techs: [
+    "Nuxt 4", "Vue 3", "TypeScript", "Medusa v2",
+    "PostgreSQL", "Redis", "Docker", "Traefik", "Google Sheets API"
+    ],
     image: "/catalogo-mama.jpg",
     github: "https://github.com/CescJavier7/AngieCatalogos",
-    demo: "https://cescjavier7.github.io/AngieCatalogos/"
-  },
+    demo: "https://tienda.cescjavier.dev"},
   {
     techs: ["HTML5", "CSS3", "JavaScript", "Animaciones de Rendimiento"],
     image: "/drobys-band.jpg",
