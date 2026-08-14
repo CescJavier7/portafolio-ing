@@ -219,7 +219,7 @@ export async function handleIncomingMessage(
     };
   }
 
-  // 5. Flujo con IA (Groq / Llama 3.1)
+  // 5. Flujo con IA (Groq / Llama 3.3)
   if (!process.env.GROQ_API_KEY) {
     console.error("GROQ_API_KEY no está configurada en este entorno.");
     return { status: 500, body: { error: "Falta la credencial de Groq en este entorno." } };
@@ -235,7 +235,10 @@ export async function handleIncomingMessage(
         ...conversationHistory,
         { role: "user", content: message },
       ],
-      model: "llama-3.1-8b-instant",
+      // llama-3.1-8b-instant se decomisiona el 2026-08-16 (aviso de Groq).
+      // Usamos el mismo modelo que los reportes de Sentra (ya activo en la
+      // cuenta): un solo modelo que mantener, y mejor calidad para el chat.
+      model: "llama-3.3-70b-versatile",
       temperature: 0.6,
       max_tokens: 500,
     });
