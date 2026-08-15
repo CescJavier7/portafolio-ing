@@ -84,3 +84,12 @@
 .dark .driver-popover-description { color: #a1a1aa; }
 .dark .driver-popover-arrow-side-bottom.driver-popover-arrow { border-bottom-color: #18181b; }
 .dark .driver-popover-arrow-side-top.driver-popover-arrow { border-top-color: #18181b; }
+
+/* Overlay del tour: oscurece + difumina levemente el resto para enfocar la
+   sección resaltada. Si el elemento resaltado se ve borroso en algún navegador,
+   basta con quitar la línea de backdrop-filter. */
+.driver-overlay,
+.driver-overlay-animated {
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}

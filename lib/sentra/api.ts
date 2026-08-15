@@ -574,6 +574,7 @@ export interface CVContent {
   languages: string[];
   match_score: number;
   missing_requirements: string[];
+  actionable_suggestions: string[];
   tips: string[];
 }
 
@@ -681,6 +682,12 @@ export async function sentraUpdateCV(
 
 export async function sentraDeleteCV(id: string): Promise<void> {
   await request(`/api/v1/cv/${id}`, { method: 'DELETE' }, true);
+}
+
+// Regeneración interactiva con IA: reescribe el CV para subir el match.
+// CONSUME 1 crédito y devuelve una versión NUEVA (el original queda en historial).
+export async function sentraImproveCV(id: string, content: CVContent): Promise<SentraCVDocument> {
+  return request(`/api/v1/cv/${id}/improve`, { method: 'POST', body: JSON.stringify({ content }) }, true);
 }
 
 // ── Registro de auditoría ───────────────────────────────────────────

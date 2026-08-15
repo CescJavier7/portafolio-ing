@@ -177,7 +177,23 @@
     "codeLabel": "Code",
     "viewCodeLabel": "View Code",
     "demoLabel": "Live Demo",
+    "comingSoon": "Coming soon",
     "items": [
+      {
+        "title": "Sentra",
+        "category": "SaaS / Cybersecurity & Continuous Monitoring",
+        "description": "Web security auditing and continuous monitoring platform. Verify a domain via DNS and get a Security Score, AI reports, monitoring with alerts, a public API and RBAC teams. 100% passive by design. Full multi-tenant, in production."
+      },
+      {
+        "title": "AI ATS-Resume Builder",
+        "category": "Applied AI / Employability Tool",
+        "description": "A resume builder that tailors your CV to each job with AI: upload a PDF or a photo (OCR), get a structured CV with a match score and actionable suggestions, edit it live and apply with an AI-written email. Freemium with weekly credits."
+      },
+      {
+        "title": "DartShannon — Living Profile",
+        "category": "In development",
+        "description": "Upcoming project in the works. More details soon."
+      },
       {
         "title": "SentinelX",
         "category": "Cybersecurity / DevSecOps & SOAR Architecture",
@@ -1114,7 +1130,10 @@
     "profileHint": "Paste your current CV or describe your experience, education and skills. The more detail, the better the result.",
     "profilePlaceholder": "E.g.: Software engineer with 3 years in web development (React, Node.js). BSc in Computer Science...",
     "uploadPdf": "Upload my CV (PDF)",
+    "uploadCv": "Upload CV (PDF or photo)",
     "pdfBusy": "Reading PDF…",
+    "unreadableText": "The text looks space-less or unreadable (broken extraction). Paste it manually or upload a cleaner file.",
+    "tutorial": "View tutorial",
     "jobLabel": "The job posting",
     "jobHint": "Paste the posting text, or upload a photo and we extract the text (review it before generating).",
     "jobPlaceholder": "E.g.: We are looking for a Backend Developer with experience in Python, FastAPI, PostgreSQL and Docker...",
@@ -1150,6 +1169,17 @@
     "errorGeneric": "Something went wrong. Please try again.",
     "limitReached": "You reached your CV limit for this month.",
     "upgrade": "See plans",
+    "applyImprovements": "Improve with AI",
+    "improving": "Improving…",
+    "editHint": "Everything is editable: tweak the text before downloading. \"Improve with AI\" rewrites the CV to raise the match (uses 1 credit).",
+    "fName": "Full name",
+    "fHeadline": "Professional headline",
+    "fRole": "Role",
+    "fCompany": "Company",
+    "fPeriod": "Period",
+    "fHighlights": "Achievements (one per line)",
+    "addExperience": "Add experience",
+    "linesHint": "one per line",
     "pdf": {
       "summary": "Professional summary",
       "experience": "Experience",

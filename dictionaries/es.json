@@ -177,7 +177,23 @@
     "codeLabel": "Código",
     "viewCodeLabel": "Ver Código",
     "demoLabel": "Live Demo",
+    "comingSoon": "Próximamente",
     "items": [
+      {
+        "title": "Sentra",
+        "category": "SaaS / Ciberseguridad & Monitoreo Continuo",
+        "description": "Plataforma de auditoría y monitoreo continuo de seguridad web. Verificas un dominio por DNS y obtienes un Security Score, informes con IA, monitoreo con alertas, API pública y equipos con RBAC. 100% pasivo por diseño. Multi-tenant end-to-end en producción."
+      },
+      {
+        "title": "AI ATS-Resume Builder",
+        "category": "IA Aplicada / Herramienta de Empleabilidad",
+        "description": "Generador de CV que adapta tu currículum a cada oferta con IA: sube un PDF o una foto (OCR), obtén un CV estructurado con match score y sugerencias accionables, edítalo en vivo y postúlate con un correo redactado por IA. Freemium con créditos semanales."
+      },
+      {
+        "title": "DartShannon — Ficha Viva",
+        "category": "En desarrollo",
+        "description": "Próximo proyecto en construcción. Pronto más detalles."
+      },
       {
         "title": "SentinelX",
         "category": "Ciberseguridad / DevSecOps & SOAR Architecture",
@@ -1114,7 +1130,10 @@
     "profileHint": "Pega tu CV actual o describe tu experiencia, formación y habilidades. Cuanto más detalle, mejor el resultado.",
     "profilePlaceholder": "Ej.: Ingeniero de software con 3 años en desarrollo web (React, Node.js). Licenciado en Informática...",
     "uploadPdf": "Subir mi CV en PDF",
+    "uploadCv": "Subir CV (PDF o foto)",
     "pdfBusy": "Leyendo PDF…",
+    "unreadableText": "El texto parece sin espacios o ilegible (extracción rota). Pégalo manualmente o sube otro archivo más limpio.",
+    "tutorial": "Ver tutorial",
     "jobLabel": "La oferta laboral",
     "jobHint": "Pega el texto de la vacante, o sube una foto y extraemos el texto (revísalo antes de generar).",
     "jobPlaceholder": "Ej.: Buscamos Backend Developer con experiencia en Python, FastAPI, PostgreSQL y Docker...",
@@ -1150,6 +1169,17 @@
     "errorGeneric": "Algo salió mal. Inténtalo de nuevo.",
     "limitReached": "Alcanzaste tu límite de CVs de este mes.",
     "upgrade": "Ver planes",
+    "applyImprovements": "Aplicar mejoras con IA",
+    "improving": "Mejorando…",
+    "editHint": "Todo es editable: ajusta el texto a tu gusto antes de descargar. \"Aplicar mejoras con IA\" reescribe el CV para subir el match (usa 1 crédito).",
+    "fName": "Nombre completo",
+    "fHeadline": "Titular profesional",
+    "fRole": "Puesto",
+    "fCompany": "Empresa",
+    "fPeriod": "Periodo",
+    "fHighlights": "Logros (uno por línea)",
+    "addExperience": "Agregar experiencia",
+    "linesHint": "uno por línea",
     "pdf": {
       "summary": "Resumen profesional",
       "experience": "Experiencia",

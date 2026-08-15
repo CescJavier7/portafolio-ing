@@ -16,7 +16,8 @@ contra inyección vive en cv_service.py (lo mete como DATOS delimitados).
 import io
 import re
 
-MAX_PDF_BYTES = 10 * 1024 * 1024  # 10 MB
+from app.services.text_guard import is_readable_text
+
 MAX_PDF_PAGES = 15                 # un CV/perfil no necesita más
 MAX_TEXT_CHARS = 15000
 
@@ -28,10 +29,18 @@ def _sanitize(text: str) -> str:
     return text.strip()[:MAX_TEXT_CHARS]
 
 
-def extract_text_from_pdf(pdf_bytes: bytes) -> str:
-    if len(pdf_bytes) > MAX_PDF_BYTES:
-        raise ValueError("El PDF es demasiado grande (máximo 10 MB).")
+def _extract(reader, mode: str | None) -> str:
+    parts: list[str] = []
+    for page in reader.pages[:MAX_PDF_PAGES]:
+        try:
+            parts.append(page.extract_text(extraction_mode=mode) if mode else page.extract_text() or "")
+        except Exception:
+            continue  # una página ilegible no debe tumbar todo
+    return _sanitize("\n".join(p or "" for p in parts))
 
+
+def extract_text_from_pdf(pdf_bytes: bytes) -> str:
+    """El tamaño y el tipo REAL ya se validaron en file_guard antes de llamar aquí."""
     from pypdf import PdfReader  # lazy
     from pypdf.errors import PdfReadError  # lazy
 
@@ -40,24 +49,29 @@ def extract_text_from_pdf(pdf_bytes: bytes) -> str:
     except (PdfReadError, OSError, ValueError):
         raise ValueError("El archivo no es un PDF válido o está dañado.")
 
-    # PDFs cifrados sin contraseña: pypdf a veces expone páginas vacías.
     if getattr(reader, "is_encrypted", False):
         try:
             reader.decrypt("")  # intento con contraseña vacía
         except Exception:
             raise ValueError("El PDF está protegido con contraseña.")
 
-    parts: list[str] = []
-    for page in reader.pages[:MAX_PDF_PAGES]:
-        try:
-            parts.append(page.extract_text() or "")
-        except Exception:
-            continue  # una página ilegible no debe tumbar todo
+    # Modo por defecto primero; si sale ilegible (texto pegado sin espacios,
+    # el bug real de la captura), reintentamos con modo "layout", que usa la
+    # posición de los glifos para reinsertar los espacios.
+    text = _extract(reader, None)
+    if not is_readable_text(text):
+        layout = _extract(reader, "layout")
+        if is_readable_text(layout) or len(layout) > len(text):
+            text = layout
 
-    text = _sanitize("\n".join(parts))
     if not text:
         raise ValueError(
             "No pudimos extraer texto de este PDF (¿es un escaneo/imagen?). "
             "Pega tu experiencia manualmente o sube una foto."
+        )
+    if not is_readable_text(text):
+        raise ValueError(
+            "El PDF devolvió el texto sin espacios y no es legible. "
+            "Pega tu experiencia manualmente o sube una foto (OCR)."
         )
     return text

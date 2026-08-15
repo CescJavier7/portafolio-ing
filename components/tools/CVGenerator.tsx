@@ -4,18 +4,32 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
-  FileText, Sparkles, Upload, Trash2, Download, ArrowUpRight, Lock,
-  Target, ListChecks, Lightbulb, Plus, ImageIcon, FileUp, Send, Copy, Check, X, Mail,
+  Sparkles, Upload, Trash2, Download, ArrowUpRight, Lock,
+  Target, ListChecks, Lightbulb, Plus, FileUp, Send, Copy, Check, X, Mail, Wand2, Loader2, GraduationCap,
 } from 'lucide-react';
 import {
   sentraGenerateCV, sentraOcrJobPosting, sentraExtractCVPdf, sentraApplyEmail,
-  sentraListCVs, sentraGetCV, sentraDeleteCV,
+  sentraListCVs, sentraGetCV, sentraDeleteCV, sentraUpdateCV, sentraImproveCV,
   SentraApiError,
   type SentraCVDocument, type SentraCVListItem, type SentraApplyEmail,
+  type CVContent, type CVExperienceItem,
 } from '@/lib/sentra/api';
 import { openCVPdf } from '@/lib/sentra/cvPdf';
 import { useSentraSession } from '@/lib/sentra/useSession';
+import { useAutoSave, clearDraft } from '@/lib/sentra/useAutoSave';
 import CVTour, { type CVTourDict } from '@/components/tools/CVTour';
+
+// Chequeo cliente de "texto legible" (espejo del backend text_guard): evita
+// mandar a generar un blob sin espacios (bug de extracción de PDF).
+function looksUnreadable(text: string): boolean {
+  if (text.length < 200) return false;
+  const spaceRatio = (text.match(/ /g)?.length ?? 0) / text.length;
+  const longestRun = Math.max(0, ...text.split(/\s+/).map((w) => w.length));
+  return spaceRatio < 0.04 || longestRun > 60;
+}
+
+const DRAFT_PROFILE = 'cv_draft_profile';
+const DRAFT_JOB = 'cv_draft_job';
 
 export interface CVDict {
   badge: string;
@@ -32,7 +46,10 @@ export interface CVDict {
   profileHint: string;
   profilePlaceholder: string;
   uploadPdf: string;
+  uploadCv: string;
   pdfBusy: string;
+  unreadableText: string;
+  tutorial: string;
   jobLabel: string;
   jobHint: string;
   jobPlaceholder: string;
@@ -68,6 +85,17 @@ export interface CVDict {
   errorGeneric: string;
   limitReached: string;
   upgrade: string;
+  applyImprovements: string;
+  improving: string;
+  editHint: string;
+  fName: string;
+  fHeadline: string;
+  fRole: string;
+  fCompany: string;
+  fPeriod: string;
+  fHighlights: string;
+  addExperience: string;
+  linesHint: string;
   pdf: {
     summary: string;
     experience: string;
@@ -99,22 +127,28 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<SentraCVListItem[]>([]);
   const [pdfBusy, setPdfBusy] = useState(false);
+  const [tourSignal, setTourSignal] = useState(0); // >0 = disparar tutorial a mano
   const fileRef = useRef<HTMLInputElement>(null);
   const pdfRef = useRef<HTMLInputElement>(null);
+
+  // Auto-guardado tipo Word de los dos campos largos.
+  useAutoSave(DRAFT_PROFILE, profileText, setProfileText);
+  useAutoSave(DRAFT_JOB, jobPosting, setJobPosting);
 
   useEffect(() => {
     if (user) sentraListCVs().then(setHistory).catch(() => {});
   }, [user]);
 
-  async function handlePdf(e: React.ChangeEvent<HTMLInputElement>) {
+  // Perfil: acepta PDF o imagen (OCR). Se enruta por tipo real del archivo.
+  async function handleProfileFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setPdfBusy(true);
     setError(null);
     try {
-      const { text } = await sentraExtractCVPdf(file);
-      // Reemplaza el perfil con el texto del PDF (es "tu CV actual").
-      setProfileText(text);
+      const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+      const { text } = isPdf ? await sentraExtractCVPdf(file) : await sentraOcrJobPosting(file);
+      setProfileText(text); // reemplaza: es "tu CV actual"
     } catch (err) {
       setError(err instanceof SentraApiError ? err.detail : dict.errorGeneric);
     } finally {
@@ -142,18 +176,27 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
 
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
+    // Chequeo cliente: si el texto salió sin espacios (PDF roto), avisamos YA,
+    // sin llamar al servidor ni gastar tiempo.
+    if (looksUnreadable(profileText) || looksUnreadable(jobPosting)) {
+      setError(dict.unreadableText);
+      return;
+    }
     setGenerating(true);
     setError(null);
     try {
       const cv = await sentraGenerateCV({ profile_text: profileText, job_posting: jobPosting });
+      clearDraft(DRAFT_PROFILE, DRAFT_JOB); // ya se generó: borrador cumplido
       setResult(cv);
       setHistory((prev) => [
         { id: cv.id, title: cv.title, match_score: cv.match_score, created_at: cv.created_at, updated_at: cv.updated_at },
         ...prev,
       ]);
     } catch (err) {
-      if (err instanceof SentraApiError && err.status === 402) setError(dict.limitReached);
-      else setError(err instanceof SentraApiError ? err.detail : dict.errorGeneric);
+      // Mostramos el motivo REAL del backend (SentraApiError.detail); errorGeneric
+      // queda SOLO para fallos que no traen mensaje (ej. red caída).
+      if (err instanceof SentraApiError) setError(err.status === 402 ? dict.limitReached : err.detail);
+      else setError(dict.errorGeneric);
     } finally {
       setGenerating(false);
     }
@@ -220,8 +263,24 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
           <GateCard lang={lang} dict={dict} />
         ) : (
           <>
-            {/* Tour interactivo (solo primera vez, cuando el formulario está visible) */}
-            <CVTour dict={dict.tour} active={!result} />
+            {/* Tour interactivo: automático la 1ª vez + manual desde el botón flotante */}
+            <CVTour dict={dict.tour} runSignal={tourSignal} />
+
+            {/* Botón flotante del tutorial — SOLO en la herramienta (form visible),
+                sobre el chat MekaSenkuChat (que vive abajo a la derecha). */}
+            {!result && (
+              <button
+                type="button"
+                onClick={() => setTourSignal((s) => s + 1)}
+                aria-label={dict.tutorial}
+                className="group fixed bottom-24 right-5 z-40 inline-flex items-center gap-2 h-12 pl-3.5 pr-4 rounded-full bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border border-zinc-200 dark:border-zinc-700 shadow-lg text-zinc-700 dark:text-zinc-200 hover:border-green-400 hover:text-green-600 dark:hover:text-green-400 transition-all"
+              >
+                <GraduationCap className="w-5 h-5 shrink-0" />
+                <span className="text-[13px] font-semibold max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-[140px] transition-all duration-300">
+                  {dict.tutorial}
+                </span>
+              </button>
+            )}
 
             {/* HERRAMIENTA */}
             {!result && (
@@ -233,12 +292,12 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
                       type="button"
                       onClick={() => pdfRef.current?.click()}
                       disabled={pdfBusy}
-                      className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-green-600 dark:text-green-400 hover:underline disabled:opacity-60"
+                      className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-green-600 dark:text-green-400 hover:underline disabled:opacity-60 transition-colors"
                     >
-                      {pdfBusy ? <FileUp className="w-3.5 h-3.5 animate-pulse" /> : <FileUp className="w-3.5 h-3.5" />}
-                      {pdfBusy ? dict.pdfBusy : dict.uploadPdf}
+                      {pdfBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileUp className="w-3.5 h-3.5" />}
+                      {pdfBusy ? dict.pdfBusy : dict.uploadCv}
                     </button>
-                    <input ref={pdfRef} type="file" accept="application/pdf" onChange={handlePdf} className="hidden" />
+                    <input ref={pdfRef} type="file" accept="application/pdf,image/jpeg,image/png" onChange={handleProfileFile} className="hidden" />
                   </div>
                   <p className="text-[12px] text-zinc-400 dark:text-zinc-500 mb-2">{dict.profileHint}</p>
                   <textarea
@@ -262,10 +321,10 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
                       disabled={ocrBusy}
                       className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-green-600 dark:text-green-400 hover:underline disabled:opacity-60"
                     >
-                      {ocrBusy ? <ImageIcon className="w-3.5 h-3.5 animate-pulse" /> : <Upload className="w-3.5 h-3.5" />}
+                      {ocrBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
                       {ocrBusy ? dict.ocrBusy : dict.uploadImage}
                     </button>
-                    <input ref={fileRef} type="file" accept="image/*" onChange={handleImage} className="hidden" />
+                    <input ref={fileRef} type="file" accept="image/jpeg,image/png" onChange={handleImage} className="hidden" />
                   </div>
                   <p className="text-[12px] text-zinc-400 dark:text-zinc-500 mb-2">{dict.jobHint}</p>
                   <textarea
@@ -307,7 +366,14 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
                 cv={result}
                 dict={dict}
                 onNew={() => { setResult(null); setError(null); }}
-                onPdf={() => openCVPdf(result.content, dict.pdf)}
+                onImproved={(doc) => {
+                  // La mejora crea una VERSIÓN nueva: se muestra y entra al historial.
+                  setResult(doc);
+                  setHistory((prev) => [
+                    { id: doc.id, title: doc.title, match_score: doc.match_score, created_at: doc.created_at, updated_at: doc.updated_at },
+                    ...prev,
+                  ]);
+                }}
               />
             )}
 
@@ -384,8 +450,16 @@ function GateCard({ lang, dict }: { lang: string; dict: CVDict }) {
   );
 }
 
-function CVResult({ cv, dict, onNew, onPdf }: { cv: SentraCVDocument; dict: CVDict; onNew: () => void; onPdf: () => void }) {
-  const c = cv.content;
+function CVResult({ cv, dict, onNew, onImproved }: { cv: SentraCVDocument; dict: CVDict; onNew: () => void; onImproved: (doc: SentraCVDocument) => void }) {
+  // Vista previa EDITABLE: el contenido es estado local. El PDF, el guardado
+  // y la mejora usan estas ediciones. Se re-sincroniza si cambia el CV (tras mejorar).
+  const [content, setContent] = useState<CVContent>(cv.content);
+  useEffect(() => { setContent(cv.content); }, [cv.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const c = content;
+
+  const [improving, setImproving] = useState(false);
+  const [improveError, setImproveError] = useState<string | null>(null);
+
   const [applyOpen, setApplyOpen] = useState(false);
   const [applyBusy, setApplyBusy] = useState(false);
   const [email, setEmail] = useState<SentraApplyEmail | null>(null);
@@ -395,12 +469,57 @@ function CVResult({ cv, dict, onNew, onPdf }: { cv: SentraCVDocument; dict: CVDi
   const [copied, setCopied] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
 
+  // Quita líneas vacías de los arrays antes de enviar/compilar el PDF.
+  function clean(x: CVContent): CVContent {
+    return {
+      ...x,
+      education: x.education.filter((s) => s.trim()),
+      skills: x.skills.filter((s) => s.trim()),
+      languages: x.languages.filter((s) => s.trim()),
+      experience: x.experience.map((e) => ({ ...e, highlights: e.highlights.filter((h) => h.trim()) })),
+    };
+  }
+  function setField<K extends keyof CVContent>(key: K, value: CVContent[K]) {
+    setContent((prev) => ({ ...prev, [key]: value }));
+  }
+  function setExp(i: number, patch: Partial<CVExperienceItem>) {
+    setContent((prev) => ({ ...prev, experience: prev.experience.map((e, idx) => (idx === i ? { ...e, ...patch } : e)) }));
+  }
+  function addExp() {
+    setContent((prev) => ({ ...prev, experience: [...prev.experience, { role: '', company: '', period: '', highlights: [] }] }));
+  }
+  function removeExp(i: number) {
+    setContent((prev) => ({ ...prev, experience: prev.experience.filter((_, idx) => idx !== i) }));
+  }
+
+  function downloadPdf() {
+    sentraUpdateCV(cv.id, { content: clean(content) }).catch(() => {}); // persiste ediciones (best-effort)
+    openCVPdf(clean(content), dict.pdf);
+  }
+
+  async function applyImprovements() {
+    setImproving(true);
+    setImproveError(null);
+    try {
+      // Envía el CV EDITADO; el backend lo reescribe y crea una versión nueva (1 crédito).
+      const doc = await sentraImproveCV(cv.id, clean(content));
+      onImproved(doc);
+    } catch (err) {
+      if (err instanceof SentraApiError && err.status === 402) setImproveError(dict.limitReached);
+      else setImproveError(err instanceof SentraApiError ? err.detail : dict.errorGeneric);
+    } finally {
+      setImproving(false);
+    }
+  }
+
   async function openApply() {
     setApplyOpen(true);
-    if (email) return; // ya generado
+    if (email) return;
     setApplyBusy(true);
     setApplyError(null);
     try {
+      // Guarda las ediciones antes: el correo se redacta desde el CV guardado.
+      await sentraUpdateCV(cv.id, { content: clean(content) }).catch(() => {});
       const e = await sentraApplyEmail(cv.id);
       setEmail(e);
       setRecipient(e.recipient);
@@ -414,18 +533,16 @@ function CVResult({ cv, dict, onNew, onPdf }: { cv: SentraCVDocument; dict: CVDi
   }
 
   function openMailClient() {
-    // mailto NO puede adjuntar archivos (límite de seguridad del navegador):
-    // por eso primero descargamos el CV para que el usuario lo adjunte a mano.
-    onPdf();
+    // mailto NO adjunta archivos (seguridad del navegador): descargamos el CV
+    // editado para que el usuario lo arrastre.
+    openCVPdf(clean(content), dict.pdf);
     const to = recipient.trim();
     const url = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.location.href = url;
   }
 
-  const chips = (items: string[]) =>
-    items.map((s) => (
-      <span key={s} className="inline-block px-3 py-1 rounded-full text-[12px] font-semibold bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20 mr-2 mb-2">{s}</span>
-    ));
+  const suggestions = c.actionable_suggestions?.length ? c.actionable_suggestions : c.tips;
+  const fieldLabel = 'block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5';
 
   return (
     <div className="space-y-6">
@@ -433,9 +550,9 @@ function CVResult({ cv, dict, onNew, onPdf }: { cv: SentraCVDocument; dict: CVDi
       <div className="rounded-3xl bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 md:p-8 flex flex-col sm:flex-row items-center gap-6">
         <div
           className="shrink-0 w-24 h-24 rounded-2xl border-4 flex flex-col items-center justify-center"
-          style={{ borderColor: matchColor(cv.match_score), color: matchColor(cv.match_score) }}
+          style={{ borderColor: matchColor(c.match_score), color: matchColor(c.match_score) }}
         >
-          <span className="text-3xl font-black leading-none">{cv.match_score}%</span>
+          <span className="text-3xl font-black leading-none">{c.match_score}%</span>
           <span className="text-[10px] font-bold uppercase mt-1">{dict.matchLabel}</span>
         </div>
         <div className="min-w-0 flex-1 text-center sm:text-left">
@@ -443,10 +560,13 @@ function CVResult({ cv, dict, onNew, onPdf }: { cv: SentraCVDocument; dict: CVDi
           <p className="text-[14px] text-green-600 dark:text-green-400 font-semibold">{c.headline}</p>
         </div>
         <div className="flex flex-wrap gap-3 shrink-0 justify-center">
+          <button onClick={applyImprovements} disabled={improving} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-violet-600 text-white text-[13px] font-bold hover:scale-[1.02] transition-transform disabled:opacity-60">
+            <Wand2 className={`w-4 h-4 ${improving ? 'animate-pulse' : ''}`} /> {improving ? dict.improving : dict.applyImprovements}
+          </button>
           <button onClick={openApply} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-green-500 text-black text-[13px] font-bold hover:scale-[1.02] transition-transform">
             <Send className="w-4 h-4" /> {dict.apply}
           </button>
-          <button onClick={onPdf} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-zinc-300 dark:border-zinc-700 text-[13px] font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/5">
+          <button onClick={downloadPdf} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-zinc-300 dark:border-zinc-700 text-[13px] font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/5">
             <Download className="w-4 h-4" /> {dict.downloadPdf}
           </button>
           <button onClick={onNew} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-zinc-300 dark:border-zinc-700 text-[13px] font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5">
@@ -454,6 +574,10 @@ function CVResult({ cv, dict, onNew, onPdf }: { cv: SentraCVDocument; dict: CVDi
           </button>
         </div>
       </div>
+
+      {improveError && (
+        <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">{improveError}</p>
+      )}
 
       {/* Panel One-Click Apply */}
       {applyOpen && (
@@ -517,43 +641,73 @@ function CVResult({ cv, dict, onNew, onPdf }: { cv: SentraCVDocument; dict: CVDi
         </div>
       )}
 
-      {/* Contenido del CV */}
-      <div className="rounded-3xl bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 md:p-8 space-y-6">
-        {c.summary && <Section icon={<FileText className="w-4 h-4" />} title={dict.summaryTitle}><p className="text-[14px] text-zinc-600 dark:text-zinc-300 leading-relaxed">{c.summary}</p></Section>}
-        {c.experience.length > 0 && (
-          <Section icon={<Target className="w-4 h-4" />} title={dict.experienceTitle}>
-            <div className="space-y-4">
-              {c.experience.map((e, i) => (
-                <div key={i}>
-                  <p className="text-[14px] font-bold text-zinc-900 dark:text-white">
-                    {e.role}{e.company ? ` · ${e.company}` : ''}
-                    {e.period && <span className="ml-2 text-[12px] font-medium text-zinc-400">{e.period}</span>}
-                  </p>
-                  {e.highlights?.length > 0 && (
-                    <ul className="mt-1.5 space-y-1">
-                      {e.highlights.map((h, j) => (
-                        <li key={j} className="flex items-start gap-2 text-[13px] text-zinc-600 dark:text-zinc-400">
-                          <span className="w-1 h-1 rounded-full bg-green-500 mt-2 shrink-0" />{h}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+      {/* Contenido del CV — EDITABLE */}
+      <div className="rounded-3xl bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 md:p-8 space-y-5">
+        <p className="text-[12px] text-zinc-400 dark:text-zinc-500">{dict.editHint}</p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={fieldLabel}>{dict.fName}</label>
+            <input value={c.full_name} onChange={(ev) => setField('full_name', ev.target.value)} className={inputBase} />
+          </div>
+          <div>
+            <label className={fieldLabel}>{dict.fHeadline}</label>
+            <input value={c.headline} onChange={(ev) => setField('headline', ev.target.value)} className={inputBase} />
+          </div>
+        </div>
+
+        <div>
+          <label className={fieldLabel}>{dict.summaryTitle}</label>
+          <textarea rows={3} value={c.summary} onChange={(ev) => setField('summary', ev.target.value)} className={`${inputBase} resize-y`} />
+        </div>
+
+        <div>
+          <label className={fieldLabel}>{dict.experienceTitle}</label>
+          <div className="space-y-3">
+            {c.experience.map((e, i) => (
+              <div key={i} className="relative rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-2.5">
+                <button type="button" onClick={() => removeExp(i)} className="absolute top-3 right-3 text-zinc-400 hover:text-red-500" aria-label="Quitar">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pr-8">
+                  <input placeholder={dict.fRole} value={e.role} onChange={(ev) => setExp(i, { role: ev.target.value })} className={inputBase} />
+                  <input placeholder={dict.fCompany} value={e.company} onChange={(ev) => setExp(i, { company: ev.target.value })} className={inputBase} />
+                  <input placeholder={dict.fPeriod} value={e.period} onChange={(ev) => setExp(i, { period: ev.target.value })} className={inputBase} />
                 </div>
-              ))}
-            </div>
-          </Section>
-        )}
-        {c.education.length > 0 && (
-          <Section icon={<FileText className="w-4 h-4" />} title={dict.educationTitle}>
-            <ul className="space-y-1">{c.education.map((s, i) => <li key={i} className="text-[13px] text-zinc-600 dark:text-zinc-400">{s}</li>)}</ul>
-          </Section>
-        )}
-        {c.skills.length > 0 && <Section icon={<Sparkles className="w-4 h-4" />} title={dict.skillsTitle}><div>{chips(c.skills)}</div></Section>}
-        {c.languages.length > 0 && <Section icon={<Sparkles className="w-4 h-4" />} title={dict.languagesTitle}><div>{chips(c.languages)}</div></Section>}
+                <textarea
+                  placeholder={dict.fHighlights}
+                  rows={3}
+                  value={e.highlights.join('\n')}
+                  onChange={(ev) => setExp(i, { highlights: ev.target.value.split('\n') })}
+                  className={`${inputBase} resize-y`}
+                />
+              </div>
+            ))}
+            <button type="button" onClick={addExp} className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-green-600 dark:text-green-400 hover:underline">
+              <Plus className="w-3.5 h-3.5" /> {dict.addExperience}
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={fieldLabel}>{dict.skillsTitle} <span className="normal-case font-normal text-zinc-400">· {dict.linesHint}</span></label>
+            <textarea rows={5} value={c.skills.join('\n')} onChange={(ev) => setField('skills', ev.target.value.split('\n'))} className={`${inputBase} resize-y`} />
+          </div>
+          <div>
+            <label className={fieldLabel}>{dict.languagesTitle} <span className="normal-case font-normal text-zinc-400">· {dict.linesHint}</span></label>
+            <textarea rows={5} value={c.languages.join('\n')} onChange={(ev) => setField('languages', ev.target.value.split('\n'))} className={`${inputBase} resize-y`} />
+          </div>
+        </div>
+
+        <div>
+          <label className={fieldLabel}>{dict.educationTitle} <span className="normal-case font-normal text-zinc-400">· {dict.linesHint}</span></label>
+          <textarea rows={3} value={c.education.join('\n')} onChange={(ev) => setField('education', ev.target.value.split('\n'))} className={`${inputBase} resize-y`} />
+        </div>
       </div>
 
       {/* Análisis del match (el diferenciador) */}
-      {(c.missing_requirements.length > 0 || c.tips.length > 0) && (
+      {(c.missing_requirements.length > 0 || suggestions.length > 0) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {c.missing_requirements.length > 0 && (
             <div className="rounded-3xl bg-amber-500/5 border border-amber-500/20 p-6">
@@ -561,10 +715,10 @@ function CVResult({ cv, dict, onNew, onPdf }: { cv: SentraCVDocument; dict: CVDi
               <ul className="space-y-1.5">{c.missing_requirements.map((m, i) => <li key={i} className="text-[13px] text-zinc-600 dark:text-zinc-300">• {m}</li>)}</ul>
             </div>
           )}
-          {c.tips.length > 0 && (
-            <div className="rounded-3xl bg-green-500/5 border border-green-500/20 p-6">
-              <p className="flex items-center gap-2 text-sm font-bold text-green-600 dark:text-green-400 mb-3"><Lightbulb className="w-4 h-4" /> {dict.tipsTitle}</p>
-              <ul className="space-y-1.5">{c.tips.map((t, i) => <li key={i} className="text-[13px] text-zinc-600 dark:text-zinc-300">• {t}</li>)}</ul>
+          {suggestions.length > 0 && (
+            <div className="rounded-3xl bg-violet-500/5 border border-violet-500/20 p-6">
+              <p className="flex items-center gap-2 text-sm font-bold text-violet-600 dark:text-violet-400 mb-3"><Lightbulb className="w-4 h-4" /> {dict.tipsTitle}</p>
+              <ul className="space-y-1.5">{suggestions.map((t, i) => <li key={i} className="text-[13px] text-zinc-600 dark:text-zinc-300">• {t}</li>)}</ul>
             </div>
           )}
         </div>
@@ -573,13 +727,3 @@ function CVResult({ cv, dict, onNew, onPdf }: { cv: SentraCVDocument; dict: CVDi
   );
 }
 
-function Section({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <p className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2">
-        <span className="text-green-500">{icon}</span> {title}
-      </p>
-      {children}
-    </div>
-  );
-}

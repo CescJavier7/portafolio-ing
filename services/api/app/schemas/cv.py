@@ -23,6 +23,13 @@ class CVUpdateRequest(BaseModel):
     content: dict | None = None
 
 
+class CVImproveRequest(BaseModel):
+    # El CV ACTUAL (posiblemente ya editado a mano en la vista previa). El LLM
+    # lo reescribe para subir el match, incorporando las sugerencias. Cuenta
+    # como 1 generación nueva (consume crédito).
+    content: dict
+
+
 # ── Estructura del CV que devuelve el LLM (validación de su salida) ──
 
 class CVExperienceItem(BaseModel):
@@ -44,7 +51,10 @@ class CVContent(BaseModel):
     languages: list[str] = []
     match_score: int = 0            # % de requisitos cubiertos (0-100)
     missing_requirements: list[str] = []  # requisitos de la oferta NO cubiertos
-    tips: list[str] = []            # sugerencias para mejorar el match
+    # Sugerencias accionables para subir el match. `tips` se mantiene como alias
+    # retrocompatible (CVs viejos lo traían); el prompt ahora puebla ambos igual.
+    actionable_suggestions: list[str] = []
+    tips: list[str] = []
 
 
 # ── Salida ────────────────────────────────────────────────────────────

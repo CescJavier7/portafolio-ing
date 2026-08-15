@@ -26,23 +26,23 @@ class PlanConfig:
     max_api_keys: int         # tope de llaves activas simultáneas
     max_team_members: int     # usuarios totales en la organización (incluye OWNER)
     max_webhooks: int         # webhooks salientes activos simultáneos
-    cv_per_month: int         # generaciones de CV al mes (0 = ilimitado)
+    cv_per_week: int          # generaciones de CV por semana (0 = ilimitado)
 
 
 # limited_scans=False => escaneos ilimitados (coherente con "ilimitados" del
 # modal de upgrade). El rate limit por endpoint (10/min) sigue protegiendo
 # contra abuso incluso en planes ilimitados.
 #
-# cv_per_month: el generador de CV es freemium por CUENTA (por usuario). FREE
-# tiene una cuota mensual; los planes de pago la sueltan (0 = ilimitado). El
-# contador se calcula al vuelo (COUNT de CVs del usuario en el mes en curso),
-# no se guarda un contador mutable — así no hay estado que resetear ni que
-# pueda desincronizarse.
+# cv_per_week: el generador de CV es freemium por CUENTA (por usuario). FREE
+# tiene una cuota SEMANAL; los planes de pago la sueltan (0 = ilimitado). El
+# contador se calcula al vuelo (COUNT de CVs del usuario en los últimos 7 días,
+# ventana rodante), no se guarda un contador mutable — así no hay estado que
+# resetear ni que pueda desincronizarse. Generar Y "mejorar con IA" cuentan.
 PLANS: dict[str, PlanConfig] = {
-    "FREE": PlanConfig(max_targets=3, scans_per_day=3, limited_scans=True, show_score_detail=False, ai_reports=False, api_access=False, max_api_keys=0, max_team_members=1, max_webhooks=0, cv_per_month=3),
-    "PRO": PlanConfig(max_targets=10, scans_per_day=0, limited_scans=False, show_score_detail=True, ai_reports=True, api_access=True, max_api_keys=3, max_team_members=3, max_webhooks=1, cv_per_month=0),
-    "TEAM": PlanConfig(max_targets=50, scans_per_day=0, limited_scans=False, show_score_detail=True, ai_reports=True, api_access=True, max_api_keys=10, max_team_members=10, max_webhooks=5, cv_per_month=0),
-    "ENTERPRISE": PlanConfig(max_targets=1000, scans_per_day=0, limited_scans=False, show_score_detail=True, ai_reports=True, api_access=True, max_api_keys=50, max_team_members=50, max_webhooks=20, cv_per_month=0),
+    "FREE": PlanConfig(max_targets=3, scans_per_day=3, limited_scans=True, show_score_detail=False, ai_reports=False, api_access=False, max_api_keys=0, max_team_members=1, max_webhooks=0, cv_per_week=3),
+    "PRO": PlanConfig(max_targets=10, scans_per_day=0, limited_scans=False, show_score_detail=True, ai_reports=True, api_access=True, max_api_keys=3, max_team_members=3, max_webhooks=1, cv_per_week=0),
+    "TEAM": PlanConfig(max_targets=50, scans_per_day=0, limited_scans=False, show_score_detail=True, ai_reports=True, api_access=True, max_api_keys=10, max_team_members=10, max_webhooks=5, cv_per_week=0),
+    "ENTERPRISE": PlanConfig(max_targets=1000, scans_per_day=0, limited_scans=False, show_score_detail=True, ai_reports=True, api_access=True, max_api_keys=50, max_team_members=50, max_webhooks=20, cv_per_week=0),
 }
 
 

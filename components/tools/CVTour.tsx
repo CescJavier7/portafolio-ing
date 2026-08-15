@@ -26,10 +26,13 @@ const TOUR_FLAG = 'cv_tour_done';
  * propio overlay/portal en el DOM, fuera del árbol de React — por eso no pelea
  * con la hidratación del App Router.
  */
-export default function CVTour({ dict, active }: { dict: CVTourDict; active: boolean }) {
+export default function CVTour({ dict, runSignal }: { dict: CVTourDict; runSignal: number }) {
   useEffect(() => {
-    if (!active || typeof window === 'undefined') return;
-    if (localStorage.getItem(TOUR_FLAG)) return;
+    if (typeof window === 'undefined') return;
+    // runSignal === 0 → arranque automático (respeta el flag de "ya visto").
+    // runSignal > 0  → disparo MANUAL desde el botón: siempre se muestra.
+    const manual = runSignal > 0;
+    if (!manual && localStorage.getItem(TOUR_FLAG)) return;
 
     // Espera un frame a que el formulario esté en el DOM antes de anclar.
     const raf = requestAnimationFrame(() => {
@@ -59,7 +62,7 @@ export default function CVTour({ dict, active }: { dict: CVTourDict; active: boo
     });
 
     return () => cancelAnimationFrame(raf);
-  }, [active, dict]);
+  }, [runSignal, dict]);
 
   return null;
 }

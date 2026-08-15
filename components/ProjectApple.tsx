@@ -13,7 +13,30 @@ const projectMeta: {
   image: string;
   github: string;
   demo: string;
+  comingSoon?: boolean;
 }[] = [
+  {
+    // Sentra — SaaS insignia de seguridad web.
+    techs: ["FastAPI", "Next.js 16", "PostgreSQL", "Redis", "Docker", "Traefik", "Lemon Squeezy", "Groq LLM"],
+    image: "/sentra-preview.png",
+    github: "",
+    demo: "https://cescjavier.dev/es/sentinel"
+  },
+  {
+    // AI ATS-Resume Builder — el generador de CV actual.
+    techs: ["FastAPI", "Groq LLM", "Tesseract OCR", "pypdf", "Next.js", "driver.js"],
+    image: "/cv-builder-preview.png",
+    github: "",
+    demo: "https://cescjavier.dev/es/herramientas/cv"
+  },
+  {
+    // DartShannon (Ficha Viva) — próximamente.
+    techs: [],
+    image: "/dartshannon-preview.png",
+    github: "",
+    demo: "",
+    comingSoon: true
+  },
   {
     techs: ["FastAPI", "ReactFlow (WebSockets)", "Elasticsearch", "Docker", "Suricata (NIDS)", "Zero-Trust SSH", "Redis"],
     image: "/sentinelx-preview.jpeg",
@@ -80,6 +103,7 @@ interface ProjectsDictionary {
   codeLabel: string;
   viewCodeLabel: string;
   demoLabel: string;
+  comingSoon?: string;
   items: ProjectItemDictionary[];
 }
 
@@ -335,10 +359,11 @@ export default function ProjectsApple({ dict }: ProjectsAppleProps) {
                 </div>
 
                 <div className="relative w-full h-full overflow-hidden">
-                  <img 
-                    src={project.image} 
-                    alt={project.title} 
-                    className="w-full h-full object-cover transition-transform duration-[2s] md:group-hover:scale-105" 
+                  <img
+                    src={project.image}
+                    alt={project.title}
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    className="w-full h-full object-cover transition-transform duration-[2s] md:group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/100 via-black/40 to-black/20" />
                 </div>
@@ -375,14 +400,23 @@ export default function ProjectsApple({ dict }: ProjectsAppleProps) {
                    ))}
                  </div>
                  <div className="flex items-center gap-4 mt-auto">
-                   <a href={project.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-6 py-3.5 rounded-full bg-white text-black font-semibold hover:scale-105 transition-transform text-sm">
-                     <SiGithub className="w-4 h-4" /> {dict.codeLabel}
-                   </a>
-                   {/* CONDICIONAL: Solo muestra el botón si hay URL de demo */}
-                   {project.demo && (
-                     <a href={project.demo} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-6 py-3.5 rounded-full text-white border border-white/20 hover:bg-white/10 transition-all text-sm font-semibold">
-                       <ExternalLink size={16} /> {dict.demoLabel}
-                     </a>
+                   {project.comingSoon ? (
+                     <span className="px-5 py-2.5 rounded-full bg-white/10 border border-white/20 text-white text-sm font-semibold">
+                       {dict.comingSoon ?? 'Próximamente'}
+                     </span>
+                   ) : (
+                     <>
+                       {project.github && (
+                         <a href={project.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-6 py-3.5 rounded-full bg-white text-black font-semibold hover:scale-105 transition-transform text-sm">
+                           <SiGithub className="w-4 h-4" /> {dict.codeLabel}
+                         </a>
+                       )}
+                       {project.demo && (
+                         <a href={project.demo} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-6 py-3.5 rounded-full text-white border border-white/20 hover:bg-white/10 transition-all text-sm font-semibold">
+                           <ExternalLink size={16} /> {dict.demoLabel}
+                         </a>
+                       )}
+                     </>
                    )}
                  </div>
               </div>
@@ -424,7 +458,7 @@ export default function ProjectsApple({ dict }: ProjectsAppleProps) {
                 <h3 className="text-3xl font-bold text-zinc-900 dark:text-white mb-6">{activeProject.title}</h3>
 
                 <div className="w-full aspect-video rounded-2xl overflow-hidden mb-6 border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-black">
-                  <img src={activeProject.image} alt={activeProject.title} className="w-full h-full object-cover" />
+                  <img src={activeProject.image} alt={activeProject.title} onError={(e) => { e.currentTarget.style.display = 'none'; }} className="w-full h-full object-cover" />
                 </div>
 
                 <p className="text-zinc-600 dark:text-zinc-300 text-base md:text-lg leading-relaxed mb-8">
@@ -440,14 +474,23 @@ export default function ProjectsApple({ dict }: ProjectsAppleProps) {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <a href={activeProject.github} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full px-6 py-3.5 rounded-full bg-zinc-900 text-white dark:bg-white dark:text-black font-semibold active:scale-95 transition-transform text-sm">
-                     <SiGithub className="w-4 h-4" /> {dict.viewCodeLabel}
-                  </a>
-                  {/* CONDICIONAL: También para el modal móvil */}
-                  {activeProject.demo && (
-                    <a href={activeProject.demo} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full px-6 py-3.5 rounded-full text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 active:bg-zinc-100 dark:active:bg-zinc-800 transition-colors text-sm font-semibold">
-                      <ExternalLink className="w-4 h-4" /> {dict.demoLabel}
-                    </a>
+                  {activeProject.comingSoon ? (
+                    <span className="flex items-center justify-center w-full px-6 py-3.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-semibold text-sm">
+                      {dict.comingSoon ?? 'Próximamente'}
+                    </span>
+                  ) : (
+                    <>
+                      {activeProject.github && (
+                        <a href={activeProject.github} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full px-6 py-3.5 rounded-full bg-zinc-900 text-white dark:bg-white dark:text-black font-semibold active:scale-95 transition-transform text-sm">
+                          <SiGithub className="w-4 h-4" /> {dict.viewCodeLabel}
+                        </a>
+                      )}
+                      {activeProject.demo && (
+                        <a href={activeProject.demo} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full px-6 py-3.5 rounded-full text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 active:bg-zinc-100 dark:active:bg-zinc-800 transition-colors text-sm font-semibold">
+                          <ExternalLink className="w-4 h-4" /> {dict.demoLabel}
+                        </a>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

@@ -18,7 +18,6 @@ import io
 import re
 
 MAX_OCR_CHARS = 15000
-MAX_IMAGE_BYTES = 8 * 1024 * 1024  # 8 MB
 
 
 def sanitize_ocr_text(text: str) -> str:
@@ -31,9 +30,7 @@ def sanitize_ocr_text(text: str) -> str:
 
 
 def extract_text_from_image(image_bytes: bytes) -> str:
-    if len(image_bytes) > MAX_IMAGE_BYTES:
-        raise ValueError("La imagen es demasiado grande (máximo 8 MB).")
-
+    """El tamaño y el tipo REAL ya se validaron en file_guard antes de llamar aquí."""
     from PIL import Image, UnidentifiedImageError  # lazy
     import pytesseract  # lazy
 
