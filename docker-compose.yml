@@ -96,6 +96,15 @@ services:
       # a mano, ver README de services/api).
       - REDIS_URL=redis://sentra-redis:6379/0
       - ENVIRONMENT=production
+    healthcheck:
+      # Python en vez de curl: la imagen python:3.12-slim NO trae curl. Ruta
+      # /health (NO /api/v1/health). start_period da margen a que corran las
+      # migraciones del entrypoint + arranque de Uvicorn antes de contar fallos.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
     depends_on:
       portfolio-db:
         condition: service_healthy

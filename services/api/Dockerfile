@@ -13,14 +13,19 @@ COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini .
 
+# Entrypoint: corre las migraciones y luego Uvicorn. chmod como root (antes de
+# bajar de privilegios) para asegurar el bit de ejecución sin depender de los
+# permisos del archivo en el repo.
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
 USER sentra
 
 EXPOSE 8000
 
-# ⚠️ "--forwarded-allow-ips=*" confía en X-Forwarded-For de CUALQUIER origen.
-# Es seguro únicamente porque este contenedor NO se expone directamente a
-# internet (solo Traefik lo alcanza, dentro de la red interna de Docker).
-# Si alguna vez publicas el puerto 8000 directo al host, cambia esto a la
-# IP/subred real de Traefik, o cualquiera podría spoofear su IP de origen
-# y burlar el rate limiting por IP.
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips=*"]
+# El ENTRYPOINT asume el arranque de Uvicorn (ver entrypoint.sh). El
+# "--forwarded-allow-ips=*" vive ahí: confía en X-Forwarded-For de CUALQUIER
+# origen, seguro SOLO porque este contenedor no se expone directo a internet
+# (solo Traefik lo alcanza por la red interna). Si algún día publicas el
+# puerto 8000 al host, restringe esa IP a la de Traefik.
+ENTRYPOINT ["/app/entrypoint.sh"]

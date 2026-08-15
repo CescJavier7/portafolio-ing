@@ -1,0 +1,13 @@
+# El build de sentra-api NO debe copiar el entorno virtual ni artefactos:
+# las dependencias se instalan con pip dentro del Dockerfile. Excluirlos
+# acelera el build (miles de archivos menos en el contexto) y evita arrastrar
+# binarios de macOS a la imagen Linux.
+venv/
+get-pip.py
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.env
+.env.*
+.DS_Store

@@ -52,3 +52,12 @@ yarn-error.log*
 next-env.d.ts
 
 /app/generated/prisma
+
+# Backend Python (services/api): el entorno virtual y artefactos de instalación
+# NUNCA van a git — se instalan en el build de Docker (pip install). Los binarios
+# compilados en macOS no sirven en el Linux del VPS, y son miles de archivos.
+services/api/venv/
+services/api/get-pip.py
+__pycache__/
+*.pyc
+services/api/**/__pycache__/
