@@ -16,6 +16,12 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: 22
+          # command_timeout por defecto = 10m. El build en el VPS (Tesseract por
+          # apt + pip + next build) puede pasarse de ahí y hacer que la ACCIÓN
+          # reporte un falso fallo aunque el deploy termine bien en el servidor.
+          # 30m da margen de sobra (y la capa de Tesseract queda cacheada, así
+          # que los próximos builds son mucho más rápidos).
+          command_timeout: 30m
           script: |
             cd /opt/apps/portafolio
 
