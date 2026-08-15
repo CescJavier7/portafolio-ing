@@ -31,6 +31,26 @@ function looksUnreadable(text: string): boolean {
 const DRAFT_PROFILE = 'cv_draft_profile';
 const DRAFT_JOB = 'cv_draft_job';
 
+// Procesa una lista de archivos (PDF → extracción, imagen → OCR) y concatena
+// el texto. Cada llamada valida el archivo en el backend (magic numbers, 5MB).
+async function extractFromFiles(files: File[]): Promise<string> {
+  const parts: string[] = [];
+  for (const f of files) {
+    const isPdf = f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf');
+    const { text } = isPdf ? await sentraExtractCVPdf(f) : await sentraOcrJobPosting(f);
+    if (text?.trim()) parts.push(text.trim());
+  }
+  return parts.join('\n\n');
+}
+
+function imagesFromPaste(e: React.ClipboardEvent): File[] {
+  return Array.from(e.clipboardData.files).filter((f) => f.type.startsWith('image/'));
+}
+
+function appendText(prev: string, added: string): string {
+  return [prev.trim(), added.trim()].filter(Boolean).join('\n\n');
+}
+
 export interface CVDict {
   badge: string;
   title: string;
@@ -139,39 +159,64 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
     if (user) sentraListCVs().then(setHistory).catch(() => {});
   }, [user]);
 
-  // Perfil: acepta PDF o imagen (OCR). Se enruta por tipo real del archivo.
-  async function handleProfileFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const showErr = (err: unknown) =>
+    setError(err instanceof SentraApiError ? err.detail : err instanceof Error ? err.message : dict.errorGeneric);
+
+  // Perfil: acepta MÚLTIPLES archivos (PDF + imágenes). Itera, hace OCR/extracción
+  // y CONCATENA todo en el textarea (útil para un CV de varias fotos/páginas).
+  async function processProfileFiles(files: File[]) {
+    if (files.length === 0) return;
     setPdfBusy(true);
     setError(null);
     try {
-      const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-      const { text } = isPdf ? await sentraExtractCVPdf(file) : await sentraOcrJobPosting(file);
-      setProfileText(text); // reemplaza: es "tu CV actual"
+      const text = await extractFromFiles(files);
+      setProfileText((prev) => appendText(prev, text));
     } catch (err) {
-      setError(err instanceof SentraApiError ? err.detail : dict.errorGeneric);
+      showErr(err);
     } finally {
       setPdfBusy(false);
       if (pdfRef.current) pdfRef.current.value = '';
     }
   }
 
-  async function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+  async function handleProfileFile(e: React.ChangeEvent<HTMLInputElement>) {
+    await processProfileFiles(Array.from(e.target.files ?? []));
+  }
+
+  // Ctrl+V con imagen(es) en el portapapeles sobre "Tu experiencia": las captura
+  // y las procesa (varias permitidas). Si no hay imagen, deja pegar texto normal.
+  async function handleProfilePaste(e: React.ClipboardEvent) {
+    const imgs = imagesFromPaste(e);
+    if (imgs.length === 0) return;
+    e.preventDefault();
+    await processProfileFiles(imgs);
+  }
+
+  // Oferta: ESTRICTAMENTE 1 archivo/imagen.
+  async function processJobFile(file: File | undefined) {
     if (!file) return;
     setOcrBusy(true);
     setError(null);
     try {
       const { text } = await sentraOcrJobPosting(file);
-      // Se rellena el textarea; el usuario REVISA/corrige antes de generar.
-      setJobPosting((prev) => (prev ? `${prev}\n${text}` : text));
+      setJobPosting((prev) => appendText(prev, text)); // el usuario revisa antes de generar
     } catch (err) {
-      setError(err instanceof SentraApiError ? err.detail : dict.errorGeneric);
+      showErr(err);
     } finally {
       setOcrBusy(false);
       if (fileRef.current) fileRef.current.value = '';
     }
+  }
+
+  async function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
+    await processJobFile(e.target.files?.[0]);
+  }
+
+  async function handleJobPaste(e: React.ClipboardEvent) {
+    const imgs = imagesFromPaste(e);
+    if (imgs.length === 0) return;
+    e.preventDefault();
+    await processJobFile(imgs[0]); // solo la primera: la oferta es 1 imagen
   }
 
   async function handleGenerate(e: React.FormEvent) {
@@ -297,7 +342,7 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
                       {pdfBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileUp className="w-3.5 h-3.5" />}
                       {pdfBusy ? dict.pdfBusy : dict.uploadCv}
                     </button>
-                    <input ref={pdfRef} type="file" accept="application/pdf,image/jpeg,image/png" onChange={handleProfileFile} className="hidden" />
+                    <input ref={pdfRef} type="file" accept="application/pdf,image/jpeg,image/png" multiple onChange={handleProfileFile} className="hidden" />
                   </div>
                   <p className="text-[12px] text-zinc-400 dark:text-zinc-500 mb-2">{dict.profileHint}</p>
                   <textarea
@@ -307,6 +352,7 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
                     rows={7}
                     value={profileText}
                     onChange={(e) => setProfileText(e.target.value)}
+                    onPaste={handleProfilePaste}
                     placeholder={dict.profilePlaceholder}
                     className={`${inputBase} resize-y`}
                   />
@@ -334,6 +380,7 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
                     rows={7}
                     value={jobPosting}
                     onChange={(e) => setJobPosting(e.target.value)}
+                    onPaste={handleJobPaste}
                     placeholder={dict.jobPlaceholder}
                     className={`${inputBase} resize-y`}
                   />

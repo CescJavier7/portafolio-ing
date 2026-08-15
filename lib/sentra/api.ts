@@ -79,10 +79,39 @@ function setToken(token: string | null) {
   else sessionStorage.removeItem(TOKEN_KEY);
 }
 
+// Extrae RIGUROSAMENTE el motivo de un error del backend, en este orden:
+//   1) JSON `detail` string (HTTPException de FastAPI).
+//   2) JSON `detail` array (validación 422: [{loc,msg,...}]) → se aplana.
+//   3) JSON `error` string (rutas de Next.js, ej. /api/sentra/report).
+//   4) Cuerpo de TEXTO plano (ej. HTML de 502/504 de Cloudflare/Traefik) → extracto.
+//   5) Último recurso: el código HTTP, para que SIEMPRE se vea un porqué.
+// Nunca devuelve vacío → el recuadro rojo jamás queda "ciego".
+async function readErrorDetail(res: Response): Promise<string> {
+  try {
+    const body = await res.clone().json();
+    if (typeof body?.detail === 'string') return body.detail;
+    if (Array.isArray(body?.detail)) {
+      const msg = body.detail.map((e: { msg?: string }) => e?.msg).filter(Boolean).join('. ');
+      if (msg) return msg;
+    }
+    if (typeof body?.error === 'string') return body.error;
+  } catch {
+    /* no era JSON */
+  }
+  try {
+    const txt = (await res.text())?.trim();
+    if (txt) return txt.length > 300 ? `${txt.slice(0, 300)}…` : txt;
+  } catch {
+    /* sin cuerpo legible */
+  }
+  return `Error ${res.status} del servidor.`;
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {},
   withAuth = false,
+  timeoutMs = 100000, // la generación con IA puede tardar; Cloudflare corta ~100s
 ): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -94,39 +123,40 @@ async function request<T>(
     if (token) headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers,
-    credentials: 'include',
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-  if (!res.ok) {
-    let detail = 'Error inesperado.';
-    try {
-      const body = await res.json();
-      // FastAPI da dos formas de `detail`:
-      // - HTTPException: string (ej. "Credenciales inválidas.")
-      // - Validación (422): array de objetos {loc, msg, type, ...}.
-      // Renderizar ese objeto crudo en React revienta la página
-      // (error #31). Aquí lo aplanamos SIEMPRE a un string legible.
-      if (typeof body.detail === 'string') {
-        detail = body.detail;
-      } else if (Array.isArray(body.detail)) {
-        detail =
-          body.detail
-            .map((e: { msg?: string }) => e?.msg)
-            .filter(Boolean)
-            .join('. ') || detail;
-      }
-    } catch {
-      /* respuesta sin JSON (ej. 502 de Traefik) — se queda el genérico */
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers,
+      credentials: 'include',
+      signal: controller.signal,
+    });
+  } catch (err) {
+    // fetch RECHAZA (no responde) por: red caída, DNS, CORS, o abort (timeout).
+    // Antes esto propagaba un TypeError → el catch del componente lo tomaba como
+    // "error desconocido" y mostraba el genérico ciego. Ahora SIEMPRE es un
+    // SentraApiError con un motivo concreto.
+    if ((err as Error)?.name === 'AbortError') {
+      throw new SentraApiError(0, 'La solicitud tardó demasiado y se canceló. Inténtalo de nuevo.');
     }
-    throw new SentraApiError(res.status, detail);
+    throw new SentraApiError(0, 'No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.');
+  } finally {
+    clearTimeout(timer);
   }
 
-  // 204 No Content (ej. DELETE) no trae body: no intentes parsearlo.
-  if (res.status === 204) return undefined as T;
-  return res.json() as Promise<T>;
+  if (!res.ok) {
+    throw new SentraApiError(res.status, await readErrorDetail(res));
+  }
+
+  if (res.status === 204) return undefined as T; // DELETE sin cuerpo
+  try {
+    return (await res.json()) as T;
+  } catch {
+    throw new SentraApiError(res.status, 'El servidor devolvió una respuesta inválida.');
+  }
 }
 
 export async function sentraRegister(data: {
@@ -604,30 +634,45 @@ export async function sentraGenerateCV(data: {
   return request('/api/v1/cv', { method: 'POST', body: JSON.stringify(data) }, true);
 }
 
-// OCR de la foto de la oferta: multipart/form-data, así que NO pasa por el
-// helper request() (que fuerza Content-Type JSON). El navegador pone el
-// boundary del form solo; nosotros solo agregamos el token.
-export async function sentraOcrJobPosting(file: File): Promise<{ text: string }> {
+// Subida multipart (OCR/PDF): NO pasa por request() (que fuerza Content-Type
+// JSON; el navegador debe poner el boundary del form). Mismo blindaje de
+// errores que request(): red/timeout/CORS → SentraApiError con motivo real.
+async function uploadMultipart<T>(path: string, file: File, timeoutMs = 100000): Promise<T> {
   const token = getToken();
   const form = new FormData();
   form.append('file', file);
-  const res = await fetch(`${API_BASE}/api/v1/cv/ocr`, {
-    method: 'POST',
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-    body: form,
-    credentials: 'include',
-  });
-  if (!res.ok) {
-    let detail = 'No se pudo procesar la imagen.';
-    try {
-      const body = await res.json();
-      if (typeof body.detail === 'string') detail = body.detail;
-    } catch {
-      /* sin JSON */
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: form,
+      credentials: 'include',
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if ((err as Error)?.name === 'AbortError') {
+      throw new SentraApiError(0, 'El archivo tardó demasiado en procesarse. Inténtalo de nuevo.');
     }
-    throw new SentraApiError(res.status, detail);
+    throw new SentraApiError(0, 'No se pudo subir el archivo. Revisa tu conexión.');
+  } finally {
+    clearTimeout(timer);
   }
-  return res.json() as Promise<{ text: string }>;
+
+  if (!res.ok) throw new SentraApiError(res.status, await readErrorDetail(res));
+  try {
+    return (await res.json()) as T;
+  } catch {
+    throw new SentraApiError(res.status, 'El servidor devolvió una respuesta inválida.');
+  }
+}
+
+export async function sentraOcrJobPosting(file: File): Promise<{ text: string }> {
+  return uploadMultipart('/api/v1/cv/ocr', file);
 }
 
 export interface SentraApplyEmail {
@@ -636,28 +681,9 @@ export interface SentraApplyEmail {
   recipient: string;
 }
 
-// Extracción de texto de un PDF (perfil/CV): multipart, no pasa por request().
+// Extracción de texto de un PDF (perfil/CV): multipart.
 export async function sentraExtractCVPdf(file: File): Promise<{ text: string }> {
-  const token = getToken();
-  const form = new FormData();
-  form.append('file', file);
-  const res = await fetch(`${API_BASE}/api/v1/cv/extract-pdf`, {
-    method: 'POST',
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-    body: form,
-    credentials: 'include',
-  });
-  if (!res.ok) {
-    let detail = 'No se pudo procesar el PDF.';
-    try {
-      const body = await res.json();
-      if (typeof body.detail === 'string') detail = body.detail;
-    } catch {
-      /* sin JSON */
-    }
-    throw new SentraApiError(res.status, detail);
-  }
-  return res.json() as Promise<{ text: string }>;
+  return uploadMultipart('/api/v1/cv/extract-pdf', file);
 }
 
 // Redacta el correo de postulación (IA) para un CV guardado.

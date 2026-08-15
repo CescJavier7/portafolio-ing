@@ -54,3 +54,6 @@ groq==0.11.0
 pytesseract==0.3.13
 Pillow==10.4.0
 pypdf==5.1.0
+# PyMuPDF: renderiza páginas de PDF a imagen EN MEMORIA (sin poppler) para el
+# fallback OCR de PDFs de Canva (glifos posicionados, sin caracteres de espacio).
+PyMuPDF==1.24.10

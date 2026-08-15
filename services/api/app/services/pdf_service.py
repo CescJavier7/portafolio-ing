@@ -19,6 +19,7 @@ import re
 from app.services.text_guard import is_readable_text
 
 MAX_PDF_PAGES = 15                 # un CV/perfil no necesita más
+MAX_OCR_PAGES = 5                  # el OCR es caro: acota el fallback
 MAX_TEXT_CHARS = 15000
 
 
@@ -39,6 +40,31 @@ def _extract(reader, mode: str | None) -> str:
     return _sanitize("\n".join(p or "" for p in parts))
 
 
+def _ocr_pdf(pdf_bytes: bytes) -> str:
+    """
+    Último recurso para PDFs sin capa de texto usable (Canva posiciona cada
+    glifo de forma absoluta y NO emite caracteres de espacio → la extracción
+    sale pegada). Renderizamos cada página a imagen EN MEMORIA con PyMuPDF y la
+    pasamos por Tesseract. Cero disco: todo son buffers en RAM.
+    """
+    import fitz  # PyMuPDF, lazy
+    from PIL import Image  # lazy
+    import pytesseract  # lazy
+
+    parts: list[str] = []
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    try:
+        for i in range(min(len(doc), MAX_OCR_PAGES)):
+            # 200 DPI: buen balance nitidez/tiempo para OCR de texto.
+            pix = doc[i].get_pixmap(dpi=200, colorspace=fitz.csRGB, alpha=False)
+            img = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
+            parts.append(pytesseract.image_to_string(img, lang="spa+eng"))
+            img.close()
+    finally:
+        doc.close()
+    return _sanitize("\n".join(parts))
+
+
 def extract_text_from_pdf(pdf_bytes: bytes) -> str:
     """El tamaño y el tipo REAL ya se validaron en file_guard antes de llamar aquí."""
     from pypdf import PdfReader  # lazy
@@ -55,14 +81,23 @@ def extract_text_from_pdf(pdf_bytes: bytes) -> str:
         except Exception:
             raise ValueError("El PDF está protegido con contraseña.")
 
-    # Modo por defecto primero; si sale ilegible (texto pegado sin espacios,
-    # el bug real de la captura), reintentamos con modo "layout", que usa la
-    # posición de los glifos para reinsertar los espacios.
+    # 1) Modo por defecto. 2) Si sale ilegible, modo "layout" (reinserta
+    # espacios por posición). 3) Si SIGUE ilegible (caso Canva: sin glifos de
+    # espacio), fallback definitivo: renderizar a imagen y OCR.
     text = _extract(reader, None)
     if not is_readable_text(text):
         layout = _extract(reader, "layout")
         if is_readable_text(layout) or len(layout) > len(text):
             text = layout
+
+    if not is_readable_text(text):
+        try:
+            ocr = _ocr_pdf(pdf_bytes)
+        except Exception as exc:
+            print(f"[PDF] Fallback OCR falló: {exc}")
+            ocr = ""
+        if ocr and (is_readable_text(ocr) or len(ocr) > len(text)):
+            text = ocr
 
     if not text:
         raise ValueError(
@@ -71,7 +106,7 @@ def extract_text_from_pdf(pdf_bytes: bytes) -> str:
         )
     if not is_readable_text(text):
         raise ValueError(
-            "El PDF devolvió el texto sin espacios y no es legible. "
-            "Pega tu experiencia manualmente o sube una foto (OCR)."
+            "El PDF no dejó texto legible ni siquiera con OCR. "
+            "Pega tu experiencia manualmente o sube una foto más nítida."
         )
     return text
