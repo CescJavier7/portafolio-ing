@@ -268,6 +268,27 @@ async def apply_email(
     )
 
 
+@router.get("/quota")
+async def cv_quota(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """
+    Cuántas generaciones de IA le quedan al usuario esta semana. Lo usa el
+    wizard para BLOQUEAR las 'varitas mágicas' al agotarse (pero dejar el editor
+    manual funcionando). remaining=None → plan ilimitado.
+    """
+    org = await db.get(Organization, current_user.organization_id)
+    limit = plan_for(org.plan if org else None).cv_per_week
+    if limit == 0:
+        return {"limit": 0, "used": 0, "remaining": None}
+    window_start = datetime.now(timezone.utc) - timedelta(days=7)
+    used_result = await db.execute(
+        select(func.count())
+        .select_from(CVDocument)
+        .where(CVDocument.user_id == current_user.id, CVDocument.created_at >= window_start)
+    )
+    used = used_result.scalar_one()
+    return {"limit": limit, "used": used, "remaining": max(0, limit - used)}
+
+
 @router.get("", response_model=list[CVListItem])
 async def list_cvs(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     result = await db.execute(

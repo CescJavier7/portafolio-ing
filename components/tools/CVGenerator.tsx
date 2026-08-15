@@ -19,13 +19,16 @@ import { useSentraSession } from '@/lib/sentra/useSession';
 import { useAutoSave, clearDraft } from '@/lib/sentra/useAutoSave';
 import CVTour, { type CVTourDict } from '@/components/tools/CVTour';
 
-// Chequeo cliente de "texto legible" (espejo del backend text_guard): evita
-// mandar a generar un blob sin espacios (bug de extracción de PDF).
+// Chequeo cliente de "texto legible" (espejo EXACTO del backend text_guard):
+// la señal fuerte es la longitud media de palabra. Un PDF de Canva (glifos sin
+// espacios) da palabras enormes → se detecta y se avisa antes de generar.
 function looksUnreadable(text: string): boolean {
-  if (text.length < 200) return false;
-  const spaceRatio = (text.match(/ /g)?.length ?? 0) / text.length;
-  const longestRun = Math.max(0, ...text.split(/\s+/).map((w) => w.length));
-  return spaceRatio < 0.04 || longestRun > 60;
+  if (text.length < 120) return false;
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return true;
+  const avgWord = words.reduce((a, w) => a + w.length, 0) / words.length;
+  const longest = Math.max(...words.map((w) => w.length));
+  return avgWord < 1.6 || avgWord > 11 || longest > 40;
 }
 
 const DRAFT_PROFILE = 'cv_draft_profile';
@@ -68,6 +71,7 @@ export interface CVDict {
   uploadPdf: string;
   uploadCv: string;
   pdfBusy: string;
+  reading: string;
   unreadableText: string;
   tutorial: string;
   jobLabel: string;
@@ -340,7 +344,7 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
                       className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-green-600 dark:text-green-400 hover:underline disabled:opacity-60 transition-colors"
                     >
                       {pdfBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileUp className="w-3.5 h-3.5" />}
-                      {pdfBusy ? dict.pdfBusy : dict.uploadCv}
+                      {pdfBusy ? dict.reading : dict.uploadCv}
                     </button>
                     <input ref={pdfRef} type="file" accept="application/pdf,image/jpeg,image/png" multiple onChange={handleProfileFile} className="hidden" />
                   </div>

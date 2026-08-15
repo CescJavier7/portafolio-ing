@@ -32,4 +32,7 @@ done
 echo "[entrypoint] Migraciones OK. Levantando Uvicorn..."
 # exec: Uvicorn reemplaza al shell → recibe las señales (SIGTERM) directamente,
 # para un apagado limpio del contenedor.
-exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips='*'
+# --timeout-keep-alive 120: mantiene viva la conexión keep-alive hasta 120s
+# (default 5s). Importante para peticiones largas (generación con IA) detrás
+# de Traefik/Cloudflare: evita que la conexión ociosa se cierre a mitad.
+exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips='*' --timeout-keep-alive 120

@@ -1132,6 +1132,7 @@
     "uploadPdf": "Upload my CV (PDF)",
     "uploadCv": "Upload CV (PDF or photo)",
     "pdfBusy": "Reading PDF…",
+    "reading": "Reading…",
     "unreadableText": "The text looks space-less or unreadable (broken extraction). Paste it manually or upload a cleaner file.",
     "tutorial": "View tutorial",
     "jobLabel": "The job posting",

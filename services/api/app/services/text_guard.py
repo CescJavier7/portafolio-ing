@@ -10,18 +10,29 @@ En vez de dejar que llegue a Groq y falle feo, lo detectamos temprano y damos
 un mensaje accionable ("pega el texto o sube una foto").
 """
 
-MIN_LEN_TO_CHECK = 200   # textos cortos no se revisan (pueden ser una línea)
-MIN_SPACE_RATIO = 0.04   # texto normal ~15%; un blob sin espacios ~0-2%
-MAX_WORD_RUN = 60        # una "palabra" (run sin espacio) más larga = roto
+MIN_LEN_TO_CHECK = 120    # textos cortos no se revisan (pueden ser una línea)
+MAX_AVG_WORD_LEN = 11     # prosa normal ~5-6; aglutinado (Canva) se dispara
+MIN_AVG_WORD_LEN = 1.6    # "E s p a c i o e n t r e t o d o" también es basura
+MAX_WORD_RUN = 40         # la "palabra" (run sin whitespace) más larga aceptable
 
 
 def is_readable_text(text: str) -> bool:
-    n = len(text)
-    if n < MIN_LEN_TO_CHECK:
+    """
+    Detecta si un texto extraído es usable. La señal FUERTE es la longitud media
+    de palabra: al separar por CUALQUIER espacio en blanco (incl. saltos de
+    línea), la prosa normal da palabras de ~5-6 chars; un PDF de Canva
+    (glifos sin caracteres de espacio) da "palabras" enormes → se detecta y se
+    fuerza el OCR. También descarta el extremo contrario (un espacio entre cada
+    letra), que igual es ilegible para el LLM.
+    """
+    if len(text) < MIN_LEN_TO_CHECK:
         return True
-    space_ratio = text.count(" ") / n
-    longest_run = max((len(w) for w in text.split()), default=0)
-    return space_ratio >= MIN_SPACE_RATIO and longest_run <= MAX_WORD_RUN
+    words = text.split()  # separa por espacios Y saltos de línea
+    if not words:
+        return False
+    avg_word = sum(len(w) for w in words) / len(words)
+    longest = max(len(w) for w in words)
+    return MIN_AVG_WORD_LEN <= avg_word <= MAX_AVG_WORD_LEN and longest <= MAX_WORD_RUN
 
 
 def assert_readable(text: str) -> None:

@@ -83,7 +83,7 @@ def generate_cv(profile_text: str, job_posting: str) -> CVContent:
             {"role": "user", "content": user_message},
         ],
         temperature=0.4,
-        max_tokens=2500,
+        max_tokens=2000,
         response_format={"type": "json_object"},
     )
 
@@ -144,7 +144,7 @@ def improve_cv(current_content: dict, job_posting: str) -> CVContent:
             {"role": "user", "content": user_message},
         ],
         temperature=0.4,
-        max_tokens=2500,
+        max_tokens=2000,
         response_format={"type": "json_object"},
     )
 

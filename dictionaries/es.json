@@ -1132,6 +1132,7 @@
     "uploadPdf": "Subir mi CV en PDF",
     "uploadCv": "Subir CV (PDF o foto)",
     "pdfBusy": "Leyendo PDF…",
+    "reading": "Leyendo…",
     "unreadableText": "El texto parece sin espacios o ilegible (extracción rota). Pégalo manualmente o sube otro archivo más limpio.",
     "tutorial": "Ver tutorial",
     "jobLabel": "La oferta laboral",

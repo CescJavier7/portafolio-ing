@@ -111,7 +111,7 @@ async function request<T>(
   path: string,
   options: RequestInit = {},
   withAuth = false,
-  timeoutMs = 100000, // la generación con IA puede tardar; Cloudflare corta ~100s
+  timeoutMs = 120000, // la generación con IA puede tardar; alineado con Traefik/uvicorn (120s)
 ): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -637,7 +637,7 @@ export async function sentraGenerateCV(data: {
 // Subida multipart (OCR/PDF): NO pasa por request() (que fuerza Content-Type
 // JSON; el navegador debe poner el boundary del form). Mismo blindaje de
 // errores que request(): red/timeout/CORS → SentraApiError con motivo real.
-async function uploadMultipart<T>(path: string, file: File, timeoutMs = 100000): Promise<T> {
+async function uploadMultipart<T>(path: string, file: File, timeoutMs = 120000): Promise<T> {
   const token = getToken();
   const form = new FormData();
   form.append('file', file);
