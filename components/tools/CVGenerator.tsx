@@ -14,6 +14,7 @@ import {
   type SentraCVDocument, type SentraCVListItem, type SentraCVFolder,
 } from '@/lib/sentra/api';
 import { useSentraSession } from '@/lib/sentra/useSession';
+import { matchColor } from '@/lib/sentra/matchScore';
 import { useAutoSave, clearDraft } from '@/lib/sentra/useAutoSave';
 import CVTour, { type CVTourDict } from '@/components/tools/CVTour';
 import CVWizard from '@/components/tools/CVWizard';
@@ -143,6 +144,7 @@ export interface CVDict {
     folderNew: string;
     folderCreate: string;
     folderPlaceholder: string;
+    incompleteTitle: string;
   };
   pdf: {
     summary: string;
@@ -153,12 +155,6 @@ export interface CVDict {
     generatedBy: string;
   };
   tour: CVTourDict;
-}
-
-function matchColor(score: number): string {
-  if (score >= 80) return '#16a34a';
-  if (score >= 50) return '#ca8a04';
-  return '#dc2626';
 }
 
 const inputBase =

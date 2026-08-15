@@ -19,7 +19,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   Wand2, Download, Send, Plus, Trash2, ArrowLeft, ArrowRight, Mail, X, Copy,
-  Check, Lock, Loader2, ListChecks, Lightbulb, Cloud, Folder, FolderPlus, ExternalLink,
+  Check, Lock, Loader2, ListChecks, Lightbulb, Cloud, Folder, FolderPlus, ExternalLink, AlertCircle,
 } from 'lucide-react';
 import {
   sentraUpdateCV, sentraImproveCV, sentraApplyEmail, sentraCVQuota,
@@ -29,13 +29,9 @@ import {
 } from '@/lib/sentra/api';
 import { openCVPdf } from '@/lib/sentra/cvPdf';
 import { useCVWizard, cvWizard, cleanCVContent, CV_STEPS, type CVStep } from '@/lib/sentra/cvStore';
+import { matchColor, matchTint } from '@/lib/sentra/matchScore';
+import { validateCV, type CVFieldErrors } from '@/lib/sentra/cvSchema';
 import type { CVDict } from '@/components/tools/CVGenerator';
-
-function matchColor(score: number): string {
-  if (score >= 80) return '#16a34a';
-  if (score >= 50) return '#ca8a04';
-  return '#dc2626';
-}
 
 const inputBase =
   'w-full rounded-xl bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-4 py-2.5 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-green-500/50';
@@ -57,6 +53,11 @@ interface CVWizardProps {
 export default function CVWizard({ cv, dict, lang, onNew, onVersion }: CVWizardProps) {
   const { content, cvId, step } = useCVWizard();
   const wd = dict.wizard;
+
+  // Validación de completitud (Zod): bloquea descarga/envío y marca campos en
+  // rojo hasta que el CV esté 100% completo (nombre, titular, resumen, y cada
+  // experiencia con cargo + fecha + descripción, más habilidades y formación).
+  const validation = validateCV(content);
 
   // Hidrata el store al montar / al abrir otro CV del historial.
   useEffect(() => {
@@ -213,7 +214,11 @@ export default function CVWizard({ cv, dict, lang, onNew, onVersion }: CVWizardP
         <div className="flex items-center gap-4 min-w-0 flex-1">
           <div
             className="shrink-0 w-16 h-16 rounded-2xl border-4 flex flex-col items-center justify-center"
-            style={{ borderColor: matchColor(content.match_score), color: matchColor(content.match_score) }}
+            style={{
+              borderColor: matchColor(content.match_score),
+              color: matchColor(content.match_score),
+              backgroundColor: matchTint(content.match_score),
+            }}
           >
             <span className="text-xl font-black leading-none">{content.match_score}%</span>
             <span className="text-[8px] font-bold uppercase mt-0.5">{dict.matchLabel}</span>
@@ -245,7 +250,9 @@ export default function CVWizard({ cv, dict, lang, onNew, onVersion }: CVWizardP
           </button>
           <button
             onClick={downloadPdf}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-zinc-300 dark:border-zinc-700 text-[13px] font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/5"
+            disabled={!validation.ok}
+            title={validation.ok ? dict.downloadPdf : wd.incompleteTitle}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-zinc-300 dark:border-zinc-700 text-[13px] font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
           >
             <Download className="w-4 h-4" /> {dict.downloadPdf}
           </button>
@@ -271,6 +278,20 @@ export default function CVWizard({ cv, dict, lang, onNew, onVersion }: CVWizardP
         <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-2xl px-4 py-3">{error}</p>
       )}
 
+      {/* Aviso de completitud: qué falta para poder descargar/enviar. */}
+      {!validation.ok && (
+        <div className="rounded-2xl bg-red-500/5 border border-red-500/20 px-4 py-3">
+          <p className="flex items-center gap-2 text-[13px] font-bold text-red-600 dark:text-red-400 mb-1.5">
+            <AlertCircle className="w-4 h-4 shrink-0" /> {wd.incompleteTitle}
+          </p>
+          <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-red-600/90 dark:text-red-400/90">
+            {validation.missing.slice(0, 8).map((m, i) => (
+              <li key={i}>• {m}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* ── Split-screen ── */}
       <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-6 items-start">
         {/* IZQUIERDA: asistente */}
@@ -290,6 +311,8 @@ export default function CVWizard({ cv, dict, lang, onNew, onVersion }: CVWizardP
               folderId={folderId}
               onAssignFolder={assignFolder}
               onCreateFolder={createAndAssignFolder}
+              errors={validation.errors}
+              canSend={validation.ok}
             />
           </div>
 
@@ -304,7 +327,9 @@ export default function CVWizard({ cv, dict, lang, onNew, onVersion }: CVWizardP
             {isLast ? (
               <button
                 onClick={openApply}
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-green-500 text-black text-[13px] font-bold hover:scale-[1.02] transition-transform"
+                disabled={!validation.ok}
+                title={validation.ok ? wd.sendApplication : wd.incompleteTitle}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-green-500 text-black text-[13px] font-bold hover:scale-[1.02] transition-transform disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 <Send className="w-4 h-4" /> {wd.sendApplication}
               </button>
@@ -490,6 +515,14 @@ function Stepper({
   );
 }
 
+// Añade borde rojo a un input cuando tiene error de completitud.
+const errRing = (msg?: string) =>
+  msg ? ' border-red-400 dark:border-red-500/60 focus:ring-red-500/40' : '';
+function FieldError({ msg }: { msg?: string }) {
+  if (!msg) return null;
+  return <p className="mt-1 text-[11px] font-semibold text-red-500">{msg}</p>;
+}
+
 function StepBody({
   step,
   content,
@@ -499,6 +532,8 @@ function StepBody({
   folderId,
   onAssignFolder,
   onCreateFolder,
+  errors,
+  canSend,
 }: {
   step: CVStep;
   content: CVContent;
@@ -508,6 +543,8 @@ function StepBody({
   folderId: string | null;
   onAssignFolder: (id: string | null) => void;
   onCreateFolder: (name: string) => void;
+  errors: CVFieldErrors;
+  canSend: boolean;
 }) {
   const c = content;
 
@@ -517,11 +554,13 @@ function StepBody({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={fieldLabel}>{dict.fName}</label>
-            <input value={c.full_name} onChange={(e) => cvWizard.setField('full_name', e.target.value)} className={inputBase} />
+            <input value={c.full_name} onChange={(e) => cvWizard.setField('full_name', e.target.value)} className={inputBase + errRing(errors.full_name)} />
+            <FieldError msg={errors.full_name} />
           </div>
           <div>
             <label className={fieldLabel}>{dict.fHeadline}</label>
-            <input value={c.headline} onChange={(e) => cvWizard.setField('headline', e.target.value)} className={inputBase} />
+            <input value={c.headline} onChange={(e) => cvWizard.setField('headline', e.target.value)} className={inputBase + errRing(errors.headline)} />
+            <FieldError msg={errors.headline} />
           </div>
         </div>
         <div>
@@ -530,8 +569,9 @@ function StepBody({
             rows={4}
             value={c.summary}
             onChange={(e) => cvWizard.setField('summary', e.target.value)}
-            className={`${inputBase} resize-y`}
+            className={`${inputBase} resize-y${errRing(errors.summary)}`}
           />
+          <FieldError msg={errors.summary} />
         </div>
       </div>
     );
@@ -540,30 +580,40 @@ function StepBody({
   if (step === 'experience') {
     return (
       <div className="space-y-3">
-        {c.experience.map((e, i) => (
-          <div key={i} className="relative rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-2.5">
-            <button
-              type="button"
-              onClick={() => cvWizard.removeExperience(i)}
-              className="absolute top-3 right-3 text-zinc-400 hover:text-red-500"
-              aria-label="Quitar"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pr-8">
-              <input placeholder={dict.fRole} value={e.role} onChange={(ev) => cvWizard.setExperience(i, { role: ev.target.value })} className={inputBase} />
-              <input placeholder={dict.fCompany} value={e.company} onChange={(ev) => cvWizard.setExperience(i, { company: ev.target.value })} className={inputBase} />
-              <input placeholder={dict.fPeriod} value={e.period} onChange={(ev) => cvWizard.setExperience(i, { period: ev.target.value })} className={inputBase} />
+        {c.experience.map((e, i) => {
+          const exErr = errors.experience[i] ?? {};
+          return (
+            <div key={i} className="relative rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-2.5">
+              <button
+                type="button"
+                onClick={() => cvWizard.removeExperience(i)}
+                className="absolute top-3 right-3 text-zinc-400 hover:text-red-500"
+                aria-label="Quitar"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pr-8">
+                <div>
+                  <input placeholder={dict.fRole} value={e.role} onChange={(ev) => cvWizard.setExperience(i, { role: ev.target.value })} className={inputBase + errRing(exErr.role)} />
+                  <FieldError msg={exErr.role} />
+                </div>
+                <input placeholder={dict.fCompany} value={e.company} onChange={(ev) => cvWizard.setExperience(i, { company: ev.target.value })} className={inputBase} />
+                <div>
+                  <input placeholder={dict.fPeriod} value={e.period} onChange={(ev) => cvWizard.setExperience(i, { period: ev.target.value })} className={inputBase + errRing(exErr.period)} />
+                  <FieldError msg={exErr.period} />
+                </div>
+              </div>
+              <textarea
+                placeholder={dict.fHighlights}
+                rows={3}
+                value={e.highlights.join('\n')}
+                onChange={(ev) => cvWizard.setExperience(i, { highlights: ev.target.value.split('\n') })}
+                className={`${inputBase} resize-y${errRing(exErr.highlights)}`}
+              />
+              <FieldError msg={exErr.highlights} />
             </div>
-            <textarea
-              placeholder={dict.fHighlights}
-              rows={3}
-              value={e.highlights.join('\n')}
-              onChange={(ev) => cvWizard.setExperience(i, { highlights: ev.target.value.split('\n') })}
-              className={`${inputBase} resize-y`}
-            />
-          </div>
-        ))}
+          );
+        })}
         <button
           type="button"
           onClick={() => cvWizard.addExperience()}
@@ -663,10 +713,15 @@ function StepBody({
       )}
       <button
         onClick={onApply}
-        className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-[1.01] transition-transform"
+        disabled={!canSend}
+        title={canSend ? dict.wizard.sendApplication : dict.wizard.incompleteTitle}
+        className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-[1.01] transition-transform disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
       >
         <Send className="w-4 h-4" /> {dict.wizard.sendApplication}
       </button>
+      {!canSend && (
+        <p className="text-[12px] text-red-500 text-center">{dict.wizard.incompleteTitle}</p>
+      )}
     </div>
   );
 }

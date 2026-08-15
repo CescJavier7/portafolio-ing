@@ -94,15 +94,17 @@ async def _issue_tokens(db: AsyncSession, response: Response, user: User, family
 @router.post("/register", response_model=MessageResponse)
 @limiter.limit("5/minute")
 async def register(request: Request, payload: RegisterRequest, db: AsyncSession = Depends(get_db)):
-    # Mensaje de respuesta SIEMPRE idéntico exista o no el email:
-    # evita que un atacante enumere qué correos ya están registrados.
-    generic_response = MessageResponse(
-        message="Si los datos son válidos, revisa tu correo para verificar la cuenta."
-    )
-
+    # TRADE-OFF DE SEGURIDAD (decisión de producto): devolvemos 409 explícito si
+    # el correo ya existe, para una UX clara ("ya registrado"). Esto SACRIFICA la
+    # anti-enumeración (un atacante puede sondear qué correos existen). Se mitiga
+    # con el rate-limit de 5/min de este endpoint. Si algún día prima el
+    # hardening sobre la UX, volver a respuesta genérica idéntica.
     existing = await db.execute(select(User).where(User.email == payload.email))
     if existing.scalar_one_or_none() is not None:
-        return generic_response
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Este correo ya se encuentra registrado.",
+        )
 
     organization = Organization(name=payload.organization_name)
     db.add(organization)
@@ -136,7 +138,9 @@ async def register(request: Request, payload: RegisterRequest, db: AsyncSession 
     except Exception as exc:
         print(f"[EMAIL] Fallo al enviar verificación a {payload.email}: {exc}")
 
-    return generic_response
+    return MessageResponse(
+        message="Cuenta creada. Revisa tu correo para verificarla (ya puedes iniciar sesión)."
+    )
 
 
 def _verify_result_page(title: str, body: str) -> HTMLResponse:
@@ -248,11 +252,13 @@ async def login(request: Request, response: Response, payload: LoginRequest, db:
         await db.commit()
         raise invalid_credentials
 
-    if not user.email_verified:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Verifica tu correo antes de iniciar sesión.",
-        )
+    # NOTA (decisión de arquitectura): la verificación de correo NO bloquea el
+    # login. Antes un `email_verified=False` devolvía 403 y, como los correos
+    # caían en spam, dejaba cuentas legítimas encerradas para siempre. La
+    # verificación gatea ACCIONES sensibles (no el acceso): el frontend muestra
+    # un banner de "verifica tu correo" leyendo `email_verified` de /auth/me, y
+    # las features críticas ya tienen sus propias barreras (ej. escaneo real =
+    # verificación DNS del dominio, independiente de esto).
 
     user.failed_login_attempts = 0
     user.locked_until = None

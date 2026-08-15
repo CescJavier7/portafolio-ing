@@ -38,7 +38,14 @@ def send_verification_email(to_email: str, raw_token: str) -> None:
     </div>
     """
 
-    _send(to_email, "Sentra — Verifica tu correo", html)
+    text = (
+        "Verifica tu correo\n\n"
+        "Creaste una cuenta en Sentra. Para activarla, abre este enlace:\n"
+        f"{verify_url}\n\n"
+        f"El enlace expira en {settings.EMAIL_VERIFICATION_EXPIRE_HOURS} horas. "
+        "Si no creaste esta cuenta, ignora este correo."
+    )
+    _send(to_email, "Sentra — Verifica tu correo", html, text=text)
 
 
 def send_team_invite_email(to_email: str, raw_token: str, org_name: str, inviter_name: str | None) -> None:
@@ -65,14 +72,25 @@ def send_team_invite_email(to_email: str, raw_token: str, org_name: str, inviter
     _send(to_email, f"Sentra — Invitación de {org_name}", html)
 
 
-def _send(to_email: str, subject: str, html: str) -> None:
+def _send(to_email: str, subject: str, html: str, text: str | None = None) -> None:
+    # Enviar SIEMPRE multipart (html + text): los filtros anti-spam penalizan los
+    # correos solo-HTML. `reply_to` a una dirección real mejora la reputación y
+    # da salida al usuario. Si no se pasa `text`, derivamos uno pobre pero válido.
+    payload = {
+        "from": settings.EMAIL_FROM,
+        "to": [to_email],
+        "subject": subject,
+        "html": html,
+        "text": text or "Abre este correo en un cliente compatible con HTML.",
+        "reply_to": "admin@cescjavier.dev",
+    }
     response = requests.post(
         RESEND_API_URL,
         headers={
             "Authorization": f"Bearer {settings.RESEND_API_KEY}",
             "Content-Type": "application/json",
         },
-        json={"from": settings.EMAIL_FROM, "to": [to_email], "subject": subject, "html": html},
+        json=payload,
         timeout=10,
     )
     response.raise_for_status()

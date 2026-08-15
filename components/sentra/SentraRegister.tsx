@@ -46,11 +46,13 @@ export default function SentraRegister({ lang, dict }: { lang: string; dict: Dic
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [duplicate, setDuplicate] = useState(false); // 409: correo ya registrado
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setDuplicate(false);
     try {
       await sentraRegister({
         email,
@@ -58,11 +60,15 @@ export default function SentraRegister({ lang, dict }: { lang: string; dict: Dic
         organization_name: org,
         marketing_consent: consent,
       });
-      // La API responde SIEMPRE el mensaje genérico (anti-enumeración):
-      // el estado de éxito aquí solo significa "petición aceptada".
       setDone(true);
     } catch (err) {
-      setError(err instanceof SentraApiError ? err.detail : 'Error de conexión.');
+      // 409 = correo ya registrado: alerta clara + CTA a login.
+      if (err instanceof SentraApiError && err.status === 409) {
+        setDuplicate(true);
+        setError(err.detail);
+      } else {
+        setError(err instanceof SentraApiError ? err.detail : 'Error de conexión.');
+      }
     } finally {
       setLoading(false);
     }
@@ -166,9 +172,20 @@ export default function SentraRegister({ lang, dict }: { lang: string; dict: Dic
                 </label>
 
                 {error && (
-                  <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+                  <div className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
                     {error}
-                  </p>
+                    {duplicate && (
+                      <>
+                        {' '}
+                        <Link
+                          href={`/${lang}/sentinel/login`}
+                          className="font-bold underline hover:text-red-600"
+                        >
+                          {dict.loginLink}
+                        </Link>
+                      </>
+                    )}
+                  </div>
                 )}
 
                 <button

@@ -1217,7 +1217,8 @@
       "folderAll": "Todas",
       "folderNew": "Nueva",
       "folderCreate": "Crear",
-      "folderPlaceholder": "Ej. Ciberseguridad, Ingeniería…"
+      "folderPlaceholder": "Ej. Ciberseguridad, Ingeniería…",
+      "incompleteTitle": "Completa tu CV para descargar o enviar la postulación."
     },
     "pdf": {
       "summary": "Resumen profesional",
