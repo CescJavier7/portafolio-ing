@@ -4,20 +4,19 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
-  Sparkles, Upload, Trash2, Download, ArrowUpRight, Lock,
-  Target, ListChecks, Lightbulb, Plus, FileUp, Send, Copy, Check, X, Mail, Wand2, Loader2, GraduationCap,
+  Sparkles, Upload, Trash2, ArrowUpRight, Lock,
+  Target, ListChecks, FileUp, Loader2, GraduationCap,
 } from 'lucide-react';
 import {
-  sentraGenerateCV, sentraOcrJobPosting, sentraExtractCVPdf, sentraApplyEmail,
-  sentraListCVs, sentraGetCV, sentraDeleteCV, sentraUpdateCV, sentraImproveCV,
+  sentraGenerateCV, sentraOcrJobPosting, sentraExtractCVPdf,
+  sentraListCVs, sentraGetCV, sentraDeleteCV,
   SentraApiError,
-  type SentraCVDocument, type SentraCVListItem, type SentraApplyEmail,
-  type CVContent, type CVExperienceItem,
+  type SentraCVDocument, type SentraCVListItem,
 } from '@/lib/sentra/api';
-import { openCVPdf } from '@/lib/sentra/cvPdf';
 import { useSentraSession } from '@/lib/sentra/useSession';
 import { useAutoSave, clearDraft } from '@/lib/sentra/useAutoSave';
 import CVTour, { type CVTourDict } from '@/components/tools/CVTour';
+import CVWizard from '@/components/tools/CVWizard';
 
 // Chequeo cliente de "texto legible" (espejo EXACTO del backend text_guard):
 // la señal fuerte es la longitud media de palabra. Un PDF de Canva (glifos sin
@@ -120,6 +119,24 @@ export interface CVDict {
   fHighlights: string;
   addExperience: string;
   linesHint: string;
+  wizard: {
+    steps: { personal: string; experience: string; education: string; skills: string; review: string };
+    intro: { personal: string; experience: string; education: string; skills: string; review: string };
+    stepOf: string;
+    back: string;
+    next: string;
+    sendApplication: string;
+    magic: string;
+    magicHint: string;
+    aiLeft: string;
+    aiUnlimited: string;
+    aiLocked: string;
+    previewTitle: string;
+    previewEmpty: string;
+    saving: string;
+    saved: string;
+    reviewClear: string;
+  };
   pdf: {
     summary: string;
     experience: string;
@@ -411,15 +428,17 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
               </form>
             )}
 
-            {/* RESULTADO */}
+            {/* RESULTADO — asistente split-screen (stepper + vista previa A4 en vivo) */}
             {result && (
-              <CVResult
+              <CVWizard
                 cv={result}
                 dict={dict}
+                lang={lang}
                 onNew={() => { setResult(null); setError(null); }}
-                onImproved={(doc) => {
-                  // La mejora crea una VERSIÓN nueva: se muestra y entra al historial.
-                  setResult(doc);
+                onVersion={(doc) => {
+                  // La mejora con IA crea una VERSIÓN nueva: entra al historial.
+                  // NO tocamos `result` (ancla del wizard) para no re-hidratar el
+                  // store y expulsar al usuario del paso donde está.
                   setHistory((prev) => [
                     { id: doc.id, title: doc.title, match_score: doc.match_score, created_at: doc.created_at, updated_at: doc.updated_at },
                     ...prev,
@@ -500,281 +519,3 @@ function GateCard({ lang, dict }: { lang: string; dict: CVDict }) {
     </div>
   );
 }
-
-function CVResult({ cv, dict, onNew, onImproved }: { cv: SentraCVDocument; dict: CVDict; onNew: () => void; onImproved: (doc: SentraCVDocument) => void }) {
-  // Vista previa EDITABLE: el contenido es estado local. El PDF, el guardado
-  // y la mejora usan estas ediciones. Se re-sincroniza si cambia el CV (tras mejorar).
-  const [content, setContent] = useState<CVContent>(cv.content);
-  useEffect(() => { setContent(cv.content); }, [cv.id]); // eslint-disable-line react-hooks/exhaustive-deps
-  const c = content;
-
-  const [improving, setImproving] = useState(false);
-  const [improveError, setImproveError] = useState<string | null>(null);
-
-  const [applyOpen, setApplyOpen] = useState(false);
-  const [applyBusy, setApplyBusy] = useState(false);
-  const [email, setEmail] = useState<SentraApplyEmail | null>(null);
-  const [recipient, setRecipient] = useState('');
-  const [subject, setSubject] = useState('');
-  const [body, setBody] = useState('');
-  const [copied, setCopied] = useState(false);
-  const [applyError, setApplyError] = useState<string | null>(null);
-
-  // Quita líneas vacías de los arrays antes de enviar/compilar el PDF.
-  function clean(x: CVContent): CVContent {
-    return {
-      ...x,
-      education: x.education.filter((s) => s.trim()),
-      skills: x.skills.filter((s) => s.trim()),
-      languages: x.languages.filter((s) => s.trim()),
-      experience: x.experience.map((e) => ({ ...e, highlights: e.highlights.filter((h) => h.trim()) })),
-    };
-  }
-  function setField<K extends keyof CVContent>(key: K, value: CVContent[K]) {
-    setContent((prev) => ({ ...prev, [key]: value }));
-  }
-  function setExp(i: number, patch: Partial<CVExperienceItem>) {
-    setContent((prev) => ({ ...prev, experience: prev.experience.map((e, idx) => (idx === i ? { ...e, ...patch } : e)) }));
-  }
-  function addExp() {
-    setContent((prev) => ({ ...prev, experience: [...prev.experience, { role: '', company: '', period: '', highlights: [] }] }));
-  }
-  function removeExp(i: number) {
-    setContent((prev) => ({ ...prev, experience: prev.experience.filter((_, idx) => idx !== i) }));
-  }
-
-  function downloadPdf() {
-    sentraUpdateCV(cv.id, { content: clean(content) }).catch(() => {}); // persiste ediciones (best-effort)
-    openCVPdf(clean(content), dict.pdf);
-  }
-
-  async function applyImprovements() {
-    setImproving(true);
-    setImproveError(null);
-    try {
-      // Envía el CV EDITADO; el backend lo reescribe y crea una versión nueva (1 crédito).
-      const doc = await sentraImproveCV(cv.id, clean(content));
-      onImproved(doc);
-    } catch (err) {
-      if (err instanceof SentraApiError && err.status === 402) setImproveError(dict.limitReached);
-      else setImproveError(err instanceof SentraApiError ? err.detail : dict.errorGeneric);
-    } finally {
-      setImproving(false);
-    }
-  }
-
-  async function openApply() {
-    setApplyOpen(true);
-    if (email) return;
-    setApplyBusy(true);
-    setApplyError(null);
-    try {
-      // Guarda las ediciones antes: el correo se redacta desde el CV guardado.
-      await sentraUpdateCV(cv.id, { content: clean(content) }).catch(() => {});
-      const e = await sentraApplyEmail(cv.id);
-      setEmail(e);
-      setRecipient(e.recipient);
-      setSubject(e.subject);
-      setBody(e.body);
-    } catch (err) {
-      setApplyError(err instanceof SentraApiError ? err.detail : 'No se pudo redactar el correo.');
-    } finally {
-      setApplyBusy(false);
-    }
-  }
-
-  function openMailClient() {
-    // mailto NO adjunta archivos (seguridad del navegador): descargamos el CV
-    // editado para que el usuario lo arrastre.
-    openCVPdf(clean(content), dict.pdf);
-    const to = recipient.trim();
-    const url = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.location.href = url;
-  }
-
-  const suggestions = c.actionable_suggestions?.length ? c.actionable_suggestions : c.tips;
-  const fieldLabel = 'block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5';
-
-  return (
-    <div className="space-y-6">
-      {/* Cabecera con match score + acciones */}
-      <div className="rounded-3xl bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 md:p-8 flex flex-col sm:flex-row items-center gap-6">
-        <div
-          className="shrink-0 w-24 h-24 rounded-2xl border-4 flex flex-col items-center justify-center"
-          style={{ borderColor: matchColor(c.match_score), color: matchColor(c.match_score) }}
-        >
-          <span className="text-3xl font-black leading-none">{c.match_score}%</span>
-          <span className="text-[10px] font-bold uppercase mt-1">{dict.matchLabel}</span>
-        </div>
-        <div className="min-w-0 flex-1 text-center sm:text-left">
-          <h2 className="text-xl font-black tracking-tight text-zinc-900 dark:text-white">{c.full_name || cv.title}</h2>
-          <p className="text-[14px] text-green-600 dark:text-green-400 font-semibold">{c.headline}</p>
-        </div>
-        <div className="flex flex-wrap gap-3 shrink-0 justify-center">
-          <button onClick={applyImprovements} disabled={improving} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-violet-600 text-white text-[13px] font-bold hover:scale-[1.02] transition-transform disabled:opacity-60">
-            <Wand2 className={`w-4 h-4 ${improving ? 'animate-pulse' : ''}`} /> {improving ? dict.improving : dict.applyImprovements}
-          </button>
-          <button onClick={openApply} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-green-500 text-black text-[13px] font-bold hover:scale-[1.02] transition-transform">
-            <Send className="w-4 h-4" /> {dict.apply}
-          </button>
-          <button onClick={downloadPdf} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-zinc-300 dark:border-zinc-700 text-[13px] font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/5">
-            <Download className="w-4 h-4" /> {dict.downloadPdf}
-          </button>
-          <button onClick={onNew} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-zinc-300 dark:border-zinc-700 text-[13px] font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5">
-            <Plus className="w-4 h-4" /> {dict.newCv}
-          </button>
-        </div>
-      </div>
-
-      {improveError && (
-        <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">{improveError}</p>
-      )}
-
-      {/* Panel One-Click Apply */}
-      {applyOpen && (
-        <div className="rounded-3xl bg-white dark:bg-zinc-900/40 border border-green-500/30 shadow-sm p-6 md:p-8">
-          <div className="flex items-center justify-between mb-4">
-            <p className="flex items-center gap-2 text-sm font-black tracking-tight text-zinc-900 dark:text-white">
-              <Mail className="w-4 h-4 text-green-500" /> {dict.applyTitle}
-            </p>
-            <button onClick={() => setApplyOpen(false)} className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-
-          {applyBusy ? (
-            <p className="text-sm text-zinc-400 dark:text-zinc-500 animate-pulse py-6 text-center">{dict.applyBusy}</p>
-          ) : applyError ? (
-            <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">{applyError}</p>
-          ) : (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">{dict.applyRecipient}</label>
-                <input
-                  type="email"
-                  value={recipient}
-                  onChange={(e) => setRecipient(e.target.value)}
-                  placeholder={dict.applyRecipientPlaceholder}
-                  className={inputBase}
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">{dict.applySubject}</label>
-                <input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} className={inputBase} />
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">{dict.applyBody}</label>
-                <textarea rows={9} value={body} onChange={(e) => setBody(e.target.value)} className={`${inputBase} resize-y`} />
-              </div>
-
-              <p className="text-[12px] text-amber-600 dark:text-amber-400 bg-amber-500/5 border border-amber-500/20 rounded-xl px-4 py-3 leading-relaxed">
-                {dict.applyInstruction}
-              </p>
-
-              <div className="flex flex-wrap gap-3">
-                <button onClick={openMailClient} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-green-500 text-black text-[13px] font-bold hover:scale-[1.02] transition-transform">
-                  <Mail className="w-4 h-4" /> {dict.applyOpenMail}
-                </button>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(body);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 1500);
-                  }}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-zinc-300 dark:border-zinc-700 text-[13px] font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5"
-                >
-                  {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                  {copied ? dict.applyCopied : dict.applyCopyBody}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Contenido del CV — EDITABLE */}
-      <div className="rounded-3xl bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 md:p-8 space-y-5">
-        <p className="text-[12px] text-zinc-400 dark:text-zinc-500">{dict.editHint}</p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className={fieldLabel}>{dict.fName}</label>
-            <input value={c.full_name} onChange={(ev) => setField('full_name', ev.target.value)} className={inputBase} />
-          </div>
-          <div>
-            <label className={fieldLabel}>{dict.fHeadline}</label>
-            <input value={c.headline} onChange={(ev) => setField('headline', ev.target.value)} className={inputBase} />
-          </div>
-        </div>
-
-        <div>
-          <label className={fieldLabel}>{dict.summaryTitle}</label>
-          <textarea rows={3} value={c.summary} onChange={(ev) => setField('summary', ev.target.value)} className={`${inputBase} resize-y`} />
-        </div>
-
-        <div>
-          <label className={fieldLabel}>{dict.experienceTitle}</label>
-          <div className="space-y-3">
-            {c.experience.map((e, i) => (
-              <div key={i} className="relative rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-2.5">
-                <button type="button" onClick={() => removeExp(i)} className="absolute top-3 right-3 text-zinc-400 hover:text-red-500" aria-label="Quitar">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pr-8">
-                  <input placeholder={dict.fRole} value={e.role} onChange={(ev) => setExp(i, { role: ev.target.value })} className={inputBase} />
-                  <input placeholder={dict.fCompany} value={e.company} onChange={(ev) => setExp(i, { company: ev.target.value })} className={inputBase} />
-                  <input placeholder={dict.fPeriod} value={e.period} onChange={(ev) => setExp(i, { period: ev.target.value })} className={inputBase} />
-                </div>
-                <textarea
-                  placeholder={dict.fHighlights}
-                  rows={3}
-                  value={e.highlights.join('\n')}
-                  onChange={(ev) => setExp(i, { highlights: ev.target.value.split('\n') })}
-                  className={`${inputBase} resize-y`}
-                />
-              </div>
-            ))}
-            <button type="button" onClick={addExp} className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-green-600 dark:text-green-400 hover:underline">
-              <Plus className="w-3.5 h-3.5" /> {dict.addExperience}
-            </button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className={fieldLabel}>{dict.skillsTitle} <span className="normal-case font-normal text-zinc-400">· {dict.linesHint}</span></label>
-            <textarea rows={5} value={c.skills.join('\n')} onChange={(ev) => setField('skills', ev.target.value.split('\n'))} className={`${inputBase} resize-y`} />
-          </div>
-          <div>
-            <label className={fieldLabel}>{dict.languagesTitle} <span className="normal-case font-normal text-zinc-400">· {dict.linesHint}</span></label>
-            <textarea rows={5} value={c.languages.join('\n')} onChange={(ev) => setField('languages', ev.target.value.split('\n'))} className={`${inputBase} resize-y`} />
-          </div>
-        </div>
-
-        <div>
-          <label className={fieldLabel}>{dict.educationTitle} <span className="normal-case font-normal text-zinc-400">· {dict.linesHint}</span></label>
-          <textarea rows={3} value={c.education.join('\n')} onChange={(ev) => setField('education', ev.target.value.split('\n'))} className={`${inputBase} resize-y`} />
-        </div>
-      </div>
-
-      {/* Análisis del match (el diferenciador) */}
-      {(c.missing_requirements.length > 0 || suggestions.length > 0) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {c.missing_requirements.length > 0 && (
-            <div className="rounded-3xl bg-amber-500/5 border border-amber-500/20 p-6">
-              <p className="flex items-center gap-2 text-sm font-bold text-amber-600 dark:text-amber-400 mb-3"><ListChecks className="w-4 h-4" /> {dict.missingTitle}</p>
-              <ul className="space-y-1.5">{c.missing_requirements.map((m, i) => <li key={i} className="text-[13px] text-zinc-600 dark:text-zinc-300">• {m}</li>)}</ul>
-            </div>
-          )}
-          {suggestions.length > 0 && (
-            <div className="rounded-3xl bg-violet-500/5 border border-violet-500/20 p-6">
-              <p className="flex items-center gap-2 text-sm font-bold text-violet-600 dark:text-violet-400 mb-3"><Lightbulb className="w-4 h-4" /> {dict.tipsTitle}</p>
-              <ul className="space-y-1.5">{suggestions.map((t, i) => <li key={i} className="text-[13px] text-zinc-600 dark:text-zinc-300">• {t}</li>)}</ul>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-

@@ -716,6 +716,19 @@ export async function sentraImproveCV(id: string, content: CVContent): Promise<S
   return request(`/api/v1/cv/${id}/improve`, { method: 'POST', body: JSON.stringify({ content }) }, true);
 }
 
+export interface SentraCVQuota {
+  limit: number;
+  used: number;
+  remaining: number | null; // null = ilimitado (planes de pago)
+}
+
+// Cuántas generaciones/mejoras con IA le quedan al usuario esta semana. El
+// wizard lo usa para BLOQUEAR las varitas mágicas al agotarse (dejando el
+// editor manual intacto). remaining=null → plan sin límite.
+export async function sentraCVQuota(): Promise<SentraCVQuota> {
+  return request('/api/v1/cv/quota', { method: 'GET' }, true);
+}
+
 // ── Registro de auditoría ───────────────────────────────────────────
 
 export interface SentraAuditEntry {

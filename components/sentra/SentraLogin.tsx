@@ -52,10 +52,15 @@ export default function SentraLogin({ lang, dict }: { lang: string; dict: Dict }
       await sentraLogin({ email, password });
       router.push(`/${lang}/sentinel/panel`);
     } catch (err) {
+      // 403 = cuenta sin verificar: único caso con UI especial (CTA de reenvío).
       if (err instanceof SentraApiError && err.status === 403) {
         setUnverified(true);
-      } else if (err instanceof SentraApiError && (err.status === 401 || err.status === 423)) {
-        setError(err.detail);
+      } else if (err instanceof SentraApiError) {
+        // Cualquier otro error de la API (401 credenciales, 423 bloqueo, 429
+        // rate limit, 0 = red/CORS/timeout, 5xx = backend caído) muestra su
+        // motivo REAL. Nada de disfrazar un backend inalcanzable como
+        // "credenciales inválidas": eso oculta incidentes de infraestructura.
+        setError(err.detail || dict.genericError);
       } else {
         setError(dict.genericError);
       }

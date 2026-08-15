@@ -1181,6 +1181,36 @@
     "fHighlights": "Achievements (one per line)",
     "addExperience": "Add experience",
     "linesHint": "one per line",
+    "wizard": {
+      "steps": {
+        "personal": "Details",
+        "experience": "Experience",
+        "education": "Education",
+        "skills": "Skills",
+        "review": "Review"
+      },
+      "intro": {
+        "personal": "Your name, professional headline and a summary tailored to the role.",
+        "experience": "Reorder and refine your experience. One achievement per line.",
+        "education": "Your academic background. One line per degree or course.",
+        "skills": "Skills and languages relevant to the position.",
+        "review": "Review the match analysis and send your application."
+      },
+      "stepOf": "Step {n} of {total}",
+      "back": "Back",
+      "next": "Next",
+      "sendApplication": "Send application",
+      "magic": "Improve with AI",
+      "magicHint": "Rewrites the whole CV to raise the match with the job (uses 1 credit).",
+      "aiLeft": "{n} AI uses left this week",
+      "aiUnlimited": "Unlimited AI",
+      "aiLocked": "AI limit reached. Keep editing your CV manually with our pro editor.",
+      "previewTitle": "Live preview",
+      "previewEmpty": "Your CV will appear here as you edit.",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "reviewClear": "No gaps found: your CV covers the job's key requirements. You can send your application."
+    },
     "pdf": {
       "summary": "Professional summary",
       "experience": "Experience",

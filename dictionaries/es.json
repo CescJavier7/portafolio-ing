@@ -1181,6 +1181,36 @@
     "fHighlights": "Logros (uno por línea)",
     "addExperience": "Agregar experiencia",
     "linesHint": "uno por línea",
+    "wizard": {
+      "steps": {
+        "personal": "Datos",
+        "experience": "Experiencia",
+        "education": "Formación",
+        "skills": "Habilidades",
+        "review": "Revisar"
+      },
+      "intro": {
+        "personal": "Tu nombre, titular profesional y un resumen orientado a la oferta.",
+        "experience": "Reordena y afina tus experiencias. Un logro por línea.",
+        "education": "Tu formación académica. Una línea por título o curso.",
+        "skills": "Habilidades e idiomas relevantes para la vacante.",
+        "review": "Revisa el análisis del match y envía tu postulación."
+      },
+      "stepOf": "Paso {n} de {total}",
+      "back": "Atrás",
+      "next": "Siguiente",
+      "sendApplication": "Enviar postulación",
+      "magic": "Mejorar con IA",
+      "magicHint": "Reescribe todo el CV para subir el match con la oferta (consume 1 crédito).",
+      "aiLeft": "{n} usos de IA esta semana",
+      "aiUnlimited": "IA ilimitada",
+      "aiLocked": "Límite de IA alcanzado. Sigue editando tu CV manualmente con nuestro editor pro.",
+      "previewTitle": "Vista previa en vivo",
+      "previewEmpty": "Tu CV aparecerá aquí mientras lo editas.",
+      "saving": "Guardando…",
+      "saved": "Guardado",
+      "reviewClear": "Sin observaciones: tu CV cubre los requisitos clave de la oferta. Ya puedes enviar tu postulación."
+    },
     "pdf": {
       "summary": "Resumen profesional",
       "experience": "Experiencia",

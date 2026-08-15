@@ -121,13 +121,12 @@ services:
       # Mismo patrón que portfolio-app: sin certresolver, TLS lo resuelve Cloudflare.
       - "traefik.http.routers.sentra-api.tls=true"
       - "traefik.http.services.sentra-api.loadbalancer.server.port=8000"
-      # Timeouts largos hacia el backend: la generación con IA (Groq) puede
-      # tardar decenas de segundos. Un serversTransport propio sube el tiempo
-      # que Traefik espera por la respuesta del backend a 120s (default = sin
-      # límite, pero lo fijamos explícito y también el idle de la conexión).
-      - "traefik.http.serversTransports.sentraapi.forwardingTimeouts.responseHeaderTimeout=120s"
-      - "traefik.http.serversTransports.sentraapi.forwardingTimeouts.idleConnTimeout=120s"
-      - "traefik.http.services.sentra-api.loadbalancer.serversTransport=sentraapi@docker"
+      # NOTA: NO usamos un `serversTransport` propio. Traefik por defecto NO pone
+      # límite al tiempo de respuesta del backend (responseHeaderTimeout=0), así
+      # que la generación lenta con IA ya está cubierta. El timeout real se
+      # maneja en Uvicorn (--timeout-keep-alive) y en el cliente (120s). Un
+      # serversTransport@docker mal referenciado deja el servicio sin ruta →
+      # 502/503 → login roto. No vale la pena el riesgo por un default que ya sirve.
       # Rate limiting también a nivel de proxy, como capa extra ante el
       # rate limiting propio de la app (defensa en profundidad).
       - "traefik.http.middlewares.sentra-api-ratelimit.ratelimit.average=50"
