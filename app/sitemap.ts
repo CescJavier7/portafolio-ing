@@ -27,6 +27,7 @@ const PATHS: { path: string; priority: number; freq: 'weekly' | 'monthly' }[] = 
   { path: '/sentinel/scan', priority: 0.9, freq: 'weekly' }, // escáner gratis: gancho de SEO
   { path: '/sentinel/precios', priority: 0.7, freq: 'monthly' },
   { path: '/sentinel/seguridad', priority: 0.6, freq: 'monthly' },
+  { path: '/herramientas/cv', priority: 0.8, freq: 'monthly' }, // generador de CV (gancho SEO)
   { path: '/blog', priority: 0.8, freq: 'weekly' },
   { path: '/legal/terminos', priority: 0.3, freq: 'monthly' },
   { path: '/legal/privacidad', priority: 0.3, freq: 'monthly' },

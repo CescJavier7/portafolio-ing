@@ -1,5 +1,12 @@
 FROM python:3.12-slim
 
+# Tesseract OCR (+ packs de idioma español e inglés) para el generador de CV:
+# pytesseract es solo un wrapper, necesita el binario del sistema. Se limpia
+# el cache de apt en la misma capa para no engordar la imagen.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-spa tesseract-ocr-eng \
+    && rm -rf /var/lib/apt/lists/*
+
 # Usuario no-root: si el contenedor se compromete, el proceso no corre
 # como root dentro del contenedor (reduce el radio de daño de un escape).
 RUN useradd --create-home --shell /bin/bash sentra

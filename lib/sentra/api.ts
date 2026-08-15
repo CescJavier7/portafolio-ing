@@ -555,6 +555,99 @@ export async function sentraDeleteWebhook(webhookId: string): Promise<void> {
   await request(`/api/v1/webhooks/${webhookId}`, { method: 'DELETE' }, true);
 }
 
+// ── Generador de CV ─────────────────────────────────────────────────
+
+export interface CVExperienceItem {
+  role: string;
+  company: string;
+  period: string;
+  highlights: string[];
+}
+
+export interface CVContent {
+  full_name: string;
+  headline: string;
+  summary: string;
+  experience: CVExperienceItem[];
+  education: string[];
+  skills: string[];
+  languages: string[];
+  match_score: number;
+  missing_requirements: string[];
+  tips: string[];
+}
+
+export interface SentraCVDocument {
+  id: string;
+  title: string;
+  job_posting: string;
+  content: CVContent;
+  match_score: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SentraCVListItem {
+  id: string;
+  title: string;
+  match_score: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function sentraGenerateCV(data: {
+  title?: string;
+  profile_text: string;
+  job_posting: string;
+}): Promise<SentraCVDocument> {
+  return request('/api/v1/cv', { method: 'POST', body: JSON.stringify(data) }, true);
+}
+
+// OCR de la foto de la oferta: multipart/form-data, así que NO pasa por el
+// helper request() (que fuerza Content-Type JSON). El navegador pone el
+// boundary del form solo; nosotros solo agregamos el token.
+export async function sentraOcrJobPosting(file: File): Promise<{ text: string }> {
+  const token = getToken();
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(`${API_BASE}/api/v1/cv/ocr`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    let detail = 'No se pudo procesar la imagen.';
+    try {
+      const body = await res.json();
+      if (typeof body.detail === 'string') detail = body.detail;
+    } catch {
+      /* sin JSON */
+    }
+    throw new SentraApiError(res.status, detail);
+  }
+  return res.json() as Promise<{ text: string }>;
+}
+
+export async function sentraListCVs(): Promise<SentraCVListItem[]> {
+  return request('/api/v1/cv', { method: 'GET' }, true);
+}
+
+export async function sentraGetCV(id: string): Promise<SentraCVDocument> {
+  return request(`/api/v1/cv/${id}`, { method: 'GET' }, true);
+}
+
+export async function sentraUpdateCV(
+  id: string,
+  data: { title?: string; content?: CVContent },
+): Promise<SentraCVDocument> {
+  return request(`/api/v1/cv/${id}`, { method: 'PUT', body: JSON.stringify(data) }, true);
+}
+
+export async function sentraDeleteCV(id: string): Promise<void> {
+  await request(`/api/v1/cv/${id}`, { method: 'DELETE' }, true);
+}
+
 // ── Registro de auditoría ───────────────────────────────────────────
 
 export interface SentraAuditEntry {

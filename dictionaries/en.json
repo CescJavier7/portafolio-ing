@@ -19,6 +19,7 @@
     },
     "services": "Services",
     "sentinel": "Sentra",
+    "tools": "Tools",
     "blog": "Blog",
     "session": {
       "login": "Sign in",
@@ -921,7 +922,7 @@
     "terms": {
       "title": "Terms of Service",
       "updatedLabel": "Last updated:",
-      "updatedDate": "July 23, 2026",
+      "updatedDate": "August 15, 2026",
       "intro": "These Terms govern your use of Sentra (\"the Service\"), a security auditing and monitoring platform operated by Kevin Javier Montatixe Caiza. By creating an account or using the Service, you accept these Terms.",
       "sections": [
         {
@@ -935,6 +936,13 @@
           "body": [
             "You may only audit domains you own or are explicitly authorized to audit, and you must complete DNS verification before scanning.",
             "Using Sentra to audit third-party systems without permission, bypass their access controls, or for any illegal purpose is prohibited. You are responsible for your use of the Service and for the authorizations you claim to hold."
+          ]
+        },
+        {
+          "heading": "CV generator",
+          "body": [
+            "The CV generator is an assistance tool: it tailors your resume to a job posting using artificial intelligence, based on the information you provide. It does NOT guarantee getting a job nor the absolute accuracy of the generated text — you are responsible for reviewing and correcting the CV before using it.",
+            "You may only enter personal data that is yours or that you are authorized to use. Do not upload third-party postings or data that infringe copyright or confidentiality. The generated content is for your personal use in recruitment processes."
           ]
         },
         {
@@ -986,7 +994,7 @@
     "privacy": {
       "title": "Privacy Policy",
       "updatedLabel": "Last updated:",
-      "updatedDate": "July 23, 2026",
+      "updatedDate": "August 15, 2026",
       "intro": "This Policy explains what data Sentra collects, why, and how it protects it. We handle your data with the minimum necessary to operate the Service.",
       "sections": [
         {
@@ -1013,6 +1021,14 @@
           "heading": "Scan data",
           "body": [
             "Scans analyze only publicly accessible information about domains you verified as your own. We do not access private content of your systems or store sensitive data hosted on them."
+          ]
+        },
+        {
+          "heading": "CV generator data",
+          "body": [
+            "When you use the CV generator we process: your experience/CV text, the job posting text (that you paste or that we extract via OCR from an image you upload) and the generated CV. This data may include your personal information.",
+            "To generate the CV, that text is sent to Groq (our AI provider, with infrastructure in the United States): this is an international data transfer, performed solely to generate your CV. Images you upload are processed to extract their text and are NOT stored.",
+            "We store your generated CVs in your account so you can reuse and edit them (you chose to keep history). We keep them while your account is active or until YOU delete them: you can delete any CV at any time from the tool (right to erasure), and deletion is permanent."
           ]
         },
         {
@@ -1065,5 +1081,69 @@
     "disclaimer": "100% passive scan over public information. We never access your systems or put load on them.",
     "errorGeneric": "The scan could not be completed. Check the domain and try again.",
     "errorRate": "Too many scans in a row. Wait a moment and try again."
+  },
+  "cvTool": {
+    "badge": "Free tool · AI-powered",
+    "title": "Your CV, tailored to each job",
+    "subtitle": "Paste your experience and the job posting (or upload a photo of it). The AI returns a tailored resume, with a match score and what you need to fit better.",
+    "benefits": [
+      {
+        "title": "Tailored to the job",
+        "desc": "Not a generic CV: it rewrites and prioritizes your experience based on what each opening asks for."
+      },
+      {
+        "title": "AI writing",
+        "desc": "Turns your experience into achievements with action verbs, without inventing anything you did not provide."
+      },
+      {
+        "title": "Match score and gaps",
+        "desc": "A % of how well you fit and the list of requirements you do not yet cover, so you can work on them."
+      }
+    ],
+    "howTitle": "How it works",
+    "howSteps": [
+      "Paste your current experience (or CV) and the job posting text. Got a photo of the posting? Upload it and we extract the text for you.",
+      "The AI generates a resume tailored to that opening, with an honest match score.",
+      "Download it as PDF and keep it in your history to reuse or edit."
+    ],
+    "gateTitle": "Sign up to use the builder",
+    "gateBody": "The CV builder is part of your free cescjavier.dev account. Create your account (the same one as Sentra) and start generating resumes tailored to each job.",
+    "register": "Create free account",
+    "login": "I already have an account",
+    "profileLabel": "Your experience / current CV",
+    "profileHint": "Paste your current CV or describe your experience, education and skills. The more detail, the better the result.",
+    "profilePlaceholder": "E.g.: Software engineer with 3 years in web development (React, Node.js). BSc in Computer Science...",
+    "jobLabel": "The job posting",
+    "jobHint": "Paste the posting text, or upload a photo and we extract the text (review it before generating).",
+    "jobPlaceholder": "E.g.: We are looking for a Backend Developer with experience in Python, FastAPI, PostgreSQL and Docker...",
+    "uploadImage": "Upload posting photo",
+    "ocrBusy": "Reading image…",
+    "generate": "Generate my CV",
+    "generating": "Generating…",
+    "matchLabel": "match",
+    "summaryTitle": "Professional summary",
+    "experienceTitle": "Experience",
+    "educationTitle": "Education",
+    "skillsTitle": "Skills",
+    "languagesTitle": "Languages",
+    "missingTitle": "What you are missing to fit",
+    "tipsTitle": "Suggestions to improve",
+    "downloadPdf": "Download PDF",
+    "newCv": "Generate another",
+    "historyTitle": "Your saved CVs",
+    "historyEmpty": "You have not generated any CV yet.",
+    "open": "Open",
+    "delete": "Delete",
+    "errorGeneric": "Something went wrong. Please try again.",
+    "limitReached": "You reached your CV limit for this month.",
+    "upgrade": "See plans",
+    "pdf": {
+      "summary": "Professional summary",
+      "experience": "Experience",
+      "education": "Education",
+      "skills": "Skills",
+      "languages": "Languages",
+      "generatedBy": "Generated with the CV assistant of"
+    }
   }
 }

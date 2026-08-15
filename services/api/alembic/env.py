@@ -22,6 +22,7 @@ import app.models.webhook
 import app.models.audit_log
 import app.models.scan_observation
 import app.models.processed_webhook_event
+import app.models.cv_document
 
 # Configuración de logging de Alembic
 config = context.config

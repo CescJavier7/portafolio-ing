@@ -47,6 +47,13 @@ class Settings(BaseSettings):
     INVITE_ACCEPT_URL_BASE: str = "https://cescjavier.dev/es/sentinel/accept-invite"
     INVITE_EXPIRE_HOURS: int = 72
 
+    # ── Groq (LLM para el generador de CV) ──────────────────────
+    # Opcional a nivel de arranque (default vacío) para no tumbar la API si
+    # aún no se configuró en el .env del VPS. El endpoint de CV valida su
+    # presencia y responde 503 si falta, en vez de reventar el servicio entero.
+    GROQ_API_KEY: str = ""
+    GROQ_CV_MODEL: str = "llama-3.3-70b-versatile"
+
     # ── Monitoreo continuo ──────────────────────────────────────
     # Secreto que protege el endpoint /internal/run-monitoring (lo dispara
     # un cron del VPS, no un usuario). Vacío = monitoreo deshabilitado

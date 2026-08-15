@@ -14,6 +14,7 @@ from app.api.v1.targets import router as targets_router
 from app.api.v1.team import router as team_router
 from app.api.v1.webhooks import router as webhooks_router
 from app.api.v1.audit import router as audit_router
+from app.api.v1.cv import router as cv_router
 from app.core.config import get_settings
 from app.core.rate_limit import limiter
 
@@ -49,6 +50,7 @@ app.include_router(public_free_router, prefix="/api/v1")
 app.include_router(team_router, prefix="/api/v1")
 app.include_router(webhooks_router, prefix="/api/v1")
 app.include_router(audit_router, prefix="/api/v1")
+app.include_router(cv_router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["health"])

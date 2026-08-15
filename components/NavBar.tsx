@@ -34,6 +34,7 @@ interface NavBarProps {
     aboutMeItems: AboutMeItems;
     services: string;
     sentinel: string;
+    tools: string;
     blog: string;
     session?: SessionDict;
   };
@@ -89,6 +90,7 @@ export default function NavBar({ dict, lang }: NavBarProps) {
     () => [
       { name: dict.services, href: `/${lang}/services` },
       { name: dict.sentinel, href: `/${lang}/sentinel`, accent: true },
+      { name: dict.tools, href: `/${lang}/herramientas/cv` },
       { name: dict.blog, href: `/${lang}/blog` },
     ],
     [dict, lang]
