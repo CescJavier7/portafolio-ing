@@ -27,6 +27,7 @@ from app.models.cv_document import CVDocument
 from app.models.organization import Organization
 from app.models.user import User
 from app.schemas.cv import (
+    ApplyEmailOut,
     CVDocumentOut,
     CVGenerateRequest,
     CVListItem,
@@ -35,6 +36,7 @@ from app.schemas.cv import (
 )
 from app.services import cv_service
 from app.services.ocr_service import extract_text_from_image
+from app.services.pdf_service import extract_text_from_pdf
 
 settings = get_settings()
 router = APIRouter(prefix="/cv", tags=["cv"])
@@ -135,6 +137,64 @@ async def ocr_job_posting(
             detail="No se pudo procesar la imagen. Pega el texto de la oferta manualmente.",
         )
     return OCRResult(text=text)
+
+
+@router.post("/extract-pdf", response_model=OCRResult)
+@limiter.limit("10/minute")
+async def extract_pdf(
+    request: Request,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+):
+    # content_type puede mentir; pypdf igual valida el contenido real abajo.
+    if (file.content_type or "") not in ("application/pdf", "application/x-pdf", "application/octet-stream"):
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Sube un archivo PDF.",
+        )
+    pdf_bytes = await file.read()
+    try:
+        text = await run_in_threadpool(extract_text_from_pdf, pdf_bytes)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    except Exception as exc:
+        print(f"[CV] Fallo extrayendo PDF para user {current_user.id}: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="No se pudo procesar el PDF. Pega el texto manualmente.",
+        )
+    return OCRResult(text=text)
+
+
+@router.post("/{cv_id}/apply-email", response_model=ApplyEmailOut)
+@limiter.limit("10/minute")
+async def apply_email(
+    request: Request,
+    cv_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if not settings.GROQ_API_KEY:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Servicio de IA no disponible.")
+
+    cv = await _get_owned_cv(cv_id, current_user, db)
+
+    from app.schemas.cv import CVContent
+    content = CVContent(**(cv.content or {}))
+
+    try:
+        email = await run_in_threadpool(cv_service.generate_apply_email, content, cv.job_posting)
+    except (json.JSONDecodeError, ValidationError):
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="No se pudo redactar el correo. Inténtalo de nuevo.")
+    except Exception as exc:
+        print(f"[CV] Fallo generando email para cv {cv_id}: {exc}")
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="El servicio de IA no respondió.")
+
+    return ApplyEmailOut(
+        subject=email["subject"],
+        body=email["body"],
+        recipient=cv_service.extract_recipient(cv.job_posting),
+    )
 
 
 @router.get("", response_model=list[CVListItem])

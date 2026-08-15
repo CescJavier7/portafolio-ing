@@ -1113,6 +1113,8 @@
     "profileLabel": "Tu experiencia / CV actual",
     "profileHint": "Pega tu CV actual o describe tu experiencia, formación y habilidades. Cuanto más detalle, mejor el resultado.",
     "profilePlaceholder": "Ej.: Ingeniero de software con 3 años en desarrollo web (React, Node.js). Licenciado en Informática...",
+    "uploadPdf": "Subir mi CV en PDF",
+    "pdfBusy": "Leyendo PDF…",
     "jobLabel": "La oferta laboral",
     "jobHint": "Pega el texto de la vacante, o sube una foto y extraemos el texto (revísalo antes de generar).",
     "jobPlaceholder": "Ej.: Buscamos Backend Developer con experiencia en Python, FastAPI, PostgreSQL y Docker...",
@@ -1130,6 +1132,17 @@
     "tipsTitle": "Sugerencias para mejorar",
     "downloadPdf": "Descargar PDF",
     "newCv": "Generar otro",
+    "apply": "Postular con IA",
+    "applyBusy": "Redactando tu correo…",
+    "applyTitle": "Correo de postulación",
+    "applyRecipient": "Para (correo del reclutador)",
+    "applyRecipientPlaceholder": "reclutamiento@empresa.com",
+    "applySubject": "Asunto",
+    "applyBody": "Cuerpo del correo",
+    "applyOpenMail": "Abrir en mi correo",
+    "applyCopyBody": "Copiar cuerpo",
+    "applyCopied": "Copiado",
+    "applyInstruction": "Al abrir tu correo descargamos también tu CV en PDF: adjúntalo antes de enviar. Por seguridad del navegador, ningún sitio web puede adjuntar archivos a tu correo automáticamente.",
     "historyTitle": "Tus CVs guardados",
     "historyEmpty": "Aún no has generado ningún CV.",
     "open": "Abrir",
@@ -1144,6 +1157,17 @@
       "skills": "Habilidades",
       "languages": "Idiomas",
       "generatedBy": "Generado con el asistente de CV de"
+    },
+    "tour": {
+      "next": "Siguiente",
+      "prev": "Atrás",
+      "done": "Entendido",
+      "profileTitle": "1. Tu experiencia",
+      "profileBody": "Pega tu CV actual, describe tu experiencia, o sube tu CV en PDF con el botón de arriba. Cuanto más detalle, mejor el resultado.",
+      "jobTitle": "2. La oferta",
+      "jobBody": "Pega el texto de la vacante. ¿Solo tienes una foto? Súbela y extraemos el texto automáticamente para que lo revises.",
+      "generateTitle": "3. Genera tu CV",
+      "generateBody": "La IA adapta tu CV a esa oferta, te da un match score y qué te falta para encajar. Luego podrás descargarlo en PDF y postular con un clic."
     }
   }
 }

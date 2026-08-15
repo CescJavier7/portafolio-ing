@@ -629,6 +629,41 @@ export async function sentraOcrJobPosting(file: File): Promise<{ text: string }>
   return res.json() as Promise<{ text: string }>;
 }
 
+export interface SentraApplyEmail {
+  subject: string;
+  body: string;
+  recipient: string;
+}
+
+// Extracción de texto de un PDF (perfil/CV): multipart, no pasa por request().
+export async function sentraExtractCVPdf(file: File): Promise<{ text: string }> {
+  const token = getToken();
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(`${API_BASE}/api/v1/cv/extract-pdf`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    let detail = 'No se pudo procesar el PDF.';
+    try {
+      const body = await res.json();
+      if (typeof body.detail === 'string') detail = body.detail;
+    } catch {
+      /* sin JSON */
+    }
+    throw new SentraApiError(res.status, detail);
+  }
+  return res.json() as Promise<{ text: string }>;
+}
+
+// Redacta el correo de postulación (IA) para un CV guardado.
+export async function sentraApplyEmail(id: string): Promise<SentraApplyEmail> {
+  return request(`/api/v1/cv/${id}/apply-email`, { method: 'POST' }, true);
+}
+
 export async function sentraListCVs(): Promise<SentraCVListItem[]> {
   return request('/api/v1/cv', { method: 'GET' }, true);
 }

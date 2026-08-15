@@ -5,15 +5,17 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   FileText, Sparkles, Upload, Trash2, Download, ArrowUpRight, Lock,
-  Target, ListChecks, Lightbulb, Plus, ImageIcon,
+  Target, ListChecks, Lightbulb, Plus, ImageIcon, FileUp, Send, Copy, Check, X, Mail,
 } from 'lucide-react';
 import {
-  sentraGenerateCV, sentraOcrJobPosting, sentraListCVs, sentraGetCV, sentraDeleteCV,
+  sentraGenerateCV, sentraOcrJobPosting, sentraExtractCVPdf, sentraApplyEmail,
+  sentraListCVs, sentraGetCV, sentraDeleteCV,
   SentraApiError,
-  type SentraCVDocument, type SentraCVListItem,
+  type SentraCVDocument, type SentraCVListItem, type SentraApplyEmail,
 } from '@/lib/sentra/api';
 import { openCVPdf } from '@/lib/sentra/cvPdf';
 import { useSentraSession } from '@/lib/sentra/useSession';
+import CVTour, { type CVTourDict } from '@/components/tools/CVTour';
 
 export interface CVDict {
   badge: string;
@@ -29,6 +31,8 @@ export interface CVDict {
   profileLabel: string;
   profileHint: string;
   profilePlaceholder: string;
+  uploadPdf: string;
+  pdfBusy: string;
   jobLabel: string;
   jobHint: string;
   jobPlaceholder: string;
@@ -46,6 +50,17 @@ export interface CVDict {
   tipsTitle: string;
   downloadPdf: string;
   newCv: string;
+  apply: string;
+  applyBusy: string;
+  applyTitle: string;
+  applyRecipient: string;
+  applyRecipientPlaceholder: string;
+  applySubject: string;
+  applyBody: string;
+  applyOpenMail: string;
+  applyCopyBody: string;
+  applyCopied: string;
+  applyInstruction: string;
   historyTitle: string;
   historyEmpty: string;
   open: string;
@@ -61,6 +76,7 @@ export interface CVDict {
     languages: string;
     generatedBy: string;
   };
+  tour: CVTourDict;
 }
 
 function matchColor(score: number): string {
@@ -82,11 +98,30 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
   const [result, setResult] = useState<SentraCVDocument | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<SentraCVListItem[]>([]);
+  const [pdfBusy, setPdfBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const pdfRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) sentraListCVs().then(setHistory).catch(() => {});
   }, [user]);
+
+  async function handlePdf(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPdfBusy(true);
+    setError(null);
+    try {
+      const { text } = await sentraExtractCVPdf(file);
+      // Reemplaza el perfil con el texto del PDF (es "tu CV actual").
+      setProfileText(text);
+    } catch (err) {
+      setError(err instanceof SentraApiError ? err.detail : dict.errorGeneric);
+    } finally {
+      setPdfBusy(false);
+      if (pdfRef.current) pdfRef.current.value = '';
+    }
+  }
 
   async function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -185,13 +220,29 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
           <GateCard lang={lang} dict={dict} />
         ) : (
           <>
+            {/* Tour interactivo (solo primera vez, cuando el formulario está visible) */}
+            <CVTour dict={dict.tour} active={!result} />
+
             {/* HERRAMIENTA */}
             {!result && (
               <form onSubmit={handleGenerate} className="rounded-3xl bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 md:p-8 space-y-6">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">{dict.profileLabel}</label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{dict.profileLabel}</label>
+                    <button
+                      type="button"
+                      onClick={() => pdfRef.current?.click()}
+                      disabled={pdfBusy}
+                      className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-green-600 dark:text-green-400 hover:underline disabled:opacity-60"
+                    >
+                      {pdfBusy ? <FileUp className="w-3.5 h-3.5 animate-pulse" /> : <FileUp className="w-3.5 h-3.5" />}
+                      {pdfBusy ? dict.pdfBusy : dict.uploadPdf}
+                    </button>
+                    <input ref={pdfRef} type="file" accept="application/pdf" onChange={handlePdf} className="hidden" />
+                  </div>
                   <p className="text-[12px] text-zinc-400 dark:text-zinc-500 mb-2">{dict.profileHint}</p>
                   <textarea
+                    id="cv-profile"
                     required
                     minLength={30}
                     rows={7}
@@ -218,6 +269,7 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
                   </div>
                   <p className="text-[12px] text-zinc-400 dark:text-zinc-500 mb-2">{dict.jobHint}</p>
                   <textarea
+                    id="cv-job"
                     required
                     minLength={30}
                     rows={7}
@@ -238,6 +290,7 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
                 )}
 
                 <button
+                  id="cv-generate"
                   type="submit"
                   disabled={generating}
                   className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-[1.01] active:scale-[0.99] transition-transform disabled:opacity-60"
@@ -333,6 +386,42 @@ function GateCard({ lang, dict }: { lang: string; dict: CVDict }) {
 
 function CVResult({ cv, dict, onNew, onPdf }: { cv: SentraCVDocument; dict: CVDict; onNew: () => void; onPdf: () => void }) {
   const c = cv.content;
+  const [applyOpen, setApplyOpen] = useState(false);
+  const [applyBusy, setApplyBusy] = useState(false);
+  const [email, setEmail] = useState<SentraApplyEmail | null>(null);
+  const [recipient, setRecipient] = useState('');
+  const [subject, setSubject] = useState('');
+  const [body, setBody] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [applyError, setApplyError] = useState<string | null>(null);
+
+  async function openApply() {
+    setApplyOpen(true);
+    if (email) return; // ya generado
+    setApplyBusy(true);
+    setApplyError(null);
+    try {
+      const e = await sentraApplyEmail(cv.id);
+      setEmail(e);
+      setRecipient(e.recipient);
+      setSubject(e.subject);
+      setBody(e.body);
+    } catch (err) {
+      setApplyError(err instanceof SentraApiError ? err.detail : 'No se pudo redactar el correo.');
+    } finally {
+      setApplyBusy(false);
+    }
+  }
+
+  function openMailClient() {
+    // mailto NO puede adjuntar archivos (límite de seguridad del navegador):
+    // por eso primero descargamos el CV para que el usuario lo adjunte a mano.
+    onPdf();
+    const to = recipient.trim();
+    const url = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = url;
+  }
+
   const chips = (items: string[]) =>
     items.map((s) => (
       <span key={s} className="inline-block px-3 py-1 rounded-full text-[12px] font-semibold bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20 mr-2 mb-2">{s}</span>
@@ -353,8 +442,11 @@ function CVResult({ cv, dict, onNew, onPdf }: { cv: SentraCVDocument; dict: CVDi
           <h2 className="text-xl font-black tracking-tight text-zinc-900 dark:text-white">{c.full_name || cv.title}</h2>
           <p className="text-[14px] text-green-600 dark:text-green-400 font-semibold">{c.headline}</p>
         </div>
-        <div className="flex gap-3 shrink-0">
-          <button onClick={onPdf} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-green-500 text-black text-[13px] font-bold hover:scale-[1.02] transition-transform">
+        <div className="flex flex-wrap gap-3 shrink-0 justify-center">
+          <button onClick={openApply} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-green-500 text-black text-[13px] font-bold hover:scale-[1.02] transition-transform">
+            <Send className="w-4 h-4" /> {dict.apply}
+          </button>
+          <button onClick={onPdf} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-zinc-300 dark:border-zinc-700 text-[13px] font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/5">
             <Download className="w-4 h-4" /> {dict.downloadPdf}
           </button>
           <button onClick={onNew} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-zinc-300 dark:border-zinc-700 text-[13px] font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5">
@@ -362,6 +454,68 @@ function CVResult({ cv, dict, onNew, onPdf }: { cv: SentraCVDocument; dict: CVDi
           </button>
         </div>
       </div>
+
+      {/* Panel One-Click Apply */}
+      {applyOpen && (
+        <div className="rounded-3xl bg-white dark:bg-zinc-900/40 border border-green-500/30 shadow-sm p-6 md:p-8">
+          <div className="flex items-center justify-between mb-4">
+            <p className="flex items-center gap-2 text-sm font-black tracking-tight text-zinc-900 dark:text-white">
+              <Mail className="w-4 h-4 text-green-500" /> {dict.applyTitle}
+            </p>
+            <button onClick={() => setApplyOpen(false)} className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {applyBusy ? (
+            <p className="text-sm text-zinc-400 dark:text-zinc-500 animate-pulse py-6 text-center">{dict.applyBusy}</p>
+          ) : applyError ? (
+            <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">{applyError}</p>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">{dict.applyRecipient}</label>
+                <input
+                  type="email"
+                  value={recipient}
+                  onChange={(e) => setRecipient(e.target.value)}
+                  placeholder={dict.applyRecipientPlaceholder}
+                  className={inputBase}
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">{dict.applySubject}</label>
+                <input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} className={inputBase} />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">{dict.applyBody}</label>
+                <textarea rows={9} value={body} onChange={(e) => setBody(e.target.value)} className={`${inputBase} resize-y`} />
+              </div>
+
+              <p className="text-[12px] text-amber-600 dark:text-amber-400 bg-amber-500/5 border border-amber-500/20 rounded-xl px-4 py-3 leading-relaxed">
+                {dict.applyInstruction}
+              </p>
+
+              <div className="flex flex-wrap gap-3">
+                <button onClick={openMailClient} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-green-500 text-black text-[13px] font-bold hover:scale-[1.02] transition-transform">
+                  <Mail className="w-4 h-4" /> {dict.applyOpenMail}
+                </button>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(body);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1500);
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-zinc-300 dark:border-zinc-700 text-[13px] font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5"
+                >
+                  {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                  {copied ? dict.applyCopied : dict.applyCopyBody}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Contenido del CV */}
       <div className="rounded-3xl bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 md:p-8 space-y-6">

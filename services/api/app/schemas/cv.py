@@ -74,3 +74,11 @@ class CVListItem(BaseModel):
 
 class OCRResult(BaseModel):
     text: str
+
+
+class ApplyEmailOut(BaseModel):
+    # Correo de postulación redactado por el LLM. `recipient` sale por regex
+    # de la oferta (si trae un email); puede quedar vacío y lo pone el usuario.
+    subject: str
+    body: str
+    recipient: str = ""

@@ -42,3 +42,45 @@
   animation-duration: 0.4s;
   animation-timing-function: cubic-bezier(0.43, 0.13, 0.23, 0.96);
 }
+/* ── Tour interactivo (driver.js) — tema para combinar con el verde/limpio ── */
+.driver-popover {
+  border-radius: 16px;
+  box-shadow: 0 20px 60px -10px rgba(0, 0, 0, 0.35);
+  padding: 18px 20px;
+}
+.driver-popover-title {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.driver-popover-description {
+  line-height: 1.55;
+  color: #52525b;
+}
+.driver-popover-progress-text {
+  color: #a1a1aa;
+  font-size: 12px;
+}
+.driver-popover-next-btn,
+.driver-popover-prev-btn {
+  border-radius: 999px !important;
+  font-weight: 700 !important;
+  text-shadow: none !important;
+  border: 1px solid transparent !important;
+}
+.driver-popover-next-btn {
+  background-color: #22c55e !important;
+  color: #000 !important;
+}
+.driver-popover-prev-btn {
+  background-color: transparent !important;
+  color: #71717a !important;
+  border-color: #d4d4d8 !important;
+}
+.dark .driver-popover {
+  background-color: #18181b;
+  color: #fff;
+}
+.dark .driver-popover-title { color: #fff; }
+.dark .driver-popover-description { color: #a1a1aa; }
+.dark .driver-popover-arrow-side-bottom.driver-popover-arrow { border-bottom-color: #18181b; }
+.dark .driver-popover-arrow-side-top.driver-popover-arrow { border-top-color: #18181b; }

@@ -1113,6 +1113,8 @@
     "profileLabel": "Your experience / current CV",
     "profileHint": "Paste your current CV or describe your experience, education and skills. The more detail, the better the result.",
     "profilePlaceholder": "E.g.: Software engineer with 3 years in web development (React, Node.js). BSc in Computer Science...",
+    "uploadPdf": "Upload my CV (PDF)",
+    "pdfBusy": "Reading PDF…",
     "jobLabel": "The job posting",
     "jobHint": "Paste the posting text, or upload a photo and we extract the text (review it before generating).",
     "jobPlaceholder": "E.g.: We are looking for a Backend Developer with experience in Python, FastAPI, PostgreSQL and Docker...",
@@ -1130,6 +1132,17 @@
     "tipsTitle": "Suggestions to improve",
     "downloadPdf": "Download PDF",
     "newCv": "Generate another",
+    "apply": "Apply with AI",
+    "applyBusy": "Drafting your email…",
+    "applyTitle": "Application email",
+    "applyRecipient": "To (recruiter email)",
+    "applyRecipientPlaceholder": "recruiting@company.com",
+    "applySubject": "Subject",
+    "applyBody": "Email body",
+    "applyOpenMail": "Open in my email",
+    "applyCopyBody": "Copy body",
+    "applyCopied": "Copied",
+    "applyInstruction": "When your email opens we also download your CV as a PDF: attach it before sending. By browser security, no website can attach files to your email automatically.",
     "historyTitle": "Your saved CVs",
     "historyEmpty": "You have not generated any CV yet.",
     "open": "Open",
@@ -1144,6 +1157,17 @@
       "skills": "Skills",
       "languages": "Languages",
       "generatedBy": "Generated with the CV assistant of"
+    },
+    "tour": {
+      "next": "Next",
+      "prev": "Back",
+      "done": "Got it",
+      "profileTitle": "1. Your experience",
+      "profileBody": "Paste your current CV, describe your experience, or upload your CV as a PDF with the button above. The more detail, the better the result.",
+      "jobTitle": "2. The job posting",
+      "jobBody": "Paste the posting text. Only have a photo? Upload it and we extract the text automatically for you to review.",
+      "generateTitle": "3. Generate your CV",
+      "generateBody": "The AI tailors your CV to that posting, gives you a match score and what you are missing. Then you can download it as PDF and apply in one click."
     }
   }
 }

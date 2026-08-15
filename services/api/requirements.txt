@@ -47,8 +47,10 @@ watchfiles==1.2.0
 websockets==16.1.1
 wrapt==2.2.2
 
-# Generador de CV: LLM (Groq) + OCR (Tesseract vía pytesseract + Pillow).
+# Generador de CV: LLM (Groq) + OCR (Tesseract vía pytesseract + Pillow) +
+# extracción de texto de PDF (pypdf, puro Python, sin dependencias de sistema).
 # El binario tesseract-ocr se instala a nivel de sistema en el Dockerfile.
 groq==0.11.0
 pytesseract==0.3.13
 Pillow==10.4.0
+pypdf==5.1.0
