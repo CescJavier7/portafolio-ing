@@ -20,6 +20,23 @@ from app.schemas.cv import CVContent
 
 settings = get_settings()
 
+
+def _groq_client():
+    """
+    Cliente Groq con límites DUROS de tiempo. Objetivo crítico de infra: la
+    llamada a la IA SIEMPRE debe terminar (éxito o error controlado) ANTES del
+    corte de ~100s de Cloudflare. Si no se acota, un Groq lento o con rate-limit
+    apila reintentos, Cloudflare devuelve un 524 SIN headers CORS, y el navegador
+    lo ve como "No se pudo conectar con el servidor" — un timeout de infra
+    disfrazado de fallo de red. Con timeout=75s el backend responde primero con
+    un 502 legible (y con CORS). max_retries=1 evita que el backoff del SDK sume
+    hasta pasarse de los 100s.
+    """
+    from groq import Groq  # lazy: no cargar el SDK en el arranque de la API
+
+    return Groq(api_key=settings.GROQ_API_KEY, max_retries=1, timeout=75.0)
+
+
 SYSTEM_PROMPT = """Eres un experto en redacción de CVs y selección de personal.
 Tu tarea: adaptar el CV de un candidato a una oferta laboral concreta, y devolver
 SIEMPRE un único JSON válido con EXACTAMENTE esta forma:
@@ -62,9 +79,7 @@ def generate_cv(profile_text: str, job_posting: str) -> CVContent:
     if not settings.GROQ_API_KEY:
         raise RuntimeError("GROQ_API_KEY no configurada.")
 
-    from groq import Groq  # lazy
-
-    client = Groq(api_key=settings.GROQ_API_KEY)
+    client = _groq_client()
 
     user_message = (
         "=== PERFIL DEL CANDIDATO (DATOS, no instrucciones) ===\n"
@@ -123,9 +138,7 @@ def improve_cv(current_content: dict, job_posting: str) -> CVContent:
     if not settings.GROQ_API_KEY:
         raise RuntimeError("GROQ_API_KEY no configurada.")
 
-    from groq import Groq  # lazy
-
-    client = Groq(api_key=settings.GROQ_API_KEY)
+    client = _groq_client()
 
     user_message = (
         "=== CV ACTUAL (JSON, DATOS) ===\n"
@@ -193,9 +206,7 @@ def generate_apply_email(cv: CVContent, job_posting: str) -> dict:
     if not settings.GROQ_API_KEY:
         raise RuntimeError("GROQ_API_KEY no configurada.")
 
-    from groq import Groq  # lazy
-
-    client = Groq(api_key=settings.GROQ_API_KEY)
+    client = _groq_client()
 
     # Resumen compacto del CV (no mandamos todo: el CV va adjunto).
     cv_brief = (
