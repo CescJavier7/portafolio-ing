@@ -19,11 +19,13 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   Wand2, Download, Send, Plus, Trash2, ArrowLeft, ArrowRight, Mail, X, Copy,
-  Check, Lock, Loader2, ListChecks, Lightbulb, Cloud,
+  Check, Lock, Loader2, ListChecks, Lightbulb, Cloud, Folder, FolderPlus, ExternalLink,
 } from 'lucide-react';
 import {
-  sentraUpdateCV, sentraImproveCV, sentraApplyEmail, sentraCVQuota, SentraApiError,
+  sentraUpdateCV, sentraImproveCV, sentraApplyEmail, sentraCVQuota,
+  sentraListCVFolders, sentraCreateCVFolder, SentraApiError,
   type SentraCVDocument, type SentraApplyEmail, type SentraCVQuota, type CVContent,
+  type SentraCVFolder,
 } from '@/lib/sentra/api';
 import { openCVPdf } from '@/lib/sentra/cvPdf';
 import { useCVWizard, cvWizard, cleanCVContent, CV_STEPS, type CVStep } from '@/lib/sentra/cvStore';
@@ -67,6 +69,35 @@ export default function CVWizard({ cv, dict, lang, onNew, onVersion }: CVWizardP
     sentraCVQuota().then(setQuota).catch(() => {});
   }, []);
   const aiLocked = quota != null && quota.remaining === 0;
+
+  // ── Carpetas / categorías ──────────────────────────────────────────
+  const [folders, setFolders] = useState<SentraCVFolder[]>([]);
+  const [folderId, setFolderId] = useState<string | null>(cv.folder_id);
+  useEffect(() => {
+    sentraListCVFolders().then(setFolders).catch(() => {});
+  }, []);
+  useEffect(() => {
+    setFolderId(cv.folder_id);
+  }, [cv.id]);
+
+  // Asigna (o quita, con null) la carpeta del CV actual y lo persiste.
+  async function assignFolder(id: string | null) {
+    setFolderId(id);
+    if (cvId) sentraUpdateCV(cvId, { folder_id: id, set_folder: true }).catch(() => {});
+  }
+
+  // Crea una carpeta (idempotente en backend) y asigna el CV a ella.
+  async function createAndAssignFolder(name: string) {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    try {
+      const folder = await sentraCreateCVFolder(trimmed);
+      setFolders((prev) => (prev.some((f) => f.id === folder.id) ? prev : [...prev, folder]));
+      await assignFolder(folder.id);
+    } catch {
+      /* best-effort: el select manual sigue disponible */
+    }
+  }
 
   // ── Autosave al backend (debounced) ────────────────────────────────
   const savedRef = useRef<string>('');
@@ -156,11 +187,21 @@ export default function CVWizard({ cv, dict, lang, onNew, onVersion }: CVWizardP
     }
   }
 
+  // Ambos flujos descargan primero el PDF (mailto/Gmail web no adjuntan archivos
+  // locales por seguridad del navegador) para que el usuario lo arrastre.
   function openMailClient() {
-    openCVPdf(cleanCVContent(content), dict.pdf); // descarga el PDF para adjuntar
+    openCVPdf(cleanCVContent(content), dict.pdf);
     window.location.href = `mailto:${recipient.trim()}?subject=${encodeURIComponent(
       subject,
     )}&body=${encodeURIComponent(body)}`;
+  }
+
+  function openGmail() {
+    openCVPdf(cleanCVContent(content), dict.pdf);
+    const url = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
+      recipient.trim(),
+    )}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 
   const isLast = step === CV_STEPS.length - 1;
@@ -245,6 +286,10 @@ export default function CVWizard({ cv, dict, lang, onNew, onVersion }: CVWizardP
               content={content}
               dict={dict}
               onApply={openApply}
+              folders={folders}
+              folderId={folderId}
+              onAssignFolder={assignFolder}
+              onCreateFolder={createAndAssignFolder}
             />
           </div>
 
@@ -342,25 +387,32 @@ export default function CVWizard({ cv, dict, lang, onNew, onVersion }: CVWizardP
                   {dict.applyInstruction}
                 </p>
 
-                <div className="flex flex-wrap gap-3">
+                {/* Dos vías grandes: Gmail (web) y Mail/Outlook (mailto). */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    onClick={openGmail}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-red-500 text-white text-[13px] font-bold hover:scale-[1.02] transition-transform"
+                  >
+                    <ExternalLink className="w-4 h-4" /> {dict.applyOpenGmail}
+                  </button>
                   <button
                     onClick={openMailClient}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-green-500 text-black text-[13px] font-bold hover:scale-[1.02] transition-transform"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-black text-[13px] font-bold hover:scale-[1.02] transition-transform"
                   >
                     <Mail className="w-4 h-4" /> {dict.applyOpenMail}
                   </button>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(body);
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 1500);
-                    }}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-zinc-300 dark:border-zinc-700 text-[13px] font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5"
-                  >
-                    {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                    {copied ? dict.applyCopied : dict.applyCopyBody}
-                  </button>
                 </div>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(body);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1500);
+                  }}
+                  className="inline-flex items-center gap-2 text-[13px] font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
+                >
+                  {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                  {copied ? dict.applyCopied : dict.applyCopyBody}
+                </button>
               </div>
             )}
           </div>
@@ -443,11 +495,19 @@ function StepBody({
   content,
   dict,
   onApply,
+  folders,
+  folderId,
+  onAssignFolder,
+  onCreateFolder,
 }: {
   step: CVStep;
   content: CVContent;
   dict: CVDict;
   onApply: () => void;
+  folders: SentraCVFolder[];
+  folderId: string | null;
+  onAssignFolder: (id: string | null) => void;
+  onCreateFolder: (name: string) => void;
 }) {
   const c = content;
 
@@ -564,6 +624,13 @@ function StepBody({
   const suggestions = c.actionable_suggestions?.length ? c.actionable_suggestions : c.tips;
   return (
     <div className="space-y-5">
+      <FolderPicker
+        dict={dict}
+        folders={folders}
+        folderId={folderId}
+        onAssign={onAssignFolder}
+        onCreate={onCreateFolder}
+      />
       {c.missing_requirements.length === 0 && suggestions.length === 0 ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">{dict.wizard.reviewClear}</p>
       ) : (
@@ -604,6 +671,89 @@ function StepBody({
   );
 }
 
+function FolderPicker({
+  dict,
+  folders,
+  folderId,
+  onAssign,
+  onCreate,
+}: {
+  dict: CVDict;
+  folders: SentraCVFolder[];
+  folderId: string | null;
+  onAssign: (id: string | null) => void;
+  onCreate: (name: string) => void;
+}) {
+  const wd = dict.wizard;
+  const [creating, setCreating] = useState(false);
+  const [name, setName] = useState('');
+
+  function submit() {
+    if (!name.trim()) return;
+    onCreate(name);
+    setName('');
+    setCreating(false);
+  }
+
+  return (
+    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-5">
+      <label className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-2.5">
+        <Folder className="w-3.5 h-3.5" /> {wd.folderLabel}
+      </label>
+      {creating ? (
+        <div className="flex items-center gap-2">
+          <input
+            autoFocus
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') submit();
+              if (e.key === 'Escape') { setCreating(false); setName(''); }
+            }}
+            placeholder={wd.folderPlaceholder}
+            className={inputBase}
+          />
+          <button
+            type="button"
+            onClick={submit}
+            className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-green-500 text-black text-[13px] font-bold"
+          >
+            <Check className="w-4 h-4" /> {wd.folderCreate}
+          </button>
+          <button
+            type="button"
+            onClick={() => { setCreating(false); setName(''); }}
+            className="shrink-0 text-zinc-400 hover:text-zinc-900 dark:hover:text-white p-2"
+            aria-label="Cancelar"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <select
+            value={folderId ?? ''}
+            onChange={(e) => onAssign(e.target.value || null)}
+            className={`${inputBase} appearance-none cursor-pointer`}
+          >
+            <option value="">{wd.folderNone}</option>
+            {folders.map((f) => (
+              <option key={f.id} value={f.id}>{f.name}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => setCreating(true)}
+            className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 text-[13px] font-semibold text-green-600 dark:text-green-400 hover:bg-green-500/5"
+          >
+            <FolderPlus className="w-4 h-4" /> {wd.folderNew}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Vista previa A4 — espeja el layout del PDF (lib/sentra/cvPdf.ts). Siempre en
 // "modo papel" (fondo blanco, texto oscuro) aunque la UI esté en dark.
 function CVPreviewA4({
@@ -638,9 +788,12 @@ function CVPreviewA4({
 
   return (
     <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-lg overflow-hidden bg-white">
-      <div className="aspect-[1/1.414] overflow-y-auto">
+      {/* Scroll VISIBLE (cv-scroll anula el hide global) y acotado a la altura de
+          la ventana: el contenido largo (habilidades, idiomas) ya no se corta —
+          se desplaza. min-h mantiene proporción de hoja cuando el CV es corto. */}
+      <div className="cv-scroll overflow-y-auto max-h-[calc(100vh-9rem)] min-h-[420px]">
         <div
-          className="p-6 sm:p-7 text-zinc-900"
+          className="p-8 sm:p-10 text-zinc-900"
           style={{ fontFamily: '-apple-system, "Segoe UI", Roboto, sans-serif' }}
         >
           {isEmpty ? (

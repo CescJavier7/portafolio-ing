@@ -56,6 +56,13 @@ SIEMPRE un único JSON válido con EXACTAMENTE esta forma:
 }
 
 Reglas:
+- REGLA CRÍTICA (FECHAS): el campo "period" de CADA experiencia y el periodo de
+  CADA formación son OBLIGATORIOS. Extrae el rango exacto del perfil (ej. "Ene
+  2023 - Presente", "2021 - 2022"). Si no está explícito pero el texto da pistas
+  ("desde 2022", "hace 2 años"), infiérelo de forma CONSERVADORA. Si no hay
+  ninguna pista, escribe EXACTAMENTE "Fecha no especificada". NUNCA dejes "period"
+  vacío, ni con la palabra "Periodo", ni con "Sin especificar". En "education",
+  incluye el periodo dentro del propio string (ej. "Ingeniería en X (2020 - 2024)").
 - Prioriza y reescribe la experiencia y las habilidades del candidato que son
   RELEVANTES para los requisitos de la oferta. Usa verbos de acción y logros.
 - "match_score" = porcentaje (0-100) de los requisitos de la oferta que el perfil
@@ -125,6 +132,10 @@ Devuelves SIEMPRE el mismo JSON con EXACTAMENTE esta forma:
   "actionable_suggestions": ["string"], "tips": ["string"] }
 
 Reglas:
+- FECHAS: conserva/rellena el "period" de cada experiencia y formación. Si el CV
+  ya lo trae, mantenlo; si viene vacío o como "Periodo"/"Sin especificar" y el
+  texto da pistas, infiérelo conservador; si no, escribe "Fecha no especificada".
+  NUNCA lo dejes vacío ni como "Periodo".
 - NO inventes experiencia, títulos, empresas ni habilidades que no estén ya en el CV.
   Mejorar = redactar y enfatizar mejor lo que YA hay, no fabricar.
 - Recalcula "match_score" de forma honesta tras la mejora.

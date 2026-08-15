@@ -24,12 +24,15 @@ from app.core.plans import plan_for
 from app.core.rate_limit import limiter
 from app.db.session import get_db
 from app.models.cv_document import CVDocument
+from app.models.cv_folder import CVFolder
 from app.models.organization import Organization
 from app.models.user import User
 from app.schemas.cv import (
     ApplyEmailOut,
     CVContent,
     CVDocumentOut,
+    CVFolderCreate,
+    CVFolderOut,
     CVGenerateRequest,
     CVImproveRequest,
     CVListItem,
@@ -230,6 +233,7 @@ async def improve_cv(
         job_posting=original.job_posting,
         content=improved.model_dump(),
         match_score=improved.match_score,
+        folder_id=original.folder_id,  # la versión mejorada hereda la carpeta
     )
     db.add(doc)
     await db.commit()
@@ -289,11 +293,71 @@ async def cv_quota(current_user: User = Depends(get_current_user), db: AsyncSess
     return {"limit": limit, "used": used, "remaining": max(0, limit - used)}
 
 
-@router.get("", response_model=list[CVListItem])
-async def list_cvs(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+# ── Carpetas / categorías ──────────────────────────────────────────────
+# OJO: estas rutas se declaran ANTES de las de "/{cv_id}" para que "/cv/folders"
+# no sea capturado por el parámetro dinámico (FastAPI casa por orden de registro).
+
+@router.get("/folders", response_model=list[CVFolderOut])
+async def list_folders(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     result = await db.execute(
-        select(CVDocument).where(CVDocument.user_id == current_user.id).order_by(CVDocument.created_at.desc())
+        select(CVFolder).where(CVFolder.user_id == current_user.id).order_by(CVFolder.created_at.asc())
     )
+    return list(result.scalars().all())
+
+
+@router.post("/folders", response_model=CVFolderOut, status_code=status.HTTP_201_CREATED)
+async def create_folder(
+    payload: CVFolderCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    name = payload.name.strip()[:80]
+    if not name:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="El nombre no puede estar vacío.")
+    # Idempotente por usuario (case-insensitive): si ya existe, la devolvemos en
+    # vez de duplicar. Evita "Ciberseguridad" y "ciberseguridad" repetidas.
+    existing = await db.execute(
+        select(CVFolder).where(
+            CVFolder.user_id == current_user.id, func.lower(CVFolder.name) == name.lower()
+        )
+    )
+    folder = existing.scalar_one_or_none()
+    if folder is not None:
+        return folder
+    folder = CVFolder(user_id=current_user.id, name=name)
+    db.add(folder)
+    await db.commit()
+    await db.refresh(folder)
+    return folder
+
+
+@router.delete("/folders/{folder_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_folder(
+    folder_id: str, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(
+        select(CVFolder).where(CVFolder.id == folder_id, CVFolder.user_id == current_user.id)
+    )
+    folder = result.scalar_one_or_none()
+    if folder is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Carpeta no encontrada.")
+    # ON DELETE SET NULL en la FK → los CVs de la carpeta se des-categorizan
+    # solos, no se borran.
+    await db.delete(folder)
+    await db.commit()
+
+
+@router.get("", response_model=list[CVListItem])
+async def list_cvs(
+    folder_id: str | None = None,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    query = select(CVDocument).where(CVDocument.user_id == current_user.id)
+    if folder_id is not None:
+        # Filtro por carpeta (anti-IDOR implícito: sigue acotado por user_id).
+        query = query.where(CVDocument.folder_id == folder_id)
+    result = await db.execute(query.order_by(CVDocument.created_at.desc()))
     return list(result.scalars().all())
 
 
@@ -319,6 +383,19 @@ async def update_cv(
             cv.match_score = max(0, min(100, int(payload.content.get("match_score", cv.match_score))))
         except (TypeError, ValueError):
             pass
+    if payload.set_folder:
+        # Asignar (o quitar, con folder_id=null) la carpeta. Si se asigna una,
+        # verificamos que pertenezca al usuario (anti-IDOR: no mover el CV a una
+        # carpeta ajena).
+        if payload.folder_id is not None:
+            owns = await db.execute(
+                select(CVFolder.id).where(
+                    CVFolder.id == payload.folder_id, CVFolder.user_id == current_user.id
+                )
+            )
+            if owns.scalar_one_or_none() is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Carpeta no encontrada.")
+        cv.folder_id = payload.folder_id
     await db.commit()
     await db.refresh(cv)
     return cv

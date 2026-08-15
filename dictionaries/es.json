@@ -19,7 +19,8 @@
     },
     "services": "Servicios",
     "sentinel": "Sentra",
-    "tools": "Herramientas",
+    "tools": "Sentra CV AI",
+    "toolsBadge": "Nuevo",
     "blog": "Blog",
     "session": {
       "login": "Iniciar sesión",
@@ -1160,6 +1161,7 @@
     "applySubject": "Asunto",
     "applyBody": "Cuerpo del correo",
     "applyOpenMail": "Abrir en mi correo",
+    "applyOpenGmail": "Abrir en Gmail",
     "applyCopyBody": "Copiar cuerpo",
     "applyCopied": "Copiado",
     "applyInstruction": "Al abrir tu correo descargamos también tu CV en PDF: adjúntalo antes de enviar. Por seguridad del navegador, ningún sitio web puede adjuntar archivos a tu correo automáticamente.",
@@ -1209,7 +1211,13 @@
       "previewEmpty": "Tu CV aparecerá aquí mientras lo editas.",
       "saving": "Guardando…",
       "saved": "Guardado",
-      "reviewClear": "Sin observaciones: tu CV cubre los requisitos clave de la oferta. Ya puedes enviar tu postulación."
+      "reviewClear": "Sin observaciones: tu CV cubre los requisitos clave de la oferta. Ya puedes enviar tu postulación.",
+      "folderLabel": "Carpeta / categoría",
+      "folderNone": "Sin carpeta",
+      "folderAll": "Todas",
+      "folderNew": "Nueva",
+      "folderCreate": "Crear",
+      "folderPlaceholder": "Ej. Ciberseguridad, Ingeniería…"
     },
     "pdf": {
       "summary": "Resumen profesional",

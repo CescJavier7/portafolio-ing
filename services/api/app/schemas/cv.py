@@ -21,6 +21,22 @@ class CVUpdateRequest(BaseModel):
     # El usuario puede corregir el CV generado (edición manual post-IA).
     title: str | None = Field(default=None, max_length=200)
     content: dict | None = None
+    # Asignación de carpeta. Distinguimos "no tocar" (campo ausente) de "quitar
+    # de la carpeta" (folder_id = null explícito) con un flag aparte.
+    folder_id: uuid.UUID | None = None
+    set_folder: bool = False  # True → aplicar folder_id (incluido null para quitar)
+
+
+class CVFolderCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
+
+
+class CVFolderOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+    created_at: datetime
 
 
 class CVImproveRequest(BaseModel):
@@ -67,6 +83,7 @@ class CVDocumentOut(BaseModel):
     job_posting: str
     content: dict
     match_score: int
+    folder_id: uuid.UUID | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -78,6 +95,7 @@ class CVListItem(BaseModel):
     id: uuid.UUID
     title: str
     match_score: int
+    folder_id: uuid.UUID | None = None
     created_at: datetime
     updated_at: datetime
 

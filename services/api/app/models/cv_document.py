@@ -31,6 +31,15 @@ class CVDocument(Base):
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
 
+    # Carpeta/categoría opcional. ON DELETE SET NULL: borrar la carpeta NO borra
+    # el CV, solo lo des-categoriza. nullable → un CV puede no tener carpeta.
+    folder_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("cv_folders.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
     # Título legible ("CV para Backend Developer — Empresa X").
     title: Mapped[str] = mapped_column(String(200), nullable=False)
 

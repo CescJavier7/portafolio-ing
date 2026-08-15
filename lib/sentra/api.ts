@@ -614,6 +614,7 @@ export interface SentraCVDocument {
   job_posting: string;
   content: CVContent;
   match_score: number;
+  folder_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -622,8 +623,15 @@ export interface SentraCVListItem {
   id: string;
   title: string;
   match_score: number;
+  folder_id: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface SentraCVFolder {
+  id: string;
+  name: string;
+  created_at: string;
 }
 
 export async function sentraGenerateCV(data: {
@@ -691,19 +699,35 @@ export async function sentraApplyEmail(id: string): Promise<SentraApplyEmail> {
   return request(`/api/v1/cv/${id}/apply-email`, { method: 'POST' }, true);
 }
 
-export async function sentraListCVs(): Promise<SentraCVListItem[]> {
-  return request('/api/v1/cv', { method: 'GET' }, true);
+export async function sentraListCVs(folderId?: string): Promise<SentraCVListItem[]> {
+  const qs = folderId ? `?folder_id=${encodeURIComponent(folderId)}` : '';
+  return request(`/api/v1/cv${qs}`, { method: 'GET' }, true);
 }
 
 export async function sentraGetCV(id: string): Promise<SentraCVDocument> {
   return request(`/api/v1/cv/${id}`, { method: 'GET' }, true);
 }
 
+// `folder_id` sólo se aplica si `set_folder` es true (null = quitar de la carpeta).
+// Así distinguimos "no tocar la carpeta" de "quitarla".
 export async function sentraUpdateCV(
   id: string,
-  data: { title?: string; content?: CVContent },
+  data: { title?: string; content?: CVContent; folder_id?: string | null; set_folder?: boolean },
 ): Promise<SentraCVDocument> {
   return request(`/api/v1/cv/${id}`, { method: 'PUT', body: JSON.stringify(data) }, true);
+}
+
+// ── Carpetas de CV ──────────────────────────────────────────────────
+export async function sentraListCVFolders(): Promise<SentraCVFolder[]> {
+  return request('/api/v1/cv/folders', { method: 'GET' }, true);
+}
+
+export async function sentraCreateCVFolder(name: string): Promise<SentraCVFolder> {
+  return request('/api/v1/cv/folders', { method: 'POST', body: JSON.stringify({ name }) }, true);
+}
+
+export async function sentraDeleteCVFolder(id: string): Promise<void> {
+  await request(`/api/v1/cv/folders/${id}`, { method: 'DELETE' }, true);
 }
 
 export async function sentraDeleteCV(id: string): Promise<void> {

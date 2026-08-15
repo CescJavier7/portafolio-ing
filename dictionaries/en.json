@@ -19,7 +19,8 @@
     },
     "services": "Services",
     "sentinel": "Sentra",
-    "tools": "Tools",
+    "tools": "Sentra CV AI",
+    "toolsBadge": "New",
     "blog": "Blog",
     "session": {
       "login": "Sign in",
@@ -1160,6 +1161,7 @@
     "applySubject": "Subject",
     "applyBody": "Email body",
     "applyOpenMail": "Open in my email",
+    "applyOpenGmail": "Open in Gmail",
     "applyCopyBody": "Copy body",
     "applyCopied": "Copied",
     "applyInstruction": "When your email opens we also download your CV as a PDF: attach it before sending. By browser security, no website can attach files to your email automatically.",
@@ -1209,7 +1211,13 @@
       "previewEmpty": "Your CV will appear here as you edit.",
       "saving": "Saving…",
       "saved": "Saved",
-      "reviewClear": "No gaps found: your CV covers the job's key requirements. You can send your application."
+      "reviewClear": "No gaps found: your CV covers the job's key requirements. You can send your application.",
+      "folderLabel": "Folder / category",
+      "folderNone": "No folder",
+      "folderAll": "All",
+      "folderNew": "New",
+      "folderCreate": "Create",
+      "folderPlaceholder": "e.g. Cybersecurity, Engineering…"
     },
     "pdf": {
       "summary": "Professional summary",

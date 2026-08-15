@@ -35,6 +35,7 @@ interface NavBarProps {
     services: string;
     sentinel: string;
     tools: string;
+    toolsBadge?: string;
     blog: string;
     session?: SessionDict;
   };
@@ -86,11 +87,13 @@ export default function NavBar({ dict, lang }: NavBarProps) {
   );
 
   // Los 3 (+Blog) ítems principales, tal como pediste: sin milanesa de links
-  const primaryLinks = useMemo(
+  const primaryLinks = useMemo<
+    { name: string; href: string; accent?: boolean; badge?: string }[]
+  >(
     () => [
       { name: dict.services, href: `/${lang}/services` },
       { name: dict.sentinel, href: `/${lang}/sentinel`, accent: true },
-      { name: dict.tools, href: `/${lang}/herramientas/cv` },
+      { name: dict.tools, href: `/${lang}/herramientas/cv`, badge: dict.toolsBadge },
       { name: dict.blog, href: `/${lang}/blog` },
     ],
     [dict, lang]
@@ -162,13 +165,18 @@ export default function NavBar({ dict, lang }: NavBarProps) {
             <Link
               key={link.name}
               href={link.href}
-              className={`text-[11px] font-semibold transition-colors uppercase tracking-wider ${
+              className={`inline-flex items-center gap-1.5 text-[11px] font-semibold transition-colors uppercase tracking-wider ${
                 link.accent
                   ? 'text-apple-blue hover:text-zinc-900 dark:hover:text-white'
                   : 'text-zinc-600 dark:text-zinc-300 hover:text-apple-blue dark:hover:text-apple-blue'
               }`}
             >
               {link.name}
+              {link.badge && (
+                <span className="rounded-full bg-green-500/15 text-green-600 dark:text-green-400 border border-green-500/30 px-1.5 py-0.5 text-[9px] font-bold leading-none tracking-normal normal-case">
+                  {link.badge}
+                </span>
+              )}
             </Link>
           ))}
         </div>
@@ -248,11 +256,16 @@ export default function NavBar({ dict, lang }: NavBarProps) {
                 key={link.name}
                 href={link.href}
                 onClick={() => setIsOpen(false)}
-                className={`text-xl font-bold tracking-tight transition-colors ${
+                className={`inline-flex items-center gap-2 text-xl font-bold tracking-tight transition-colors ${
                   link.accent ? 'text-apple-blue' : 'text-zinc-900 dark:text-white hover:text-apple-blue'
                 }`}
               >
                 {link.name}
+                {link.badge && (
+                  <span className="rounded-full bg-green-500/15 text-green-600 dark:text-green-400 border border-green-500/30 px-2 py-0.5 text-[10px] font-bold leading-none">
+                    {link.badge}
+                  </span>
+                )}
               </Link>
             ))}
 

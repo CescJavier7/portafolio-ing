@@ -33,6 +33,31 @@
   @apply bg-white/70 dark:bg-black/70 backdrop-blur-md;
 }
 
+/* Scrollbar fina y VISIBLE — anula el hide global de arriba. Se usa en la vista
+   previa del CV (columna derecha del wizard), donde el contenido largo debe
+   poder desplazarse y el usuario necesita ver que hay más abajo. */
+.cv-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(113, 113, 122, 0.5) transparent;
+}
+.cv-scroll::-webkit-scrollbar {
+  display: block;
+  width: 8px;
+  height: 8px;
+}
+.cv-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.cv-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(113, 113, 122, 0.45);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.cv-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(113, 113, 122, 0.75);
+}
+
 @view-transition {
   navigation: auto;
 }

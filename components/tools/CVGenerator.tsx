@@ -5,13 +5,13 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   Sparkles, Upload, Trash2, ArrowUpRight, Lock,
-  Target, ListChecks, FileUp, Loader2, GraduationCap,
+  Target, ListChecks, FileUp, Loader2, GraduationCap, Folder,
 } from 'lucide-react';
 import {
   sentraGenerateCV, sentraOcrJobPosting, sentraExtractCVPdf,
-  sentraListCVs, sentraGetCV, sentraDeleteCV,
+  sentraListCVs, sentraGetCV, sentraDeleteCV, sentraListCVFolders,
   SentraApiError,
-  type SentraCVDocument, type SentraCVListItem,
+  type SentraCVDocument, type SentraCVListItem, type SentraCVFolder,
 } from '@/lib/sentra/api';
 import { useSentraSession } from '@/lib/sentra/useSession';
 import { useAutoSave, clearDraft } from '@/lib/sentra/useAutoSave';
@@ -98,6 +98,7 @@ export interface CVDict {
   applySubject: string;
   applyBody: string;
   applyOpenMail: string;
+  applyOpenGmail: string;
   applyCopyBody: string;
   applyCopied: string;
   applyInstruction: string;
@@ -136,6 +137,12 @@ export interface CVDict {
     saving: string;
     saved: string;
     reviewClear: string;
+    folderLabel: string;
+    folderNone: string;
+    folderAll: string;
+    folderNew: string;
+    folderCreate: string;
+    folderPlaceholder: string;
   };
   pdf: {
     summary: string;
@@ -167,6 +174,9 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
   const [result, setResult] = useState<SentraCVDocument | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<SentraCVListItem[]>([]);
+  const [folders, setFolders] = useState<SentraCVFolder[]>([]);
+  // null = todas · 'none' = sin carpeta · <id> = carpeta concreta
+  const [activeFolder, setActiveFolder] = useState<string | null>(null);
   const [pdfBusy, setPdfBusy] = useState(false);
   const [tourSignal, setTourSignal] = useState(0); // >0 = disparar tutorial a mano
   const fileRef = useRef<HTMLInputElement>(null);
@@ -177,7 +187,10 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
   useAutoSave(DRAFT_JOB, jobPosting, setJobPosting);
 
   useEffect(() => {
-    if (user) sentraListCVs().then(setHistory).catch(() => {});
+    if (user) {
+      sentraListCVs().then(setHistory).catch(() => {});
+      sentraListCVFolders().then(setFolders).catch(() => {});
+    }
   }, [user]);
 
   const showErr = (err: unknown) =>
@@ -255,7 +268,7 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
       clearDraft(DRAFT_PROFILE, DRAFT_JOB); // ya se generó: borrador cumplido
       setResult(cv);
       setHistory((prev) => [
-        { id: cv.id, title: cv.title, match_score: cv.match_score, created_at: cv.created_at, updated_at: cv.updated_at },
+        { id: cv.id, title: cv.title, match_score: cv.match_score, folder_id: cv.folder_id, created_at: cv.created_at, updated_at: cv.updated_at },
         ...prev,
       ]);
     } catch (err) {
@@ -440,7 +453,7 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
                   // NO tocamos `result` (ancla del wizard) para no re-hidratar el
                   // store y expulsar al usuario del paso donde está.
                   setHistory((prev) => [
-                    { id: doc.id, title: doc.title, match_score: doc.match_score, created_at: doc.created_at, updated_at: doc.updated_at },
+                    { id: doc.id, title: doc.title, match_score: doc.match_score, folder_id: doc.folder_id, created_at: doc.created_at, updated_at: doc.updated_at },
                     ...prev,
                   ]);
                 }}
@@ -450,11 +463,46 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
             {/* HISTORIAL */}
             <div className="mt-10">
               <h2 className="text-lg font-black tracking-tight text-zinc-900 dark:text-white mb-4">{dict.historyTitle}</h2>
-              {history.length === 0 ? (
-                <p className="text-sm text-zinc-400 dark:text-zinc-500">{dict.historyEmpty}</p>
-              ) : (
-                <ul className="rounded-2xl bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 divide-y divide-zinc-100 dark:divide-zinc-800 overflow-hidden">
-                  {history.map((h) => (
+
+              {/* Tabs de carpeta (solo si hay carpetas creadas) */}
+              {folders.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {[
+                    { key: null as string | null, label: dict.wizard.folderAll },
+                    ...folders.map((f) => ({ key: f.id as string | null, label: f.name })),
+                    { key: 'none' as string | null, label: dict.wizard.folderNone },
+                  ].map((t) => {
+                    const on = activeFolder === t.key;
+                    return (
+                      <button
+                        key={t.key ?? '__all'}
+                        onClick={() => setActiveFolder(t.key)}
+                        className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-semibold border transition-colors ${
+                          on
+                            ? 'bg-green-500 text-black border-green-500'
+                            : 'border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:border-green-400'
+                        }`}
+                      >
+                        {t.key && t.key !== 'none' && <Folder className="w-3.5 h-3.5" />}
+                        {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {(() => {
+                const shown =
+                  activeFolder === null
+                    ? history
+                    : activeFolder === 'none'
+                      ? history.filter((h) => !h.folder_id)
+                      : history.filter((h) => h.folder_id === activeFolder);
+                return shown.length === 0 ? (
+                  <p className="text-sm text-zinc-400 dark:text-zinc-500">{dict.historyEmpty}</p>
+                ) : (
+                  <ul className="rounded-2xl bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 divide-y divide-zinc-100 dark:divide-zinc-800 overflow-hidden">
+                    {shown.map((h) => (
                     <li key={h.id} className="flex items-center gap-4 px-5 py-3.5">
                       <span
                         className="shrink-0 w-11 h-11 rounded-xl border-2 flex items-center justify-center text-[13px] font-black"
@@ -474,8 +522,9 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
                       </button>
                     </li>
                   ))}
-                </ul>
-              )}
+                  </ul>
+                );
+              })()}
             </div>
           </>
         )}
