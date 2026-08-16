@@ -100,7 +100,7 @@ export function openCVPdf(cv: CVContent, labels: CVPdfLabels): void {
     .foot { position: static; }
   }
 </style></head>
-<body onload="window.print()">
+<body>
   <h1>${esc(cv.full_name || '')}</h1>
   ${cv.headline ? `<p class="headline">${esc(cv.headline)}</p>` : ''}
   ${contactHtml}
@@ -112,9 +112,42 @@ export function openCVPdf(cv: CVContent, labels: CVPdfLabels): void {
   <div class="foot">${esc(labels.generatedBy)} — cescjavier.dev</div>
 </body></html>`;
 
-  const w = window.open('', '_blank');
-  if (!w) return; // popup bloqueado: el llamador muestra un aviso
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
+  // Imprimir desde un IFRAME OCULTO en vez de abrir una pestaña nueva. Ventajas:
+  //  · No consume un "pop-up" → no colisiona con el window.open de Gmail (el bug
+  //    del flujo de correo). Solo queda una ventana emergente: la del correo.
+  //  · No hay pestaña about:blank molesta; el diálogo de impresión sale directo.
+  //  · Sigue siendo un PDF REAL con texto seleccionable e hipervínculos (ATS).
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('aria-hidden', 'true');
+  iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentWindow?.document;
+  if (!doc) {
+    iframe.remove();
+    return;
+  }
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  const win = iframe.contentWindow;
+  const cleanup = () => {
+    if (iframe.parentNode) iframe.remove();
+  };
+  if (win) {
+    win.onafterprint = cleanup; // quita el iframe al cerrar el diálogo
+    // Pequeño margen para que el layout del iframe se asiente antes de imprimir.
+    setTimeout(() => {
+      try {
+        win.focus();
+        win.print();
+      } catch {
+        cleanup();
+      }
+    }, 200);
+  }
+  // Red de seguridad: si onafterprint no dispara en algún navegador, no dejamos
+  // el iframe colgado para siempre.
+  setTimeout(cleanup, 120000);
 }

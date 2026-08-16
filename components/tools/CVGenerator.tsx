@@ -6,12 +6,12 @@ import { motion } from 'framer-motion';
 import {
   Sparkles, Upload, Trash2, ArrowUpRight, Lock,
   Target, ListChecks, FileUp, Loader2, GraduationCap, Folder, FolderPlus, FolderInput,
-  Check, X, ChevronDown,
+  Check, X, ChevronDown, Pencil,
 } from 'lucide-react';
 import {
   sentraGenerateCV, sentraOcrJobPosting, sentraExtractCVPdf,
   sentraListCVs, sentraGetCV, sentraDeleteCV, sentraListCVFolders,
-  sentraCreateCVFolder, sentraMoveCV,
+  sentraCreateCVFolder, sentraMoveCV, sentraRenameCVFolder,
   SentraApiError,
   type SentraCVDocument, type SentraCVListItem, type SentraCVFolder,
 } from '@/lib/sentra/api';
@@ -158,6 +158,9 @@ export interface CVDict {
     sendGmail: string;
     sendMailLocal: string;
     sendMore: string;
+    perfectMatch: string;
+    folderRename: string;
+    folderRenamePlaceholder: string;
   };
   pdf: {
     summary: string;
@@ -188,6 +191,8 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
   const [activeFolder, setActiveFolder] = useState<string | null>(null);
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
+  const [renaming, setRenaming] = useState(false);
+  const [renameValue, setRenameValue] = useState('');
   const [folderBusy, setFolderBusy] = useState(false);
   const [moveOpenId, setMoveOpenId] = useState<string | null>(null); // fila con el menú "Mover" abierto
   const [pdfBusy, setPdfBusy] = useState(false);
@@ -326,6 +331,23 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
       setNewFolderName('');
       setCreatingFolder(false);
       setActiveFolder(folder.id);
+    } catch {
+      /* noop: el input queda para reintentar */
+    } finally {
+      setFolderBusy(false);
+    }
+  }
+
+  // Renombra la carpeta ACTIVA (solo carpetas reales, no "Todas"/"Sin carpeta").
+  async function renameFolder() {
+    const name = renameValue.trim();
+    if (!name || !activeFolder || activeFolder === 'none' || folderBusy) return;
+    setFolderBusy(true);
+    try {
+      const updated = await sentraRenameCVFolder(activeFolder, name);
+      setFolders((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
+      setRenaming(false);
+      setRenameValue('');
     } catch {
       /* noop: el input queda para reintentar */
     } finally {
@@ -560,13 +582,57 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
                       <X className="w-4 h-4" />
                     </button>
                   </span>
+                ) : renaming ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <input
+                      autoFocus
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') renameFolder();
+                        if (e.key === 'Escape') { setRenaming(false); setRenameValue(''); }
+                      }}
+                      placeholder={dict.wizard.folderRenamePlaceholder}
+                      className="w-56 rounded-full bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-3.5 py-1.5 text-[12px] text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-green-500/40"
+                    />
+                    <button
+                      onClick={renameFolder}
+                      disabled={folderBusy}
+                      className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-500 text-black disabled:opacity-50"
+                      aria-label={dict.wizard.folderCreate}
+                    >
+                      {folderBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                    </button>
+                    <button
+                      onClick={() => { setRenaming(false); setRenameValue(''); }}
+                      className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-zinc-300 dark:border-zinc-700 text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+                      aria-label="Cancelar"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </span>
                 ) : (
-                  <button
-                    onClick={() => setCreatingFolder(true)}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-dashed border-zinc-300 dark:border-zinc-700 text-[12px] font-semibold text-green-600 dark:text-green-400 hover:border-green-400 transition-colors"
-                  >
-                    <FolderPlus className="w-3.5 h-3.5" /> {dict.wizard.newFolder}
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setCreatingFolder(true)}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-dashed border-zinc-300 dark:border-zinc-700 text-[12px] font-semibold text-green-600 dark:text-green-400 hover:border-green-400 transition-colors"
+                    >
+                      <FolderPlus className="w-3.5 h-3.5" /> {dict.wizard.newFolder}
+                    </button>
+                    {activeFolder && activeFolder !== 'none' && (
+                      <button
+                        onClick={() => {
+                          setRenameValue(folders.find((f) => f.id === activeFolder)?.name ?? '');
+                          setRenaming(true);
+                        }}
+                        aria-label={dict.wizard.folderRename}
+                        title={dict.wizard.folderRename}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-300 dark:border-zinc-700 text-[12px] font-semibold text-zinc-600 dark:text-zinc-300 hover:border-green-400"
+                      >
+                        <Pencil className="w-3.5 h-3.5" /> {dict.wizard.folderRename}
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
 

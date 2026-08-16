@@ -190,11 +190,15 @@ export default function CVWizard({ cv, dict, lang, onNew, onVersion }: CVWizardP
         <div className="flex flex-wrap gap-2.5 shrink-0">
           <button
             onClick={runMagic}
-            disabled={improving || aiLocked}
-            title={aiLocked ? wd.aiLocked : wd.magicHint}
+            disabled={improving || aiLocked || content.match_score >= 100}
+            title={
+              content.match_score >= 100 ? wd.perfectMatch : aiLocked ? wd.aiLocked : wd.magicHint
+            }
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-violet-600 text-white text-[13px] font-bold hover:scale-[1.02] transition-transform disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
           >
-            {aiLocked ? (
+            {content.match_score >= 100 ? (
+              <Check className="w-4 h-4" />
+            ) : aiLocked ? (
               <Lock className="w-4 h-4" />
             ) : (
               <Wand2 className={`w-4 h-4 ${improving ? 'animate-pulse' : ''}`} />
@@ -218,7 +222,13 @@ export default function CVWizard({ cv, dict, lang, onNew, onVersion }: CVWizardP
         </div>
       </div>
 
-      {aiLocked && (
+      {content.match_score >= 100 && (
+        <div className="flex items-center gap-2 text-[13px] font-semibold text-green-700 dark:text-green-400 bg-green-500/10 border border-green-500/25 rounded-2xl px-4 py-3">
+          <Check className="w-4 h-4 shrink-0" />
+          <span>{wd.perfectMatch}</span>
+        </div>
+      )}
+      {aiLocked && content.match_score < 100 && (
         <div className="flex flex-wrap items-center gap-2 text-[13px] text-amber-600 dark:text-amber-400 bg-amber-500/5 border border-amber-500/20 rounded-2xl px-4 py-3">
           <Lock className="w-4 h-4 shrink-0" />
           <span>{wd.aiLocked}</span>

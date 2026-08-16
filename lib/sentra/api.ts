@@ -118,33 +118,44 @@ async function request<T>(
     ...(options.headers as Record<string, string>),
   };
 
-  if (withAuth) {
-    const token = getToken();
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-  let res: Response;
-  try {
-    res = await fetch(`${API_BASE}${path}`, {
-      ...options,
-      headers,
-      credentials: 'include',
-      signal: controller.signal,
-    });
-  } catch (err) {
-    // fetch RECHAZA (no responde) por: red caída, DNS, CORS, o abort (timeout).
-    // Antes esto propagaba un TypeError → el catch del componente lo tomaba como
-    // "error desconocido" y mostraba el genérico ciego. Ahora SIEMPRE es un
-    // SentraApiError con un motivo concreto.
-    if ((err as Error)?.name === 'AbortError') {
-      throw new SentraApiError(0, 'La solicitud tardó demasiado y se canceló. Inténtalo de nuevo.');
+  // El token se lee en CADA intento (tras un refresh silencioso hay uno nuevo).
+  const doFetch = async (): Promise<Response> => {
+    const h: Record<string, string> = { ...headers };
+    if (withAuth) {
+      const token = getToken();
+      if (token) h['Authorization'] = `Bearer ${token}`;
     }
-    throw new SentraApiError(0, 'No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.');
-  } finally {
-    clearTimeout(timer);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers: h,
+        credentials: 'include',
+        signal: controller.signal,
+      });
+    } catch (err) {
+      // fetch RECHAZA (no responde) por: red caída, DNS, CORS, o abort (timeout).
+      // Siempre lo convertimos en un SentraApiError con motivo concreto (no ciego).
+      if ((err as Error)?.name === 'AbortError') {
+        throw new SentraApiError(0, 'La solicitud tardó demasiado y se canceló. Inténtalo de nuevo.');
+      }
+      throw new SentraApiError(0, 'No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.');
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
+  let res = await doFetch();
+
+  // Access token caducado (15 min): la sesión sigue viva vía la cookie de
+  // refresh. Hacemos UN refresh silencioso y reintentamos. Esto elimina el
+  // "No autorizado." que aparecía al pulsar "Mejorar con IA" tras editar un
+  // rato (el token había expirado). Solo para peticiones autenticadas; el
+  // propio /auth/refresh usa withAuth=false, así que no hay bucle.
+  if (res.status === 401 && withAuth) {
+    const refreshed = await sentraRefresh();
+    if (refreshed) res = await doFetch();
   }
 
   if (!res.ok) {
@@ -737,6 +748,10 @@ export async function sentraListCVFolders(): Promise<SentraCVFolder[]> {
 
 export async function sentraCreateCVFolder(name: string): Promise<SentraCVFolder> {
   return request('/api/v1/cv/folders', { method: 'POST', body: JSON.stringify({ name }) }, true);
+}
+
+export async function sentraRenameCVFolder(id: string, name: string): Promise<SentraCVFolder> {
+  return request(`/api/v1/cv/folders/${id}`, { method: 'PATCH', body: JSON.stringify({ name }) }, true);
 }
 
 export async function sentraDeleteCVFolder(id: string): Promise<void> {

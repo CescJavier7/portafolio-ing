@@ -373,6 +373,29 @@ async def create_folder(
     return folder
 
 
+@router.patch("/folders/{folder_id}", response_model=CVFolderOut)
+async def rename_folder(
+    folder_id: str,
+    payload: CVFolderCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Renombra una carpeta del usuario (anti-IDOR: filtrada por user_id)."""
+    result = await db.execute(
+        select(CVFolder).where(CVFolder.id == folder_id, CVFolder.user_id == current_user.id)
+    )
+    folder = result.scalar_one_or_none()
+    if folder is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Carpeta no encontrada.")
+    name = payload.name.strip()[:80]
+    if not name:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="El nombre no puede estar vacío.")
+    folder.name = name
+    await db.commit()
+    await db.refresh(folder)
+    return folder
+
+
 @router.delete("/folders/{folder_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_folder(
     folder_id: str, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)

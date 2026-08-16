@@ -1229,7 +1229,10 @@
       "contactWebsite": "Sitio web / portafolio",
       "sendGmail": "Enviar por Gmail",
       "sendMailLocal": "Abrir en Correo",
-      "sendMore": "Más opciones de envío"
+      "sendMore": "Más opciones de envío",
+      "perfectMatch": "CV optimizado al 100%. Cumples con todos los requisitos de la oferta.",
+      "folderRename": "Renombrar",
+      "folderRenamePlaceholder": "Nuevo nombre de la carpeta"
     },
     "pdf": {
       "summary": "Resumen profesional",

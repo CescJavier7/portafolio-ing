@@ -1229,7 +1229,10 @@
       "contactWebsite": "Website / portfolio",
       "sendGmail": "Send with Gmail",
       "sendMailLocal": "Open in Mail",
-      "sendMore": "More send options"
+      "sendMore": "More send options",
+      "perfectMatch": "CV optimized to 100%. You meet all the job requirements.",
+      "folderRename": "Rename",
+      "folderRenamePlaceholder": "New folder name"
     },
     "pdf": {
       "summary": "Professional summary",
