@@ -717,6 +717,11 @@ export async function sentraUpdateCV(
   return request(`/api/v1/cv/${id}`, { method: 'PUT', body: JSON.stringify(data) }, true);
 }
 
+// Mueve un CV a una carpeta (folderId=null lo saca de toda carpeta).
+export async function sentraMoveCV(id: string, folderId: string | null): Promise<SentraCVDocument> {
+  return request(`/api/v1/cv/${id}`, { method: 'PATCH', body: JSON.stringify({ folder_id: folderId }) }, true);
+}
+
 // ── Carpetas de CV ──────────────────────────────────────────────────
 export async function sentraListCVFolders(): Promise<SentraCVFolder[]> {
   return request('/api/v1/cv/folders', { method: 'GET' }, true);

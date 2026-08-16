@@ -31,6 +31,13 @@ class CVFolderCreate(BaseModel):
     name: str = Field(min_length=1, max_length=80)
 
 
+class CVMoveRequest(BaseModel):
+    # Mover un CV a una carpeta (o sacarlo con folder_id=null). Endpoint PATCH
+    # dedicado: semántica clara ("cambiar solo la carpeta"), sin arrastrar
+    # content/title como el PUT.
+    folder_id: uuid.UUID | None = None
+
+
 class CVFolderOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

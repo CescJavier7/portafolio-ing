@@ -1218,7 +1218,10 @@
       "folderNew": "New",
       "folderCreate": "Create",
       "folderPlaceholder": "e.g. Cybersecurity, Engineering…",
-      "incompleteTitle": "Complete your CV to download or send your application."
+      "incompleteTitle": "Complete your CV to download or send your application.",
+      "newFolder": "New folder",
+      "move": "Move",
+      "moveEmpty": "Create a folder first"
     },
     "pdf": {
       "summary": "Professional summary",

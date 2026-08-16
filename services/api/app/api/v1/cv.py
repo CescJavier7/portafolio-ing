@@ -36,6 +36,7 @@ from app.schemas.cv import (
     CVGenerateRequest,
     CVImproveRequest,
     CVListItem,
+    CVMoveRequest,
     CVUpdateRequest,
     OCRResult,
 )
@@ -396,6 +397,33 @@ async def update_cv(
             if owns.scalar_one_or_none() is None:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Carpeta no encontrada.")
         cv.folder_id = payload.folder_id
+    await db.commit()
+    await db.refresh(cv)
+    return cv
+
+
+@router.patch("/{cv_id}", response_model=CVDocumentOut)
+async def move_cv(
+    cv_id: str,
+    payload: CVMoveRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Mueve un CV a una carpeta (o lo saca con folder_id=null). Doble barrera
+    anti-IDOR: el CV debe ser del usuario (_get_owned_cv) Y la carpeta destino
+    también (no se puede mover a una carpeta ajena).
+    """
+    cv = await _get_owned_cv(cv_id, current_user, db)
+    if payload.folder_id is not None:
+        owns = await db.execute(
+            select(CVFolder.id).where(
+                CVFolder.id == payload.folder_id, CVFolder.user_id == current_user.id
+            )
+        )
+        if owns.scalar_one_or_none() is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Carpeta no encontrada.")
+    cv.folder_id = payload.folder_id
     await db.commit()
     await db.refresh(cv)
     return cv

@@ -54,9 +54,10 @@ export function openCVPdf(cv: CVContent, labels: CVPdfLabels): void {
   const html = `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><title>${esc(cv.full_name || 'CV')}</title>
 <style>
-  /* A4 con márgenes de imprenta: el navegador reserva 15mm por lado, así el
-     texto nunca roza el borde de la hoja al "Guardar como PDF". */
-  @page { size: A4; margin: 15mm; }
+  /* @page margin:0 ELIMINA los artefactos del navegador (about:blank, fecha,
+     título) que se dibujan en el margen físico de la hoja. El margen seguro se
+     recupera con el padding del body en @media print (abajo). */
+  @page { size: A4; margin: 0; }
   * { box-sizing: border-box; }
   body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; color: #1a1a1a; max-width: 800px; margin: 0 auto; padding: 48px 40px; line-height: 1.5; }
   h1 { font-size: 30px; margin: 0 0 2px; letter-spacing: -0.02em; }
@@ -70,9 +71,14 @@ export function openCVPdf(cv: CVContent, labels: CVPdfLabels): void {
   li { font-size: 13px; color: #374151; margin-bottom: 3px; }
   .chip { display: inline-block; background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; font-size: 12px; padding: 3px 10px; border-radius: 999px; margin: 0 4px 6px 0; }
   .foot { margin-top: 36px; padding-top: 12px; border-top: 1px solid #e5e7eb; font-size: 10px; color: #9ca3af; }
-  /* En impresión, los márgenes los pone @page (15mm): quitamos el padding del
-     body para no duplicarlos y soltamos el max-width para llenar el área útil. */
-  @media print { body { padding: 0; max-width: none; } .foot { position: fixed; bottom: 0; } }
+  /* En impresión el margen de página es 0 (para matar los artefactos del
+     navegador), así que el margen seguro lo pone el PADDING del body. El footer
+     pasa a flujo normal (static) para respetar ese padding y no rozar el borde. */
+  @media print {
+    html, body { margin: 0; }
+    body { padding: 16mm 15mm; max-width: none; }
+    .foot { position: static; }
+  }
 </style></head>
 <body onload="window.print()">
   <h1>${esc(cv.full_name || '')}</h1>

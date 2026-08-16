@@ -5,11 +5,13 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   Sparkles, Upload, Trash2, ArrowUpRight, Lock,
-  Target, ListChecks, FileUp, Loader2, GraduationCap, Folder,
+  Target, ListChecks, FileUp, Loader2, GraduationCap, Folder, FolderPlus, FolderInput,
+  Check, X, ChevronDown,
 } from 'lucide-react';
 import {
   sentraGenerateCV, sentraOcrJobPosting, sentraExtractCVPdf,
   sentraListCVs, sentraGetCV, sentraDeleteCV, sentraListCVFolders,
+  sentraCreateCVFolder, sentraMoveCV,
   SentraApiError,
   type SentraCVDocument, type SentraCVListItem, type SentraCVFolder,
 } from '@/lib/sentra/api';
@@ -145,6 +147,9 @@ export interface CVDict {
     folderCreate: string;
     folderPlaceholder: string;
     incompleteTitle: string;
+    newFolder: string;
+    move: string;
+    moveEmpty: string;
   };
   pdf: {
     summary: string;
@@ -173,6 +178,10 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
   const [folders, setFolders] = useState<SentraCVFolder[]>([]);
   // null = todas · 'none' = sin carpeta · <id> = carpeta concreta
   const [activeFolder, setActiveFolder] = useState<string | null>(null);
+  const [creatingFolder, setCreatingFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [folderBusy, setFolderBusy] = useState(false);
+  const [moveOpenId, setMoveOpenId] = useState<string | null>(null); // fila con el menú "Mover" abierto
   const [pdfBusy, setPdfBusy] = useState(false);
   const [tourSignal, setTourSignal] = useState(0); // >0 = disparar tutorial a mano
   const fileRef = useRef<HTMLInputElement>(null);
@@ -295,6 +304,35 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
       await sentraDeleteCV(id);
     } catch {
       sentraListCVs().then(setHistory).catch(() => {});
+    }
+  }
+
+  // Crea una carpeta (idempotente en backend) y la deja seleccionada.
+  async function createFolder() {
+    const name = newFolderName.trim();
+    if (!name || folderBusy) return;
+    setFolderBusy(true);
+    try {
+      const folder = await sentraCreateCVFolder(name);
+      setFolders((prev) => (prev.some((f) => f.id === folder.id) ? prev : [...prev, folder]));
+      setNewFolderName('');
+      setCreatingFolder(false);
+      setActiveFolder(folder.id);
+    } catch {
+      /* noop: el input queda para reintentar */
+    } finally {
+      setFolderBusy(false);
+    }
+  }
+
+  // Mueve un CV a otra carpeta (optimista: actualiza el historial local ya).
+  async function moveCV(id: string, folderId: string | null) {
+    setMoveOpenId(null);
+    setHistory((prev) => prev.map((h) => (h.id === id ? { ...h, folder_id: folderId } : h)));
+    try {
+      await sentraMoveCV(id, folderId);
+    } catch {
+      sentraListCVs().then(setHistory).catch(() => {}); // revertir a estado real
     }
   }
 
@@ -460,10 +498,10 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
             <div className="mt-10">
               <h2 className="text-lg font-black tracking-tight text-zinc-900 dark:text-white mb-4">{dict.historyTitle}</h2>
 
-              {/* Tabs de carpeta (solo si hay carpetas creadas) */}
-              {folders.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {[
+              {/* Barra de carpetas: tabs de filtro + crear nueva */}
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                {folders.length > 0 &&
+                  [
                     { key: null as string | null, label: dict.wizard.folderAll },
                     ...folders.map((f) => ({ key: f.id as string | null, label: f.name })),
                     { key: 'none' as string | null, label: dict.wizard.folderNone },
@@ -484,8 +522,45 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
                       </button>
                     );
                   })}
-                </div>
-              )}
+
+                {creatingFolder ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <input
+                      autoFocus
+                      value={newFolderName}
+                      onChange={(e) => setNewFolderName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') createFolder();
+                        if (e.key === 'Escape') { setCreatingFolder(false); setNewFolderName(''); }
+                      }}
+                      placeholder={dict.wizard.folderPlaceholder}
+                      className="w-56 rounded-full bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-3.5 py-1.5 text-[12px] text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-green-500/40"
+                    />
+                    <button
+                      onClick={createFolder}
+                      disabled={folderBusy}
+                      className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-500 text-black disabled:opacity-50"
+                      aria-label={dict.wizard.folderCreate}
+                    >
+                      {folderBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                    </button>
+                    <button
+                      onClick={() => { setCreatingFolder(false); setNewFolderName(''); }}
+                      className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-zinc-300 dark:border-zinc-700 text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+                      aria-label="Cancelar"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => setCreatingFolder(true)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-dashed border-zinc-300 dark:border-zinc-700 text-[12px] font-semibold text-green-600 dark:text-green-400 hover:border-green-400 transition-colors"
+                  >
+                    <FolderPlus className="w-3.5 h-3.5" /> {dict.wizard.newFolder}
+                  </button>
+                )}
+              </div>
 
               {(() => {
                 const shown =
@@ -497,9 +572,9 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
                 return shown.length === 0 ? (
                   <p className="text-sm text-zinc-400 dark:text-zinc-500">{dict.historyEmpty}</p>
                 ) : (
-                  <ul className="rounded-2xl bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 divide-y divide-zinc-100 dark:divide-zinc-800 overflow-hidden">
+                  <ul className="rounded-2xl bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 divide-y divide-zinc-100 dark:divide-zinc-800">
                     {shown.map((h) => (
-                    <li key={h.id} className="flex items-center gap-4 px-5 py-3.5">
+                    <li key={h.id} className="flex items-center gap-3 px-5 py-3.5">
                       <span
                         className="shrink-0 w-11 h-11 rounded-xl border-2 flex items-center justify-center text-[13px] font-black"
                         style={{ borderColor: matchColor(h.match_score), color: matchColor(h.match_score) }}
@@ -513,6 +588,46 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
                       <button onClick={() => loadCV(h.id)} className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-300 dark:border-zinc-700 text-[12px] font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5">
                         {dict.open}
                       </button>
+
+                      {/* Mover a carpeta (dropdown) */}
+                      <div className="relative shrink-0">
+                        <button
+                          onClick={() => setMoveOpenId(moveOpenId === h.id ? null : h.id)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-300 dark:border-zinc-700 text-[12px] font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5"
+                        >
+                          <FolderInput className="w-3.5 h-3.5" /> {dict.wizard.move}
+                          <ChevronDown className={`w-3 h-3 transition-transform ${moveOpenId === h.id ? 'rotate-180' : ''}`} />
+                        </button>
+                        {moveOpenId === h.id && (
+                          <>
+                            <div className="fixed inset-0 z-30" onClick={() => setMoveOpenId(null)} />
+                            <div className="absolute right-0 top-full mt-1 z-40 w-52 max-h-64 overflow-y-auto cv-scroll rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl py-1">
+                              <button
+                                onClick={() => moveCV(h.id, null)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/5"
+                              >
+                                <span className="w-3.5 h-3.5 shrink-0">{!h.folder_id && <Check className="w-3.5 h-3.5 text-green-500" />}</span>
+                                {dict.wizard.folderNone}
+                              </button>
+                              {folders.map((f) => (
+                                <button
+                                  key={f.id}
+                                  onClick={() => moveCV(h.id, f.id)}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/5"
+                                >
+                                  <Folder className="w-3.5 h-3.5 shrink-0 text-zinc-400" />
+                                  <span className="flex-1 truncate">{f.name}</span>
+                                  {h.folder_id === f.id && <Check className="w-3.5 h-3.5 shrink-0 text-green-500" />}
+                                </button>
+                              ))}
+                              {folders.length === 0 && (
+                                <p className="px-3 py-2 text-[12px] text-zinc-400">{dict.wizard.moveEmpty}</p>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+
                       <button onClick={() => removeCV(h.id)} className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-300 dark:border-zinc-700 text-[12px] font-semibold text-zinc-500 dark:text-zinc-400 hover:border-red-400 hover:text-red-500">
                         <Trash2 className="w-3.5 h-3.5" /> {dict.delete}
                       </button>
