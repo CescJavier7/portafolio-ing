@@ -1226,7 +1226,10 @@
       "contactLocation": "Location (City, Country)",
       "contactEmail": "Email",
       "contactPhone": "Phone",
-      "contactWebsite": "Website / portfolio"
+      "contactWebsite": "Website / portfolio",
+      "sendGmail": "Send with Gmail",
+      "sendMailLocal": "Open in Mail",
+      "sendMore": "More send options"
     },
     "pdf": {
       "summary": "Professional summary",

@@ -27,8 +27,8 @@ function esc(s: string): string {
 }
 
 export function openCVPdf(cv: CVContent, labels: CVPdfLabels): void {
-  const chips = (items: string[]) =>
-    items.map((s) => `<span class="chip">${esc(s)}</span>`).join('');
+  // Estilo Harvard: habilidades/idiomas como texto separado por "·", sin chips.
+  const tags = (items: string[]) => `<p class="tags">${items.map((s) => esc(s)).join('  ·  ')}</p>`;
 
   const expHtml = cv.experience
     .map(
@@ -73,22 +73,24 @@ export function openCVPdf(cv: CVContent, labels: CVPdfLabels): void {
      título) que se dibujan en el margen físico de la hoja. El margen seguro se
      recupera con el padding del body en @media print (abajo). */
   @page { size: A4; margin: 0; }
+  /* Estilo Harvard: sobrio, gris/negro, líneas finas. Sin verde ni chips. */
   * { box-sizing: border-box; }
-  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; color: #1a1a1a; max-width: 800px; margin: 0 auto; padding: 48px 40px; line-height: 1.5; }
-  h1 { font-size: 30px; margin: 0 0 2px; letter-spacing: -0.02em; }
-  .headline { font-size: 15px; color: #16a34a; font-weight: 600; margin: 0 0 4px; }
-  .contact { font-size: 12px; color: #4b5563; margin: 0 0 16px; }
-  .contact a { color: #4b5563; text-decoration: none; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; color: #111827; max-width: 800px; margin: 0 auto; padding: 48px 40px; line-height: 1.5; overflow-wrap: break-word; word-wrap: break-word; }
+  h1 { font-size: 28px; margin: 0 0 2px; letter-spacing: -0.02em; color: #111827; }
+  .headline { font-size: 14px; color: #4b5563; font-weight: 500; margin: 0 0 4px; }
+  .contact { font-size: 12px; color: #6b7280; margin: 0 0 18px; overflow-wrap: break-word; }
+  .contact a { color: #6b7280; text-decoration: none; }
   .contact .sep { color: #d1d5db; margin: 0 6px; }
-  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #16a34a; border-bottom: 2px solid #e5e7eb; padding-bottom: 6px; margin: 28px 0 12px; }
-  .summary { font-size: 14px; color: #374151; }
-  .exp { margin-bottom: 14px; }
-  .exp-head { font-size: 14px; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: #374151; border-bottom: 1px solid #d1d5db; padding-bottom: 5px; margin: 24px 0 10px; }
+  .summary { font-size: 13.5px; color: #1f2937; white-space: pre-wrap; overflow-wrap: break-word; }
+  .exp { margin-bottom: 13px; }
+  .exp-head { font-size: 14px; overflow-wrap: break-word; }
+  .exp-head strong { color: #111827; }
   .period { float: right; color: #6b7280; font-size: 12px; font-weight: 500; }
-  ul { margin: 6px 0 0; padding-left: 18px; }
-  li { font-size: 13px; color: #374151; margin-bottom: 3px; }
-  .chip { display: inline-block; background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; font-size: 12px; padding: 3px 10px; border-radius: 999px; margin: 0 4px 6px 0; }
-  .foot { margin-top: 36px; padding-top: 12px; border-top: 1px solid #e5e7eb; font-size: 10px; color: #9ca3af; }
+  ul { margin: 5px 0 0; padding-left: 18px; }
+  li { font-size: 13px; color: #1f2937; margin-bottom: 3px; overflow-wrap: break-word; }
+  .tags { font-size: 13px; color: #1f2937; overflow-wrap: break-word; }
+  .foot { margin-top: 32px; padding-top: 12px; border-top: 1px solid #e5e7eb; font-size: 10px; color: #9ca3af; }
   /* En impresión el margen de página es 0 (para matar los artefactos del
      navegador), así que el margen seguro lo pone el PADDING del body. El footer
      pasa a flujo normal (static) para respetar ese padding y no rozar el borde. */
@@ -105,8 +107,8 @@ export function openCVPdf(cv: CVContent, labels: CVPdfLabels): void {
   ${cv.summary ? `<h2>${esc(labels.summary)}</h2><p class="summary">${esc(cv.summary)}</p>` : ''}
   ${expHtml ? `<h2>${esc(labels.experience)}</h2>${expHtml}` : ''}
   ${eduHtml ? `<h2>${esc(labels.education)}</h2>${eduHtml}` : ''}
-  ${cv.skills.length ? `<h2>${esc(labels.skills)}</h2>${chips(cv.skills)}` : ''}
-  ${cv.languages.length ? `<h2>${esc(labels.languages)}</h2>${chips(cv.languages)}` : ''}
+  ${cv.skills.length ? `<h2>${esc(labels.skills)}</h2>${tags(cv.skills)}` : ''}
+  ${cv.languages.length ? `<h2>${esc(labels.languages)}</h2>${tags(cv.languages)}` : ''}
   <div class="foot">${esc(labels.generatedBy)} — cescjavier.dev</div>
 </body></html>`;
 

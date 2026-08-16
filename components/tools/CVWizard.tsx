@@ -18,7 +18,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
-  Wand2, Download, Send, Plus, Trash2, ArrowLeft, ArrowRight, Mail, X, Copy,
+  Wand2, Download, Send, Plus, Trash2, ArrowLeft, ArrowRight, Mail, X, ChevronDown,
   Check, Lock, Loader2, ListChecks, Lightbulb, Cloud, Folder, FolderPlus, ExternalLink, AlertCircle,
 } from 'lucide-react';
 import {
@@ -158,53 +158,6 @@ export default function CVWizard({ cv, dict, lang, onNew, onVersion }: CVWizardP
     openCVPdf(clean, dict.pdf);
   }
 
-  // ── Postulación (correo IA) ────────────────────────────────────────
-  const [applyOpen, setApplyOpen] = useState(false);
-  const [applyBusy, setApplyBusy] = useState(false);
-  const [emailData, setEmailData] = useState<SentraApplyEmail | null>(null);
-  const [recipient, setRecipient] = useState('');
-  const [subject, setSubject] = useState('');
-  const [body, setBody] = useState('');
-  const [copied, setCopied] = useState(false);
-  const [applyError, setApplyError] = useState<string | null>(null);
-
-  async function openApply() {
-    setApplyOpen(true);
-    if (emailData) return;
-    setApplyBusy(true);
-    setApplyError(null);
-    try {
-      const clean = cleanCVContent(content);
-      if (cvId) await sentraUpdateCV(cvId, { content: clean }).catch(() => {});
-      const e = await sentraApplyEmail(cvId ?? cv.id);
-      setEmailData(e);
-      setRecipient(e.recipient);
-      setSubject(e.subject);
-      setBody(e.body);
-    } catch (err) {
-      setApplyError(err instanceof SentraApiError ? err.detail : dict.errorGeneric);
-    } finally {
-      setApplyBusy(false);
-    }
-  }
-
-  // Ambos flujos descargan primero el PDF (mailto/Gmail web no adjuntan archivos
-  // locales por seguridad del navegador) para que el usuario lo arrastre.
-  function openMailClient() {
-    openCVPdf(cleanCVContent(content), dict.pdf);
-    window.location.href = `mailto:${recipient.trim()}?subject=${encodeURIComponent(
-      subject,
-    )}&body=${encodeURIComponent(body)}`;
-  }
-
-  function openGmail() {
-    openCVPdf(cleanCVContent(content), dict.pdf);
-    const url = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
-      recipient.trim(),
-    )}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }
-
   const isLast = step === CV_STEPS.length - 1;
 
   return (
@@ -306,7 +259,8 @@ export default function CVWizard({ cv, dict, lang, onNew, onVersion }: CVWizardP
               step={CV_STEPS[step]}
               content={content}
               dict={dict}
-              onApply={openApply}
+              cvId={cvId}
+              cv={cv}
               folders={folders}
               folderId={folderId}
               onAssignFolder={assignFolder}
@@ -324,16 +278,9 @@ export default function CVWizard({ cv, dict, lang, onNew, onVersion }: CVWizardP
             >
               <ArrowLeft className="w-4 h-4" /> {wd.back}
             </button>
-            {isLast ? (
-              <button
-                onClick={openApply}
-                disabled={!validation.ok}
-                title={validation.ok ? wd.sendApplication : wd.incompleteTitle}
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-green-500 text-black text-[13px] font-bold hover:scale-[1.02] transition-transform disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
-              >
-                <Send className="w-4 h-4" /> {wd.sendApplication}
-              </button>
-            ) : (
+            {/* En el último paso la acción de envío vive en el cuerpo (Split
+                Button), así el dropdown tiene espacio para abrir hacia arriba. */}
+            {!isLast && (
               <button
                 onClick={() => cvWizard.next()}
                 className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-green-500 text-black text-[13px] font-bold hover:scale-[1.02] transition-transform"
@@ -356,93 +303,6 @@ export default function CVWizard({ cv, dict, lang, onNew, onVersion }: CVWizardP
         </div>
       </div>
 
-      {/* ── Modal de postulación ── */}
-      {applyOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm sm:p-4"
-          onClick={() => setApplyOpen(false)}
-        >
-          <div
-            className="w-full sm:max-w-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-t-3xl sm:rounded-3xl p-6 md:p-7 max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <p className="flex items-center gap-2 text-sm font-black tracking-tight text-zinc-900 dark:text-white">
-                <Mail className="w-4 h-4 text-green-500" /> {dict.applyTitle}
-              </p>
-              <button
-                onClick={() => setApplyOpen(false)}
-                className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
-                aria-label="Cerrar"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {applyBusy ? (
-              <p className="text-sm text-zinc-400 dark:text-zinc-500 animate-pulse py-8 text-center">
-                {dict.applyBusy}
-              </p>
-            ) : applyError ? (
-              <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
-                {applyError}
-              </p>
-            ) : (
-              <div className="space-y-4">
-                <div>
-                  <label className={fieldLabel}>{dict.applyRecipient}</label>
-                  <input
-                    type="email"
-                    value={recipient}
-                    onChange={(e) => setRecipient(e.target.value)}
-                    placeholder={dict.applyRecipientPlaceholder}
-                    className={inputBase}
-                  />
-                </div>
-                <div>
-                  <label className={fieldLabel}>{dict.applySubject}</label>
-                  <input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} className={inputBase} />
-                </div>
-                <div>
-                  <label className={fieldLabel}>{dict.applyBody}</label>
-                  <textarea rows={8} value={body} onChange={(e) => setBody(e.target.value)} className={`${inputBase} resize-y`} />
-                </div>
-
-                <p className="text-[12px] text-amber-600 dark:text-amber-400 bg-amber-500/5 border border-amber-500/20 rounded-xl px-4 py-3 leading-relaxed">
-                  {dict.applyInstruction}
-                </p>
-
-                {/* Dos vías grandes: Gmail (web) y Mail/Outlook (mailto). */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <button
-                    onClick={openGmail}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-red-500 text-white text-[13px] font-bold hover:scale-[1.02] transition-transform"
-                  >
-                    <ExternalLink className="w-4 h-4" /> {dict.applyOpenGmail}
-                  </button>
-                  <button
-                    onClick={openMailClient}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-black text-[13px] font-bold hover:scale-[1.02] transition-transform"
-                  >
-                    <Mail className="w-4 h-4" /> {dict.applyOpenMail}
-                  </button>
-                </div>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(body);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 1500);
-                  }}
-                  className="inline-flex items-center gap-2 text-[13px] font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
-                >
-                  {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                  {copied ? dict.applyCopied : dict.applyCopyBody}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -527,7 +387,8 @@ function StepBody({
   step,
   content,
   dict,
-  onApply,
+  cvId,
+  cv,
   folders,
   folderId,
   onAssignFolder,
@@ -538,7 +399,8 @@ function StepBody({
   step: CVStep;
   content: CVContent;
   dict: CVDict;
-  onApply: () => void;
+  cvId: string | null;
+  cv: SentraCVDocument;
   folders: SentraCVFolder[];
   folderId: string | null;
   onAssignFolder: (id: string | null) => void;
@@ -745,16 +607,113 @@ function StepBody({
           )}
         </div>
       )}
-      <button
-        onClick={onApply}
-        disabled={!canSend}
-        title={canSend ? dict.wizard.sendApplication : dict.wizard.incompleteTitle}
-        className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-[1.01] transition-transform disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
-      >
-        <Send className="w-4 h-4" /> {dict.wizard.sendApplication}
-      </button>
+      <ApplyEmailButton cvId={cvId} cv={cv} content={content} dict={dict} disabled={!canSend} />
       {!canSend && (
         <p className="text-[12px] text-red-500 text-center">{dict.wizard.incompleteTitle}</p>
+      )}
+    </div>
+  );
+}
+
+// Split Button de envío. Reemplaza el modal: al pulsar, descarga el PDF y abre
+// Gmail (o el correo local) con asunto/cuerpo ya rellenados. El correo se
+// PRE-GENERA al montar (IA), de modo que el clic no hace await → sin bloqueo de
+// pop-ups del navegador. Con fallback si la IA no responde.
+function ApplyEmailButton({
+  cvId,
+  cv,
+  content,
+  dict,
+  disabled,
+}: {
+  cvId: string | null;
+  cv: SentraCVDocument;
+  content: CVContent;
+  dict: CVDict;
+  disabled: boolean;
+}) {
+  const wd = dict.wizard;
+  const [email, setEmail] = useState<SentraApplyEmail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    sentraApplyEmail(cvId ?? cv.id)
+      .then((e) => alive && setEmail(e))
+      .catch(() => alive && setEmail(null))
+      .finally(() => alive && setLoading(false));
+    return () => {
+      alive = false;
+    };
+  }, [cvId, cv.id]);
+
+  // Fallback si la IA no respondió: nunca dejamos al usuario sin poder enviar.
+  const subject = (email?.subject || `Postulación — ${content.headline || content.full_name}`).trim();
+  const body = email?.body || content.summary || '';
+  const to = email?.recipient || '';
+
+  // Descarga el PDF (ventana de impresión → PDF real) SIN await previo, para que
+  // la apertura del correo ocurra dentro del gesto del usuario (sin bloqueo).
+  function send(via: 'gmail' | 'mail') {
+    setOpen(false);
+    openCVPdf(cleanCVContent(content), dict.pdf);
+    if (via === 'gmail') {
+      const url = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
+        to,
+      )}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } else {
+      window.location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    }
+  }
+
+  const busy = disabled || loading;
+
+  return (
+    <div className="relative">
+      <div className="flex">
+        <button
+          onClick={() => send('gmail')}
+          disabled={busy}
+          title={disabled ? wd.incompleteTitle : wd.sendGmail}
+          className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-l-full bg-green-500 text-black text-sm font-bold hover:brightness-105 transition disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          {wd.sendGmail}
+        </button>
+        <button
+          onClick={() => setOpen((o) => !o)}
+          disabled={busy}
+          aria-label={wd.sendMore}
+          className="inline-flex items-center justify-center px-3 py-3 rounded-r-full bg-green-500 text-black border-l border-black/15 hover:brightness-105 transition disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <ChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
+      <p className="mt-2 text-[11px] text-zinc-400 dark:text-zinc-500 text-center leading-snug">
+        {dict.applyInstruction}
+      </p>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
+          {/* Abre HACIA ARRIBA (bottom-full): el botón vive al pie del wizard. */}
+          <div className="absolute right-0 bottom-full mb-2 z-40 w-60 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl py-1.5 overflow-hidden">
+            <button
+              onClick={() => send('gmail')}
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/5"
+            >
+              <ExternalLink className="w-4 h-4 text-red-500" /> {wd.sendGmail}
+            </button>
+            <button
+              onClick={() => send('mail')}
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/5"
+            >
+              <Mail className="w-4 h-4" /> {wd.sendMailLocal}
+            </button>
+          </div>
+        </>
       )}
     </div>
   );
@@ -873,49 +832,44 @@ function CVPreviewA4({
     web ? { text: web, href: webHref, blank: true } : null,
   ].filter(Boolean) as { text: string; href?: string; blank?: boolean }[];
 
+  // Estilo Harvard: sobrio, sin color decorativo. Encabezado de sección =
+  // mayúsculas gris con una línea fina inferior. Nada de fondos ni chips.
   const Section = ({ children }: { children: React.ReactNode }) => (
-    <h4 className="text-[10px] font-bold uppercase tracking-[0.08em] text-green-700 border-b-2 border-zinc-200 pb-1.5 mt-5 mb-2">
+    <h4 className="text-[10px] font-bold uppercase tracking-[0.12em] text-gray-700 border-b border-gray-300 pb-1 mt-5 mb-2">
       {children}
     </h4>
   );
-  const chip = (s: string, i: number) => (
-    <span
-      key={i}
-      className="inline-block bg-green-50 border border-green-200 text-green-800 text-[10px] px-2.5 py-0.5 rounded-full mr-1.5 mb-1.5"
-    >
-      {s}
-    </span>
-  );
 
   return (
-    <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-lg overflow-hidden bg-white">
-      {/* Scroll VISIBLE (cv-scroll anula el hide global) y acotado a la altura de
-          la ventana: el contenido largo (habilidades, idiomas) ya no se corta —
-          se desplaza. min-h mantiene proporción de hoja cuando el CV es corto. */}
-      <div className="cv-scroll overflow-y-auto max-h-[calc(100vh-9rem)] min-h-[420px]">
+    <div className="rounded-xl border border-gray-200 dark:border-zinc-700 shadow-lg overflow-hidden bg-white">
+      {/* overflow-y-auto acotado a la ventana + cv-scroll (barra visible). El
+          contenido nunca rompe el layout del split-screen. */}
+      <div className="cv-scroll overflow-y-auto overflow-x-hidden max-h-[calc(100vh-9rem)] min-h-[420px]">
         <div
-          className="p-8 sm:p-10 text-zinc-900"
+          className="p-8 sm:p-10 text-gray-900 max-w-full break-words"
           style={{ fontFamily: '-apple-system, "Segoe UI", Roboto, sans-serif' }}
         >
           {isEmpty ? (
-            <p className="text-[12px] text-zinc-400 py-10 text-center">{empty}</p>
+            <p className="text-[12px] text-gray-400 py-10 text-center">{empty}</p>
           ) : (
             <>
-              <h3 className="text-[22px] font-black tracking-tight leading-tight text-zinc-900">
+              <h3 className="text-[23px] font-bold tracking-tight leading-tight text-gray-900 break-words">
                 {c.full_name || '—'}
               </h3>
-              {c.headline && <p className="text-[12px] font-semibold text-green-600 mt-0.5">{c.headline}</p>}
+              {c.headline && (
+                <p className="text-[12.5px] text-gray-600 mt-0.5 break-words">{c.headline}</p>
+              )}
 
               {contactParts.length > 0 && (
-                <p className="text-[10px] text-zinc-600 mt-1.5 leading-relaxed">
+                <p className="text-[10.5px] text-gray-500 mt-1.5 leading-relaxed break-words">
                   {contactParts.map((p, i) => (
                     <span key={i}>
-                      {i > 0 && <span className="text-zinc-300 mx-1.5">|</span>}
+                      {i > 0 && <span className="text-gray-300 mx-1.5">|</span>}
                       {p.href ? (
                         <a
                           href={p.href}
                           {...(p.blank ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                          className="text-zinc-600 no-underline hover:underline"
+                          className="text-gray-500 no-underline hover:underline"
                         >
                           {p.text}
                         </a>
@@ -930,7 +884,9 @@ function CVPreviewA4({
               {c.summary.trim() && (
                 <>
                   <Section>{labels.summary}</Section>
-                  <p className="text-[11px] leading-relaxed text-zinc-700">{c.summary}</p>
+                  <p className="text-[11px] leading-relaxed text-gray-800 whitespace-pre-wrap break-words">
+                    {c.summary}
+                  </p>
                 </>
               )}
 
@@ -939,19 +895,21 @@ function CVPreviewA4({
                   <Section>{labels.experience}</Section>
                   {experience.map((e, i) => (
                     <div key={i} className="mb-2.5">
-                      <div className="flex justify-between items-baseline gap-2">
-                        <p className="text-[11.5px] font-semibold text-zinc-900">
+                      <div className="flex justify-between items-baseline gap-3">
+                        <p className="text-[11.5px] font-semibold text-gray-900 min-w-0 break-words">
                           {e.role}
-                          {e.company && <span className="font-normal text-zinc-600"> · {e.company}</span>}
+                          {e.company && <span className="font-normal text-gray-600"> · {e.company}</span>}
                         </p>
-                        {e.period && <span className="text-[10px] text-zinc-500 shrink-0">{e.period}</span>}
+                        {e.period && (
+                          <span className="text-[10px] text-gray-500 shrink-0 whitespace-nowrap">{e.period}</span>
+                        )}
                       </div>
                       {e.highlights.filter((h) => h.trim()).length > 0 && (
                         <ul className="list-disc pl-4 mt-1 space-y-0.5">
                           {e.highlights
                             .filter((h) => h.trim())
                             .map((h, j) => (
-                              <li key={j} className="text-[10.5px] text-zinc-700 leading-snug">
+                              <li key={j} className="text-[10.5px] text-gray-800 leading-snug break-words">
                                 {h}
                               </li>
                             ))}
@@ -967,7 +925,7 @@ function CVPreviewA4({
                   <Section>{labels.education}</Section>
                   <ul className="list-disc pl-4 space-y-0.5">
                     {education.map((s, i) => (
-                      <li key={i} className="text-[10.5px] text-zinc-700 leading-snug">
+                      <li key={i} className="text-[10.5px] text-gray-800 leading-snug break-words">
                         {s}
                       </li>
                     ))}
@@ -978,18 +936,22 @@ function CVPreviewA4({
               {skills.length > 0 && (
                 <>
                   <Section>{labels.skills}</Section>
-                  <div>{skills.map(chip)}</div>
+                  <p className="text-[10.5px] text-gray-800 leading-relaxed break-words">
+                    {skills.join('  ·  ')}
+                  </p>
                 </>
               )}
 
               {languages.length > 0 && (
                 <>
                   <Section>{labels.languages}</Section>
-                  <div>{languages.map(chip)}</div>
+                  <p className="text-[10.5px] text-gray-800 leading-relaxed break-words">
+                    {languages.join('  ·  ')}
+                  </p>
                 </>
               )}
 
-              <div className="mt-6 pt-2.5 border-t border-zinc-200 text-[9px] text-zinc-400">
+              <div className="mt-6 pt-2.5 border-t border-gray-200 text-[9px] text-gray-400">
                 {labels.generatedBy} — cescjavier.dev
               </div>
             </>

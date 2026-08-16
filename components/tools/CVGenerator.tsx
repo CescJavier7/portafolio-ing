@@ -155,6 +155,9 @@ export interface CVDict {
     contactEmail: string;
     contactPhone: string;
     contactWebsite: string;
+    sendGmail: string;
+    sendMailLocal: string;
+    sendMore: string;
   };
   pdf: {
     summary: string;

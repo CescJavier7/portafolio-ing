@@ -1226,7 +1226,10 @@
       "contactLocation": "Ubicación (Ciudad, País)",
       "contactEmail": "Correo electrónico",
       "contactPhone": "Teléfono",
-      "contactWebsite": "Sitio web / portafolio"
+      "contactWebsite": "Sitio web / portafolio",
+      "sendGmail": "Enviar por Gmail",
+      "sendMailLocal": "Abrir en Correo",
+      "sendMore": "Más opciones de envío"
     },
     "pdf": {
       "summary": "Resumen profesional",
