@@ -50,6 +50,11 @@ class CVDocument(Base):
     # JSON (no HTML) → el frontend controla el render y el PDF.
     content: Mapped[dict] = mapped_column(JSON, nullable=False)
 
+    # Perfil NORMALIZADO con ids (pipeline anclado, ver cv_prompts.py). Fuente de
+    # verdad: los datos personales/empresas/fechas se copian de aquí, no de la
+    # salida del LLM. nullable: CVs antiguos (pre-pipeline) no lo tienen.
+    profile: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
     # % de requisitos de la oferta que cubre el CV (0-100), calculado por el LLM.
     match_score: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 

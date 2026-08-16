@@ -9,6 +9,7 @@ Aislamiento anti-IDOR: TODO acceso a un CV se filtra por `user_id` del token,
 nunca por un id que venga del cliente. Un CV es un dato personal → derecho de
 supresión = DELETE real.
 """
+import asyncio
 import json
 from datetime import datetime, timedelta, timezone
 
@@ -41,6 +42,7 @@ from app.schemas.cv import (
     OCRResult,
 )
 from app.services import cv_service
+from app.services.cv_prompts import detectar_datos_no_rastreables, rebuild_cv
 from app.services.file_guard import validate_upload, wipe
 from app.services.ocr_service import extract_text_from_image
 from app.services.pdf_service import extract_text_from_pdf
@@ -111,11 +113,28 @@ async def generate_cv(
     # ── Gating freemium por cuota semanal (0 = ilimitado) ──
     await _enforce_cv_quota(current_user, db)
 
-    # ── Generación con IA (bloqueante → threadpool) ──
+    # ── Pipeline anclado por ids (ver cv_prompts.py) ──
+    # Fase 1 (normalizar perfil) y Fase 2 (analizar oferta) son independientes →
+    # en paralelo. Luego Fase 3 (adaptar). Timeouts para responder SIEMPRE antes
+    # del corte de ~100s de Cloudflare (2 llamadas secuenciales como máximo).
     try:
-        cv_content = await run_in_threadpool(cv_service.generate_cv, payload.profile_text, payload.job_posting)
+        profile, analysis = await asyncio.wait_for(
+            asyncio.gather(
+                run_in_threadpool(cv_service.extract_profile, payload.profile_text),
+                run_in_threadpool(cv_service.analyze_offer, payload.job_posting),
+            ),
+            timeout=65,
+        )
+        llm_output = await asyncio.wait_for(
+            run_in_threadpool(cv_service.adapt_cv, profile, analysis),
+            timeout=45,
+        )
+    except asyncio.TimeoutError:
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="La generación tardó demasiado. Inténtalo de nuevo.",
+        )
     except (json.JSONDecodeError, ValidationError):
-        # El LLM devolvió algo no parseable/estructurado: fallo controlado.
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="No se pudo generar un CV válido. Inténtalo de nuevo.",
@@ -127,12 +146,33 @@ async def generate_cv(
             detail="El servicio de IA no respondió. Inténtalo más tarde.",
         )
 
+    # ── Fase 4: reconstrucción VERIFICADA. Los ids inventados se descartan; los
+    # datos personales/empresas/fechas salen del perfil, no del modelo. ──
+    rich, incidencias = rebuild_cv(profile, llm_output)
+    if incidencias:
+        # Tasa alta = prompt degradado o perfil mal normalizado. Diagnóstico.
+        print(f"[CV] Incidencias de reconstrucción (user {current_user.id}): {incidencias}")
+    avisos = detectar_datos_no_rastreables(rich, profile)
+    if avisos:
+        print(f"[CV] Cifras no rastreables (user {current_user.id}): {avisos}")
+
+    # Mapeo al CVContent plano que consume el frontend actual.
+    try:
+        cv_content = CVContent(**cv_service.map_rich_to_content(rich, profile))
+    except ValidationError:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="No se pudo generar un CV válido. Inténtalo de nuevo.",
+        )
+    cv_content.match_score = max(0, min(100, cv_content.match_score))
+
     doc = CVDocument(
         user_id=current_user.id,
         title=cv_service.derive_title(cv_content, payload.title),
         job_posting=payload.job_posting,
         content=cv_content.model_dump(),
         match_score=cv_content.match_score,
+        profile=profile,  # perfil normalizado con ids = fuente de verdad
     )
     db.add(doc)
     await db.commit()
@@ -235,6 +275,7 @@ async def improve_cv(
         content=improved.model_dump(),
         match_score=improved.match_score,
         folder_id=original.folder_id,  # la versión mejorada hereda la carpeta
+        profile=original.profile,  # y el perfil normalizado (fuente de verdad)
     )
     db.add(doc)
     await db.commit()
