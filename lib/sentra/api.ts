@@ -594,9 +594,17 @@ export interface CVExperienceItem {
   highlights: string[];
 }
 
+export interface CVContact {
+  location: string;
+  email: string;
+  phone: string;
+  website: string;
+}
+
 export interface CVContent {
   full_name: string;
   headline: string;
+  contact: CVContact;
   summary: string;
   experience: CVExperienceItem[];
   education: string[];

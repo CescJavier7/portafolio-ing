@@ -549,6 +549,7 @@ function StepBody({
   const c = content;
 
   if (step === 'personal') {
+    const contact = c.contact ?? { location: '', email: '', phone: '', website: '' };
     return (
       <div className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -572,6 +573,39 @@ function StepBody({
             className={`${inputBase} resize-y${errRing(errors.summary)}`}
           />
           <FieldError msg={errors.summary} />
+        </div>
+
+        {/* Contacto (cabecera del CV) — grid 2×2 */}
+        <div>
+          <label className={fieldLabel}>{dict.wizard.contactTitle}</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <input
+              placeholder={dict.wizard.contactLocation}
+              value={contact.location}
+              onChange={(e) => cvWizard.setContact('location', e.target.value)}
+              className={inputBase}
+            />
+            <input
+              type="email"
+              placeholder={dict.wizard.contactEmail}
+              value={contact.email}
+              onChange={(e) => cvWizard.setContact('email', e.target.value)}
+              className={inputBase}
+            />
+            <input
+              type="tel"
+              placeholder={dict.wizard.contactPhone}
+              value={contact.phone}
+              onChange={(e) => cvWizard.setContact('phone', e.target.value)}
+              className={inputBase}
+            />
+            <input
+              placeholder={dict.wizard.contactWebsite}
+              value={contact.website}
+              onChange={(e) => cvWizard.setContact('website', e.target.value)}
+              className={inputBase}
+            />
+          </div>
         </div>
       </div>
     );
@@ -827,6 +861,18 @@ function CVPreviewA4({
   const experience = c.experience.filter((e) => e.role.trim() || e.company.trim() || e.highlights.some((h) => h.trim()));
   const isEmpty = !c.full_name.trim() && !c.summary.trim() && experience.length === 0 && skills.length === 0;
 
+  // Fila de contacto: ubicación · correo · teléfono · web, con "|" condicionales.
+  // Correo y web como <a> para que los ATS extraigan los hipervínculos nativos.
+  const ct = c.contact ?? { location: '', email: '', phone: '', website: '' };
+  const web = ct.website.trim();
+  const webHref = web ? (/^https?:\/\//i.test(web) ? web : `https://${web}`) : '';
+  const contactParts = [
+    ct.location.trim() ? { text: ct.location.trim() } : null,
+    ct.email.trim() ? { text: ct.email.trim(), href: `mailto:${ct.email.trim()}` } : null,
+    ct.phone.trim() ? { text: ct.phone.trim() } : null,
+    web ? { text: web, href: webHref, blank: true } : null,
+  ].filter(Boolean) as { text: string; href?: string; blank?: boolean }[];
+
   const Section = ({ children }: { children: React.ReactNode }) => (
     <h4 className="text-[10px] font-bold uppercase tracking-[0.08em] text-green-700 border-b-2 border-zinc-200 pb-1.5 mt-5 mb-2">
       {children}
@@ -859,6 +905,27 @@ function CVPreviewA4({
                 {c.full_name || '—'}
               </h3>
               {c.headline && <p className="text-[12px] font-semibold text-green-600 mt-0.5">{c.headline}</p>}
+
+              {contactParts.length > 0 && (
+                <p className="text-[10px] text-zinc-600 mt-1.5 leading-relaxed">
+                  {contactParts.map((p, i) => (
+                    <span key={i}>
+                      {i > 0 && <span className="text-zinc-300 mx-1.5">|</span>}
+                      {p.href ? (
+                        <a
+                          href={p.href}
+                          {...(p.blank ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                          className="text-zinc-600 no-underline hover:underline"
+                        >
+                          {p.text}
+                        </a>
+                      ) : (
+                        p.text
+                      )}
+                    </span>
+                  ))}
+                </p>
+              )}
 
               {c.summary.trim() && (
                 <>

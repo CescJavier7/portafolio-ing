@@ -23,9 +23,22 @@ const experienceSchema = z.object({
 
 // Esquema de CV COMPLETO. Usa `passthrough` para ignorar campos extra
 // (match_score, tips, etc.) sin fallar por ellos.
+// El contacto es OPCIONAL para la completitud: un CV es válido sin web o
+// LinkedIn. Se valida su forma pero no bloquea la descarga.
+const contactSchema = z
+  .object({
+    location: z.string(),
+    email: z.string(),
+    phone: z.string(),
+    website: z.string(),
+  })
+  .partial()
+  .optional();
+
 export const cvCompleteSchema = z.object({
   full_name: z.string().trim().min(1),
   headline: z.string().trim().min(1),
+  contact: contactSchema,
   summary: z.string().trim().min(20),
   experience: z.array(experienceSchema).min(1),
   education: z.array(z.string()).refine(hasContent),

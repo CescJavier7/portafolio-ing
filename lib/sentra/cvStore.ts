@@ -14,15 +14,18 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
-import type { CVContent, CVExperienceItem } from '@/lib/sentra/api';
+import type { CVContent, CVContact, CVExperienceItem } from '@/lib/sentra/api';
 
 // El ORDEN es el flujo del asistente. 'review' = revisión final + envío.
 export const CV_STEPS = ['personal', 'experience', 'education', 'skills', 'review'] as const;
 export type CVStep = (typeof CV_STEPS)[number];
 
+export const emptyContact: CVContact = { location: '', email: '', phone: '', website: '' };
+
 export const emptyCVContent: CVContent = {
   full_name: '',
   headline: '',
+  contact: { ...emptyContact },
   summary: '',
   experience: [],
   education: [],
@@ -81,18 +84,30 @@ function clampStep(step: number): number {
   return Math.max(0, Math.min(CV_STEPS.length - 1, step));
 }
 
+// Garantiza que `content.contact` exista: los CVs generados ANTES de esta
+// feature no lo traen, y el editor/preview accede a content.contact.email.
+function withContact(content: CVContent): CVContent {
+  return { ...content, contact: { ...emptyContact, ...(content.contact ?? {}) } };
+}
+
 export const cvWizard = {
   // Carga un CV recién generado/abierto. Resetea al primer paso.
   hydrate(cv: { id: string; job_posting: string; content: CVContent }): void {
-    commit({ cvId: cv.id, jobPosting: cv.job_posting, content: cv.content, step: 0 });
+    commit({ cvId: cv.id, jobPosting: cv.job_posting, content: withContact(cv.content), step: 0 });
   },
   // Reemplaza TODO el contenido (p. ej. tras una mejora con IA) SIN tocar el
   // paso actual: el usuario no debe ser expulsado al paso 0 al usar la varita.
   setContent(content: CVContent): void {
-    commit({ ...state, content });
+    commit({ ...state, content: withContact(content) });
   },
   setField<K extends keyof CVContent>(key: K, value: CVContent[K]): void {
     commit({ ...state, content: { ...state.content, [key]: value } });
+  },
+  setContact<K extends keyof CVContact>(key: K, value: CVContact[K]): void {
+    commit({
+      ...state,
+      content: { ...state.content, contact: { ...emptyContact, ...state.content.contact, [key]: value } },
+    });
   },
   setExperience(index: number, patch: Partial<CVExperienceItem>): void {
     commit({

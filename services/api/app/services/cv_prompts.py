@@ -53,6 +53,10 @@ REGLAS
 2. PROHIBIDO inventar datos personales. Si no hay teléfono, ubicación, correo o
    LinkedIn en el texto, esos campos van vacíos. Nunca infieras una ciudad a
    partir de un nombre de empresa ni un correo a partir de un nombre.
+   La cabecera del contacto suele venir en UNA sola línea separada por "|" o "·"
+   (ej. "Machachi, Quito, Ecuador | correo@dominio.com | +593 98 375 5469 |
+   www.sitio.dev"). Separa cada dato en su campo: "ubicacion", "email",
+   "telefono", "web". Copia el correo, teléfono y web EXACTOS, sin reformatear.
 3. Ids correlativos y únicos: exp_1, exp_2... para los puestos; b1, b2, b3...
    para los logros, numerados de corrido en todo el documento (no reinicies por
    puesto).

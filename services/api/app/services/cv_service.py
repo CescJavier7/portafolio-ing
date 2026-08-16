@@ -17,7 +17,7 @@ import json
 from typing import Any
 
 from app.core.config import get_settings
-from app.schemas.cv import CVContent
+from app.schemas.cv import CVContact, CVContent
 from app.services.cv_prompts import (
     ADAPT_SYSTEM_PROMPT,
     ANALYZE_SYSTEM_PROMPT,
@@ -160,6 +160,13 @@ def map_rich_to_content(rich: dict[str, Any], profile: dict[str, Any]) -> dict[s
     return {
         "full_name": (dp.get("nombre") or "").strip(),
         "headline": (rich.get("titular") or dp.get("titular") or "").strip(),
+        # Contacto copiado del perfil (nunca de la salida del LLM adaptador).
+        "contact": {
+            "location": (dp.get("ubicacion") or "").strip(),
+            "email": (dp.get("email") or "").strip(),
+            "phone": (dp.get("telefono") or "").strip(),
+            "website": (dp.get("web") or "").strip(),
+        },
         "summary": (rich.get("resumen") or "").strip(),
         "experience": experience,
         "education": education,
@@ -326,6 +333,12 @@ def improve_cv(current_content: dict, job_posting: str) -> CVContent:
 
     data = json.loads(completion.choices[0].message.content or "{}")
     cv = CVContent(**data)
+    # El CONTACTO no lo toca el LLM (no está en su esquema de salida): se
+    # conserva tal cual del CV de entrada. Evita que "mejorar" borre la cabecera.
+    prev_contact = current_content.get("contact") or {}
+    cv.contact = CVContact(**{
+        k: prev_contact.get(k, "") for k in ("location", "email", "phone", "website")
+    })
     # CANDADO MONOTÓNICO (no confiamos solo en el prompt): el score mejorado
     # nunca puede quedar por debajo del que traía el CV de entrada. Elimina el
     # bug de fluctuación 90 -> 85 -> 80: cada "Mejorar con IA" solo puede subir

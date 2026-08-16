@@ -62,11 +62,21 @@ class CVExperienceItem(BaseModel):
     highlights: list[str] = []
 
 
+class CVContact(BaseModel):
+    # Datos de contacto de la cabecera (los pone el sistema desde el perfil, no
+    # el LLM en la fase de adaptación). Cadena vacía si el perfil no los trae.
+    location: str = ""
+    email: str = ""
+    phone: str = ""
+    website: str = ""
+
+
 class CVContent(BaseModel):
     # Se valida la salida del LLM contra esto: si devuelve basura, falla
     # ruidosamente en el router (500 controlado) en vez de guardar un CV roto.
     full_name: str = ""
     headline: str = ""
+    contact: CVContact = Field(default_factory=CVContact)
     summary: str = ""
     experience: list[CVExperienceItem] = []
     education: list[str] = []

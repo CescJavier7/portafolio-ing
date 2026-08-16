@@ -150,6 +150,11 @@ export interface CVDict {
     newFolder: string;
     move: string;
     moveEmpty: string;
+    contactTitle: string;
+    contactLocation: string;
+    contactEmail: string;
+    contactPhone: string;
+    contactWebsite: string;
   };
   pdf: {
     summary: string;

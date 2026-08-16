@@ -51,6 +51,21 @@ export function openCVPdf(cv: CVContent, labels: CVPdfLabels): void {
     ? `<ul>${cv.education.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>`
     : '';
 
+  // Fila de contacto (cabecera). Correo y web como <a> para que los ATS
+  // extraigan los hipervínculos de forma nativa. Todo escapado antes de ir al DOM.
+  const ct = cv.contact;
+  const web = (ct?.website || '').trim();
+  const webHref = web ? (/^https?:\/\//i.test(web) ? web : `https://${web}`) : '';
+  const contactParts: string[] = [];
+  if ((ct?.location || '').trim()) contactParts.push(esc(ct.location.trim()));
+  if ((ct?.email || '').trim())
+    contactParts.push(`<a href="mailto:${esc(ct.email.trim())}">${esc(ct.email.trim())}</a>`);
+  if ((ct?.phone || '').trim()) contactParts.push(esc(ct.phone.trim()));
+  if (web) contactParts.push(`<a href="${esc(webHref)}" target="_blank" rel="noopener noreferrer">${esc(web)}</a>`);
+  const contactHtml = contactParts.length
+    ? `<p class="contact">${contactParts.join(' <span class="sep">|</span> ')}</p>`
+    : '';
+
   const html = `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><title>${esc(cv.full_name || 'CV')}</title>
 <style>
@@ -61,7 +76,10 @@ export function openCVPdf(cv: CVContent, labels: CVPdfLabels): void {
   * { box-sizing: border-box; }
   body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; color: #1a1a1a; max-width: 800px; margin: 0 auto; padding: 48px 40px; line-height: 1.5; }
   h1 { font-size: 30px; margin: 0 0 2px; letter-spacing: -0.02em; }
-  .headline { font-size: 15px; color: #16a34a; font-weight: 600; margin: 0 0 16px; }
+  .headline { font-size: 15px; color: #16a34a; font-weight: 600; margin: 0 0 4px; }
+  .contact { font-size: 12px; color: #4b5563; margin: 0 0 16px; }
+  .contact a { color: #4b5563; text-decoration: none; }
+  .contact .sep { color: #d1d5db; margin: 0 6px; }
   h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #16a34a; border-bottom: 2px solid #e5e7eb; padding-bottom: 6px; margin: 28px 0 12px; }
   .summary { font-size: 14px; color: #374151; }
   .exp { margin-bottom: 14px; }
@@ -83,6 +101,7 @@ export function openCVPdf(cv: CVContent, labels: CVPdfLabels): void {
 <body onload="window.print()">
   <h1>${esc(cv.full_name || '')}</h1>
   ${cv.headline ? `<p class="headline">${esc(cv.headline)}</p>` : ''}
+  ${contactHtml}
   ${cv.summary ? `<h2>${esc(labels.summary)}</h2><p class="summary">${esc(cv.summary)}</p>` : ''}
   ${expHtml ? `<h2>${esc(labels.experience)}</h2>${expHtml}` : ''}
   ${eduHtml ? `<h2>${esc(labels.education)}</h2>${eduHtml}` : ''}

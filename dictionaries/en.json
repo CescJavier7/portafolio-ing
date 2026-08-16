@@ -1221,7 +1221,12 @@
       "incompleteTitle": "Complete your CV to download or send your application.",
       "newFolder": "New folder",
       "move": "Move",
-      "moveEmpty": "Create a folder first"
+      "moveEmpty": "Create a folder first",
+      "contactTitle": "Contact",
+      "contactLocation": "Location (City, Country)",
+      "contactEmail": "Email",
+      "contactPhone": "Phone",
+      "contactWebsite": "Website / portfolio"
     },
     "pdf": {
       "summary": "Professional summary",
