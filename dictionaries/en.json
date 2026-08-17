@@ -188,12 +188,12 @@
       {
         "title": "AI ATS-Resume Builder",
         "category": "Applied AI / Employability Tool",
-        "description": "A resume builder that tailors your CV to each job with AI: upload a PDF or a photo (OCR), get a structured CV with a match score and actionable suggestions, edit it live and apply with an AI-written email. Freemium with weekly credits."
+        "description": "Tailors your profile to each job with AI, anchored by identifiers so it never invents data: name, companies and dates are copied from your profile, not the model. It computes an honest match score by ATS keyword coverage, groups your skills by category, edits live with an A4 preview and exports an ATS-ready PDF. It includes an automation (n8n + Notion): it finds new postings daily, scores each match with AI, generates the CV tailored to the role and logs the pipeline in Notion, with a Telegram ping for the ones worth it."
       },
       {
         "title": "DartShannon — Ficha Viva",
         "category": "Product · Data security",
-        "description": "A 'MISSING' flyer travels through WhatsApp for months; when the person is found, the poster stays the same. Ficha Viva gives each case a URL with state, so the link already circulating updates itself and the chat thumbnail changes from 'missing' to 'found safe'. Privacy is a product decision made before the interface: the exact coordinate is never stored —it becomes an H3 cell and is discarded—, the map only shows bands, no dates or counts, and nothing is published without human review. Go with no framework (2 dependencies), AES-256-GCM encryption in-process, an 80-line homegrown JWT verifier that only knows HS256, and nine limits written before the first line of code. It works end to end; only Google Cloud billing is missing for the map."
+        "description": "A stateful URL for every missing-person case: the link already circulating on WhatsApp updates itself and its thumbnail changes from 'missing' to 'found safe'. Privacy by design: the exact coordinate is never persisted —it is aggregated into an H3 cell and discarded in the same INSERT—; the map publishes bands, no dates or counts, with monotonic publishing (a cell never drops a class) against Sweeney's temporal attack; and nothing is published without human review. Go with no framework (2 dependencies), AES-256-GCM encryption in-process and an 80-line homegrown JWT verifier (HS256 only, no algorithm negotiation). PostgreSQL + PostGIS + TimescaleDB + H3; React 19 PWA frontend. Working end to end in development; only Google Cloud billing for the map is pending."
       },
       {
         "title": "SentinelX",
@@ -472,7 +472,7 @@
       "planFree": "Free",
       "planDesc": "Your organization is on the free plan. Upgrade to Pro for full access when scans launch.",
       "planProDesc": "Your organization is on the Pro plan. Thanks for supporting Sentra.",
-      "upgrade": "Upgrade to Pro — $30/mo",
+      "upgrade": "Upgrade to Pro — $10/mo",
       "upgrading": "Opening checkout…",
       "upgradeError": "Could not start the payment. Try again in a moment.",
       "testModeNote": "Payments run in test mode while Sentra is in early access.",
@@ -583,7 +583,7 @@
           "AI-generated reports (technical and executive)",
           "Priority support"
         ],
-        "price": "$30/mo",
+        "price": "$10/mo",
         "cta": "Upgrade to Pro",
         "upgrading": "Opening checkout…",
         "later": "Not now",
@@ -836,11 +836,13 @@
       {
         "id": "pro",
         "name": "Pro",
-        "price": "$30",
+        "price": "$10",
         "priceNote": "/ month",
-        "desc": "For those who need their security always in the green.",
+        "desc": "All-in-one: continuous security (Sentra) + Sentra CV AI + Academy, in a single plan.",
         "cta": "Get Pro",
         "features": [
+          "Unlimited Sentra CV AI (AI-optimized resumes)",
+          "Academy: access to the courses",
           "Up to 10 domains",
           "Unlimited scans",
           "Full history: what changed and when",
@@ -869,7 +871,7 @@
         ]
       }
     ],
-    "footnote": "Prices are in USD. Payments are processed by Lemon Squeezy as merchant of record (they issue your invoice and handle taxes). You can cancel or change plans anytime from your dashboard.",
+    "footnote": "Prices are in USD. To activate your plan, pick a payment method in your panel (De Una, PayPhone, bank transfer, PayPal or USDT) and we confirm your access once the payment is verified. No contracts: cancel or change plan anytime.",
     "faqTitle": "Frequently asked questions",
     "faq": [
       {

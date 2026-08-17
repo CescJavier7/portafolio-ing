@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { SiGithub } from 'react-icons/si';
 import { ExternalLink, TerminalSquare, ChevronLeft, ChevronRight, X, MousePointerClick } from 'lucide-react';
 
@@ -166,6 +166,17 @@ export default function ProjectsApple({ dict }: ProjectsAppleProps) {
   // mostramos un placeholder con marca. Robustez ante imágenes ausentes.
   const [imgFailed, setImgFailed] = useState<Record<number, boolean>>({});
   const [modalImgFailed, setModalImgFailed] = useState(false);
+
+  // Dispositivo TÁCTIL (móvil/iPad): no hay hover real. En ese caso la tarjeta
+  // se abre al TOCAR (modal), en vez del panel de detalle que sale al pasar el
+  // mouse (que en un iPad nunca se dispara y dejaba la tarjeta "muerta").
+  const [isTouch, setIsTouch] = useState(false);
+  useEffect(() => {
+    setIsTouch(window.matchMedia('(hover: none), (pointer: coarse)').matches);
+  }, []);
+
+  // Cerrar el modal arrastrando desde la barra superior (bottom-sheet nativo).
+  const dragControls = useDragControls();
 
   // ─── NUEVO MOTOR DE SCROLL FLUIDO (ESTILO APPLE TV) ───────────────────────
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -350,10 +361,11 @@ export default function ProjectsApple({ dict }: ProjectsAppleProps) {
           className="flex overflow-x-auto snap-x snap-mandatory gap-6 px-6 md:px-[10vw] pb-12 w-full no-scrollbar relative z-20"
         >
           {projects.map((project, index) => (
-            <motion.div 
-              key={`project-${index}`} 
+            <motion.div
+              key={`project-${index}`}
               ref={(el) => { cardRefs.current[index] = el; }}
-              className="project-card group relative shrink-0 snap-center w-[85vw] md:w-[600px] h-[450px] md:h-[550px] rounded-[2rem] md:rounded-[2.5rem] bg-zinc-200 dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 overflow-hidden shadow-sm origin-center transition-[transform,opacity,box-shadow] duration-300 ease-out will-change-transform"
+              onClick={() => { if (isTouch) setActiveProject(project); }}
+              className={`project-card group relative shrink-0 snap-center w-[85vw] md:w-[600px] h-[450px] md:h-[550px] rounded-[2rem] md:rounded-[2.5rem] bg-zinc-200 dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 overflow-hidden shadow-sm origin-center transition-[transform,opacity,box-shadow] duration-300 ease-out will-change-transform ${isTouch ? 'cursor-pointer' : ''}`}
               initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, margin: "-50px" }} transition={{ duration: 0.6, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
             >
               
@@ -380,37 +392,39 @@ export default function ProjectsApple({ dict }: ProjectsAppleProps) {
                 </div>
               </div>
 
-              {/* 2. TEXTO INFERIOR */}
-              <div className="absolute inset-x-0 bottom-0 p-8 md:p-10 transition-opacity duration-500 md:group-hover:opacity-0 z-30">
+              {/* 2. TEXTO INFERIOR (en táctil no se desvanece: no hay hover) */}
+              <div className={`absolute inset-x-0 bottom-0 p-8 md:p-10 transition-opacity duration-500 z-30 ${!isTouch ? 'md:group-hover:opacity-0' : ''}`}>
                  <div className="flex items-center gap-2 text-apple-blue mb-2">
                    <TerminalSquare size={16} />
                    <p className="font-mono text-xs uppercase tracking-widest">{project.category}</p>
                  </div>
                  <h3 className="text-3xl md:text-4xl font-bold text-white mb-2 drop-shadow-md">{project.title}</h3>
-                 
-                 <button 
-                   onClick={() => setActiveProject(project)}
-                   className="mt-6 flex md:hidden items-center justify-center gap-2 w-full py-3.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/20 text-white font-medium active:scale-95 transition-transform"
+
+                 <button
+                   onClick={(e) => { e.stopPropagation(); setActiveProject(project); }}
+                   className={`mt-6 ${isTouch ? 'flex' : 'hidden'} items-center justify-center gap-2 w-full py-3.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/20 text-white font-medium active:scale-95 transition-transform`}
                  >
                    <MousePointerClick size={18} /> {dict.mobileCta}
                  </button>
               </div>
 
-              {/* 3. PANEL DE CRISTAL (SOLO PC) */}
-              <div className="hidden md:flex absolute inset-x-0 bottom-0 top-8 bg-black/90 backdrop-blur-xl p-12 flex-col justify-center opacity-0 translate-y-8 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 ease-out z-40">
-                 <p className="text-apple-blue font-mono text-xs uppercase tracking-widest mb-4">{project.category}</p>
-                 <h3 className="text-4xl font-bold text-white mb-6">{project.title}</h3>
-                 <p className="text-zinc-300 text-lg leading-relaxed mb-8 text-balance">
+              {/* 3. PANEL DE DETALLE (SOLO con hover real = desktop con mouse).
+                  overflow-y-auto para descripciones largas como DartShannon. */}
+              {!isTouch && (
+              <div className="hidden md:flex absolute inset-x-0 bottom-0 top-8 bg-black/90 backdrop-blur-xl p-8 md:p-10 flex-col justify-start overflow-y-auto no-scrollbar opacity-0 translate-y-8 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 ease-out z-40">
+                 <p className="text-apple-blue font-mono text-xs uppercase tracking-widest mb-3 shrink-0">{project.category}</p>
+                 <h3 className="text-3xl font-bold text-white mb-4 shrink-0">{project.title}</h3>
+                 <p className="text-zinc-300 text-[14px] leading-relaxed mb-5 text-balance">
                    {project.description}
                  </p>
-                 <div className="flex flex-wrap gap-2 mb-10">
+                 <div className="flex flex-wrap gap-2 mb-6">
                    {project.techs.map(tech => (
                      <span key={tech} className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white/10 text-zinc-200 border border-white/10">
                        {tech}
                      </span>
                    ))}
                  </div>
-                 <div className="flex items-center gap-4 mt-auto">
+                 <div className="flex items-center gap-4 pt-1">
                    {project.comingSoon ? (
                      <span className="px-5 py-2.5 rounded-full bg-white/10 border border-white/20 text-white text-sm font-semibold">
                        {dict.comingSoon ?? 'Próximamente'}
@@ -431,6 +445,7 @@ export default function ProjectsApple({ dict }: ProjectsAppleProps) {
                    )}
                  </div>
               </div>
+              )}
 
             </motion.div>
           ))}
@@ -450,12 +465,27 @@ export default function ProjectsApple({ dict }: ProjectsAppleProps) {
               className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm cursor-pointer"
             />
 
-            <motion.div 
+            <motion.div
               initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              drag="y"
+              dragControls={dragControls}
+              dragListener={false}
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={{ top: 0, bottom: 0.6 }}
+              onDragEnd={(_, info) => {
+                if (info.offset.y > 100 || info.velocity.y > 500) setActiveProject(null);
+              }}
               className="relative w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-t-[2rem] md:rounded-[2.5rem] shadow-2xl max-h-[90vh] flex flex-col z-[101]"
             >
-              <div className="w-12 h-1.5 bg-zinc-300 dark:bg-zinc-700 rounded-full mx-auto mt-4 shrink-0 md:hidden" />
+              {/* Barra: arrastra hacia abajo para cerrar (solo inicia el drag aquí,
+                  para que el contenido siga desplazándose con normalidad). */}
+              <div
+                onPointerDown={(e) => dragControls.start(e)}
+                className="w-full pt-4 pb-2 shrink-0 md:hidden flex justify-center cursor-grab active:cursor-grabbing touch-none"
+              >
+                <div className="w-12 h-1.5 bg-zinc-300 dark:bg-zinc-700 rounded-full" />
+              </div>
 
               <button 
                 onClick={() => setActiveProject(null)}

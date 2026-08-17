@@ -188,12 +188,12 @@
       {
         "title": "AI ATS-Resume Builder",
         "category": "IA Aplicada / Herramienta de Empleabilidad",
-        "description": "Generador de CV que adapta tu currículum a cada oferta con IA: sube un PDF o una foto (OCR), obtén un CV estructurado con match score y sugerencias accionables, edítalo en vivo y postúlate con un correo redactado por IA. Freemium con créditos semanales."
+        "description": "Adapta tu perfil a cada oferta con IA, anclado por identificadores para no inventar datos: nombre, empresas y fechas se copian de tu perfil, no del modelo. Calcula un match score honesto por cobertura de palabras clave ATS, agrupa tus habilidades por categoría, edita en vivo con vista previa A4 y exporta a PDF listo para filtros ATS. Incluye una automatización (n8n + Notion): busca ofertas nuevas cada día, puntúa el match de cada una con IA, genera el CV adaptado a la vacante y registra el pipeline en Notion, con aviso por Telegram de las que valen la pena."
       },
       {
         "title": "DartShannon — Ficha Viva",
         "category": "Producto · Seguridad de datos",
-        "description": "Una ficha de «SE BUSCA» circula por WhatsApp durante meses; cuando la persona aparece, el afiche sigue igual. Ficha Viva le da a cada caso una URL con estado, así el enlace que ya está circulando cambia solo y la miniatura del chat pasa de «se busca» a «apareció con vida». La privacidad es una decisión de producto tomada antes que la interfaz: la coordenada exacta nunca se guarda —se convierte en celda H3 y se descarta—, al mapa solo salen bandas sin fechas ni conteos, y nada se publica sin revisión humana. Go sin framework (2 dependencias), cifrado AES-256-GCM en el proceso, un verificador JWT propio de 80 líneas que solo conoce HS256, y nueve límites escritos antes de la primera línea de código. Funciona de extremo a extremo; falta facturación de Google Cloud para el mapa."
+        "description": "URL con estado para cada caso de persona desaparecida: el enlace que ya circula por WhatsApp se actualiza solo y su miniatura pasa de «se busca» a «apareció con vida». Privacidad por diseño: la coordenada exacta nunca se persiste —se agrega a una celda H3 y se descarta en el mismo INSERT—; el mapa publica bandas, sin fechas ni conteos, con publicación monótona (una celda nunca baja de clase) contra el ataque temporal de Sweeney; y nada se publica sin revisión humana. Go sin framework (2 dependencias), cifrado AES-256-GCM en el proceso y un verificador JWT propio de 80 líneas (solo HS256, sin negociación de algoritmo). PostgreSQL + PostGIS + TimescaleDB + H3; frontend React 19 PWA. Operativo de extremo a extremo en desarrollo; falta habilitar la facturación de Google Cloud para el mapa."
       },
       {
         "title": "SentinelX",
@@ -472,7 +472,7 @@
       "planFree": "Gratis",
       "planDesc": "Tu organización está en el plan gratuito. Mejora a Pro para acceder a todo cuando lancemos los escaneos.",
       "planProDesc": "Tu organización tiene el plan Pro. Gracias por apoyar el desarrollo de Sentra.",
-      "upgrade": "Mejorar a Pro — $30/mes",
+      "upgrade": "Mejorar a Pro — $10/mes",
       "upgrading": "Abriendo checkout…",
       "upgradeError": "No se pudo iniciar el pago. Inténtalo de nuevo en un momento.",
       "testModeNote": "Los pagos están en modo de prueba mientras Sentra está en acceso anticipado.",
@@ -583,7 +583,7 @@
           "Reportes generados con IA (técnico y ejecutivo)",
           "Soporte prioritario"
         ],
-        "price": "$30/mes",
+        "price": "$10/mes",
         "cta": "Mejorar a Pro",
         "upgrading": "Abriendo checkout…",
         "later": "Ahora no",
@@ -836,11 +836,13 @@
       {
         "id": "pro",
         "name": "Pro",
-        "price": "$30",
+        "price": "$10",
         "priceNote": "/ mes",
-        "desc": "Para quien vive de que su seguridad esté siempre en verde.",
+        "desc": "Todo incluido: seguridad continua (Sentra) + Sentra CV AI + Academia, en un solo plan.",
         "cta": "Empezar con Pro",
         "features": [
+          "Sentra CV AI ilimitado (CV optimizados con IA)",
+          "Academia: acceso a los cursos",
           "Hasta 10 dominios",
           "Escaneos ilimitados",
           "Historial completo: qué cambió y cuándo",
@@ -869,7 +871,7 @@
         ]
       }
     ],
-    "footnote": "Los precios están en USD. Los pagos los procesa Lemon Squeezy como comerciante registrado (emite tu factura y gestiona impuestos). Puedes cancelar o cambiar de plan en cualquier momento desde tu panel.",
+    "footnote": "Los precios están en USD. Para activar tu plan, elige un método de pago en tu panel (De Una, PayPhone, transferencia, PayPal o USDT) y confirmamos tu acceso al verificar el pago. Sin contratos: cancela o cambia de plan cuando quieras.",
     "faqTitle": "Preguntas frecuentes",
     "faq": [
       {
