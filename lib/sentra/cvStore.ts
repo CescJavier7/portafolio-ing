@@ -14,7 +14,7 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
-import type { CVContent, CVContact, CVExperienceItem } from '@/lib/sentra/api';
+import type { CVContent, CVContact, CVCertification, CVExperienceItem } from '@/lib/sentra/api';
 
 // El ORDEN es el flujo del asistente. 'review' = revisión final + envío.
 export const CV_STEPS = ['personal', 'experience', 'education', 'skills', 'review'] as const;
@@ -27,6 +27,7 @@ export const emptyCVContent: CVContent = {
   headline: '',
   contact: { ...emptyContact },
   summary: '',
+  certifications: [],
   experience: [],
   education: [],
   skills: [],
@@ -84,10 +85,15 @@ function clampStep(step: number): number {
   return Math.max(0, Math.min(CV_STEPS.length - 1, step));
 }
 
-// Garantiza que `content.contact` exista: los CVs generados ANTES de esta
-// feature no lo traen, y el editor/preview accede a content.contact.email.
+// Garantiza que existan los campos añadidos DESPUÉS de que hubiera CVs guardados
+// (contact, certifications). Sin esto, el editor/preview accede a
+// content.contact.email o content.certifications.map(...) sobre undefined.
 function withContact(content: CVContent): CVContent {
-  return { ...content, contact: { ...emptyContact, ...(content.contact ?? {}) } };
+  return {
+    ...content,
+    contact: { ...emptyContact, ...(content.contact ?? {}) },
+    certifications: Array.isArray(content.certifications) ? content.certifications : [],
+  };
 }
 
 export const cvWizard = {
@@ -139,6 +145,35 @@ export const cvWizard = {
       },
     });
   },
+  setCertification(index: number, patch: Partial<CVCertification>): void {
+    commit({
+      ...state,
+      content: {
+        ...state.content,
+        certifications: (state.content.certifications ?? []).map((c, i) =>
+          i === index ? { ...c, ...patch } : c,
+        ),
+      },
+    });
+  },
+  addCertification(): void {
+    commit({
+      ...state,
+      content: {
+        ...state.content,
+        certifications: [...(state.content.certifications ?? []), { name: '', issuer: '', year: '' }],
+      },
+    });
+  },
+  removeCertification(index: number): void {
+    commit({
+      ...state,
+      content: {
+        ...state.content,
+        certifications: (state.content.certifications ?? []).filter((_, i) => i !== index),
+      },
+    });
+  },
   setCvId(cvId: string): void {
     commit({ ...state, cvId });
   },
@@ -165,6 +200,7 @@ export function cleanCVContent(x: CVContent): CVContent {
     education: x.education.filter((s) => s.trim()),
     skills: x.skills.filter((s) => s.trim()),
     languages: x.languages.filter((s) => s.trim()),
+    certifications: (x.certifications ?? []).filter((c) => c.name.trim()),
     experience: x.experience
       .map((e) => ({ ...e, highlights: e.highlights.filter((h) => h.trim()) }))
       .filter((e) => e.role.trim() || e.company.trim() || e.highlights.length > 0),

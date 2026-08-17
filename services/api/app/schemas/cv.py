@@ -71,6 +71,13 @@ class CVContact(BaseModel):
     website: str = ""
 
 
+class CVCertification(BaseModel):
+    # Certificaciones (dato del perfil, no lo inventa el LLM adaptador).
+    name: str = ""
+    issuer: str = ""
+    year: str = ""
+
+
 class CVContent(BaseModel):
     # Se valida la salida del LLM contra esto: si devuelve basura, falla
     # ruidosamente en el router (500 controlado) en vez de guardar un CV roto.
@@ -80,6 +87,7 @@ class CVContent(BaseModel):
     summary: str = ""
     experience: list[CVExperienceItem] = []
     education: list[str] = []
+    certifications: list[CVCertification] = []
     skills: list[str] = []
     languages: list[str] = []
     match_score: int = 0            # % de requisitos cubiertos (0-100)

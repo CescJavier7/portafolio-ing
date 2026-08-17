@@ -161,11 +161,17 @@ export interface CVDict {
     perfectMatch: string;
     folderRename: string;
     folderRenamePlaceholder: string;
+    certTitle: string;
+    certName: string;
+    certIssuer: string;
+    certYear: string;
+    certAdd: string;
   };
   pdf: {
     summary: string;
     experience: string;
     education: string;
+    certifications: string;
     skills: string;
     languages: string;
     generatedBy: string;

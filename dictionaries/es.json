@@ -1232,12 +1232,18 @@
       "sendMore": "Más opciones de envío",
       "perfectMatch": "CV optimizado al 100%. Cumples con todos los requisitos de la oferta.",
       "folderRename": "Renombrar",
-      "folderRenamePlaceholder": "Nuevo nombre de la carpeta"
+      "folderRenamePlaceholder": "Nuevo nombre de la carpeta",
+      "certTitle": "Certificaciones",
+      "certName": "Nombre del certificado",
+      "certIssuer": "Entidad",
+      "certYear": "Año",
+      "certAdd": "Añadir certificación"
     },
     "pdf": {
       "summary": "Resumen profesional",
       "experience": "Experiencia",
       "education": "Formación",
+      "certifications": "Certificaciones",
       "skills": "Habilidades",
       "languages": "Idiomas",
       "generatedBy": "Generado con el asistente de CV de"

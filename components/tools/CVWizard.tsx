@@ -532,17 +532,51 @@ function StepBody({
   }
 
   if (step === 'education') {
+    const certs = c.certifications ?? [];
     return (
-      <div>
-        <label className={fieldLabel}>
-          {dict.educationTitle} <span className="normal-case font-normal text-zinc-400">· {dict.linesHint}</span>
-        </label>
-        <textarea
-          rows={6}
-          value={c.education.join('\n')}
-          onChange={(e) => cvWizard.setField('education', e.target.value.split('\n'))}
-          className={`${inputBase} resize-y`}
-        />
+      <div className="space-y-5">
+        <div>
+          <label className={fieldLabel}>
+            {dict.educationTitle} <span className="normal-case font-normal text-zinc-400">· {dict.linesHint}</span>
+          </label>
+          <textarea
+            rows={5}
+            value={c.education.join('\n')}
+            onChange={(e) => cvWizard.setField('education', e.target.value.split('\n'))}
+            className={`${inputBase} resize-y`}
+          />
+        </div>
+
+        {/* Certificaciones — field array con labels (Nombre · Entidad · Año) */}
+        <div>
+          <label className={fieldLabel}>{dict.wizard.certTitle}</label>
+          <div className="space-y-2.5">
+            {certs.map((cert, i) => (
+              <div key={i} className="relative rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4">
+                <button
+                  type="button"
+                  onClick={() => cvWizard.removeCertification(i)}
+                  className="absolute top-3 right-3 text-zinc-400 hover:text-red-500"
+                  aria-label="Quitar"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+                <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_5.5rem] gap-2.5 pr-8">
+                  <input placeholder={dict.wizard.certName} value={cert.name} onChange={(e) => cvWizard.setCertification(i, { name: e.target.value })} className={inputBase} />
+                  <input placeholder={dict.wizard.certIssuer} value={cert.issuer} onChange={(e) => cvWizard.setCertification(i, { issuer: e.target.value })} className={inputBase} />
+                  <input placeholder={dict.wizard.certYear} value={cert.year} onChange={(e) => cvWizard.setCertification(i, { year: e.target.value })} className={inputBase} inputMode="numeric" />
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => cvWizard.addCertification()}
+              className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-green-600 dark:text-green-400 hover:underline"
+            >
+              <Plus className="w-3.5 h-3.5" /> {dict.wizard.certAdd}
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -827,6 +861,7 @@ function CVPreviewA4({
   const skills = c.skills.filter((s) => s.trim());
   const languages = c.languages.filter((s) => s.trim());
   const education = c.education.filter((s) => s.trim());
+  const certifications = (c.certifications ?? []).filter((cert) => cert.name.trim());
   const experience = c.experience.filter((e) => e.role.trim() || e.company.trim() || e.highlights.some((h) => h.trim()));
   const isEmpty = !c.full_name.trim() && !c.summary.trim() && experience.length === 0 && skills.length === 0;
 
@@ -937,6 +972,21 @@ function CVPreviewA4({
                     {education.map((s, i) => (
                       <li key={i} className="text-[10.5px] text-gray-800 leading-snug break-words">
                         {s}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+
+              {certifications.length > 0 && (
+                <>
+                  <Section>{labels.certifications}</Section>
+                  <ul className="list-disc pl-4 space-y-0.5">
+                    {certifications.map((cert, i) => (
+                      <li key={i} className="text-[10.5px] text-gray-800 leading-snug break-words">
+                        {cert.name}
+                        {cert.issuer && <span className="text-gray-600"> — {cert.issuer}</span>}
+                        {cert.year && <span className="text-gray-500"> ({cert.year})</span>}
                       </li>
                     ))}
                   </ul>

@@ -1232,12 +1232,18 @@
       "sendMore": "More send options",
       "perfectMatch": "CV optimized to 100%. You meet all the job requirements.",
       "folderRename": "Rename",
-      "folderRenamePlaceholder": "New folder name"
+      "folderRenamePlaceholder": "New folder name",
+      "certTitle": "Certifications",
+      "certName": "Certificate name",
+      "certIssuer": "Issuer",
+      "certYear": "Year",
+      "certAdd": "Add certification"
     },
     "pdf": {
       "summary": "Professional summary",
       "experience": "Experience",
       "education": "Education",
+      "certifications": "Certifications",
       "skills": "Skills",
       "languages": "Languages",
       "generatedBy": "Generated with the CV assistant of"

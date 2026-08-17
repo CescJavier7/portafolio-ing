@@ -42,6 +42,10 @@ export const cvCompleteSchema = z.object({
   summary: z.string().trim().min(20),
   experience: z.array(experienceSchema).min(1),
   education: z.array(z.string()).refine(hasContent),
+  // Certificaciones: opcionales (un CV es válido sin ellas). No bloquean.
+  certifications: z
+    .array(z.object({ name: z.string(), issuer: z.string(), year: z.string() }).partial())
+    .optional(),
   skills: z.array(z.string()).refine(hasContent),
 });
 

@@ -12,6 +12,7 @@ export interface CVPdfLabels {
   summary: string;
   experience: string;
   education: string;
+  certifications: string;
   skills: string;
   languages: string;
   generatedBy: string;
@@ -49,6 +50,17 @@ export function openCVPdf(cv: CVContent, labels: CVPdfLabels): void {
 
   const eduHtml = cv.education.length
     ? `<ul>${cv.education.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>`
+    : '';
+
+  const certList = (cv.certifications ?? []).filter((c) => c.name.trim());
+  const certHtml = certList.length
+    ? `<ul>${certList
+        .map((c) => {
+          const issuer = c.issuer.trim() ? ` — ${esc(c.issuer.trim())}` : '';
+          const year = c.year.trim() ? ` (${esc(c.year.trim())})` : '';
+          return `<li>${esc(c.name.trim())}${issuer}${year}</li>`;
+        })
+        .join('')}</ul>`
     : '';
 
   // Fila de contacto (cabecera). Correo y web como <a> para que los ATS
@@ -107,6 +119,7 @@ export function openCVPdf(cv: CVContent, labels: CVPdfLabels): void {
   ${cv.summary ? `<h2>${esc(labels.summary)}</h2><p class="summary">${esc(cv.summary)}</p>` : ''}
   ${expHtml ? `<h2>${esc(labels.experience)}</h2>${expHtml}` : ''}
   ${eduHtml ? `<h2>${esc(labels.education)}</h2>${eduHtml}` : ''}
+  ${certHtml ? `<h2>${esc(labels.certifications)}</h2>${certHtml}` : ''}
   ${cv.skills.length ? `<h2>${esc(labels.skills)}</h2>${tags(cv.skills)}` : ''}
   ${cv.languages.length ? `<h2>${esc(labels.languages)}</h2>${tags(cv.languages)}` : ''}
   <div class="foot">${esc(labels.generatedBy)} — cescjavier.dev</div>

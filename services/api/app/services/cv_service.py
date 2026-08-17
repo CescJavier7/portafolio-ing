@@ -17,7 +17,7 @@ import json
 from typing import Any
 
 from app.core.config import get_settings
-from app.schemas.cv import CVContact, CVContent
+from app.schemas.cv import CVCertification, CVContact, CVContent
 from app.services.cv_prompts import (
     ADAPT_SYSTEM_PROMPT,
     ANALYZE_SYSTEM_PROMPT,
@@ -139,6 +139,16 @@ def map_rich_to_content(rich: dict[str, Any], profile: dict[str, Any]) -> dict[s
         if s.strip():
             education.append(s)
 
+    certifications = [
+        {
+            "name": (cert.get("nombre") or "").strip(),
+            "issuer": (cert.get("entidad") or "").strip(),
+            "year": str(cert.get("anio") or "").strip(),
+        }
+        for cert in rich.get("certificaciones", [])
+        if (cert.get("nombre") or "").strip()
+    ]
+
     skills: list[str] = []
     for _cat, items in (rich.get("habilidades") or {}).items():
         skills.extend([i for i in items if isinstance(i, str) and i.strip()])
@@ -170,6 +180,7 @@ def map_rich_to_content(rich: dict[str, Any], profile: dict[str, Any]) -> dict[s
         "summary": (rich.get("resumen") or "").strip(),
         "experience": experience,
         "education": education,
+        "certifications": certifications,
         "skills": skills,
         "languages": languages,
         "match_score": match_score,
@@ -339,6 +350,15 @@ def improve_cv(current_content: dict, job_posting: str) -> CVContent:
     cv.contact = CVContact(**{
         k: prev_contact.get(k, "") for k in ("location", "email", "phone", "website")
     })
+    # Certificaciones tampoco las toca el LLM (son un hecho del perfil): se
+    # conservan del CV de entrada.
+    cv.certifications = [
+        CVCertification(
+            name=str(c.get("name", "")), issuer=str(c.get("issuer", "")), year=str(c.get("year", ""))
+        )
+        for c in (current_content.get("certifications") or [])
+        if isinstance(c, dict) and str(c.get("name", "")).strip()
+    ]
     # CANDADO MONOTÓNICO (no confiamos solo en el prompt): el score mejorado
     # nunca puede quedar por debajo del que traía el CV de entrada. Elimina el
     # bug de fluctuación 90 -> 85 -> 80: cada "Mejorar con IA" solo puede subir

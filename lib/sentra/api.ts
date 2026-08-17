@@ -612,6 +612,12 @@ export interface CVContact {
   website: string;
 }
 
+export interface CVCertification {
+  name: string;
+  issuer: string;
+  year: string;
+}
+
 export interface CVContent {
   full_name: string;
   headline: string;
@@ -619,6 +625,7 @@ export interface CVContent {
   summary: string;
   experience: CVExperienceItem[];
   education: string[];
+  certifications: CVCertification[];
   skills: string[];
   languages: string[];
   match_score: number;
