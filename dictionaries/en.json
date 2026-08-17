@@ -21,6 +21,8 @@
     "sentinel": "Sentra",
     "tools": "Sentra CV AI",
     "toolsBadge": "New",
+    "academy": "Academy",
+    "academyBadge": "In progress",
     "blog": "Blog",
     "session": {
       "login": "Sign in",
@@ -1107,16 +1109,16 @@
     "subtitle": "Paste your experience and the job posting (or upload a photo of it). The AI returns a tailored resume, with a match score and what you need to fit better.",
     "benefits": [
       {
-        "title": "Tailored to the job",
-        "desc": "Not a generic CV: it rewrites and prioritizes your experience based on what each opening asks for."
+        "title": "No invented data",
+        "desc": "Anchored by identifiers: name, companies and dates are copied from your profile, never the model. Zero hallucinations."
       },
       {
-        "title": "AI writing",
-        "desc": "Turns your experience into achievements with action verbs, without inventing anything you did not provide."
+        "title": "Pro editor + ATS PDF",
+        "desc": "Education, skills by category, languages and certifications in structured fields. Live preview and a PDF with links ATS filters can read."
       },
       {
-        "title": "Match score and gaps",
-        "desc": "A % of how well you fit and the list of requirements you do not yet cover, so you can work on them."
+        "title": "Apply in one click",
+        "desc": "We draft the application email and open it in Gmail or your mail app, with the CV ready to attach. Coming soon: automation and application tracking."
       }
     ],
     "howTitle": "How it works",

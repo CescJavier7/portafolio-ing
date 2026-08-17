@@ -21,6 +21,8 @@
     "sentinel": "Sentra",
     "tools": "Sentra CV AI",
     "toolsBadge": "Nuevo",
+    "academy": "Academia",
+    "academyBadge": "En desarrollo",
     "blog": "Blog",
     "session": {
       "login": "Iniciar sesión",
@@ -1107,16 +1109,16 @@
     "subtitle": "Pega tu experiencia y la oferta laboral (o sube una foto de ella). La IA te devuelve un CV a la medida, con un match score y qué te falta para encajar mejor.",
     "benefits": [
       {
-        "title": "A la medida de la oferta",
-        "desc": "No un CV genérico: reescribe y prioriza tu experiencia según lo que pide cada vacante."
+        "title": "Sin datos inventados",
+        "desc": "Anclado por identificadores: nombre, empresas y fechas se copian de tu perfil, nunca del modelo. Cero alucinaciones."
       },
       {
-        "title": "Redacción con IA",
-        "desc": "Convierte tu experiencia en logros con verbos de acción, sin inventar nada que no le hayas dado."
+        "title": "Editor pro + PDF ATS",
+        "desc": "Formación, habilidades por categoría, idiomas y certificaciones en campos estructurados. Vista previa en vivo y PDF con enlaces que los filtros ATS leen."
       },
       {
-        "title": "Match score y brechas",
-        "desc": "Un % de qué tan bien encajas y la lista de requisitos que aún no cubres, para que los trabajes."
+        "title": "Postula en un clic",
+        "desc": "Redactamos el correo de postulación y lo abrimos en Gmail o tu correo, con el CV listo para adjuntar. Próximamente: automatización y seguimiento de postulaciones."
       }
     ],
     "howTitle": "Cómo funciona",

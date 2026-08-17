@@ -4,6 +4,11 @@ import { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { SiGithub } from 'react-icons/si';
 import { ExternalLink, TerminalSquare, ChevronLeft, ChevronRight, X, MousePointerClick } from 'lucide-react';
+// Imágenes EMPAQUETADAS (no dependen de /public): Next las emite a _next/static,
+// que siempre se copia al contenedor y se sirve. Fin del bug de "no cargan".
+import sentraPreview from '@/public/sentra-preview.png';
+import cvPreview from '@/public/cv-builder-preview.png';
+import dartPreview from '@/public/dartshannon-preview.png';
 
 // ─── METADATA DE PROYECTOS (NO TRADUCIBLE) ───────────────────────────────────
 // Assets, links y stack tecnológico no cambian entre idiomas. El orden es
@@ -17,22 +22,22 @@ const projectMeta: {
 }[] = [
   {
     // Sentra — SaaS insignia de seguridad web.
-    techs: ["FastAPI", "Next.js 16", "PostgreSQL", "Redis", "Docker", "Traefik", "Lemon Squeezy", "Groq LLM"],
-    image: "/sentra-preview.png",
+    techs: ["FastAPI", "Next.js 16", "PostgreSQL", "Redis", "Docker", "Traefik", "Groq LLM"],
+    image: sentraPreview.src,
     github: "",
     demo: "https://cescjavier.dev/es/sentinel"
   },
   {
     // AI ATS-Resume Builder — el generador de CV actual.
-    techs: ["FastAPI", "Groq LLM", "Tesseract OCR", "pypdf", "Next.js", "driver.js"],
-    image: "/cv-builder-preview.png",
+    techs: ["FastAPI", "Groq LLM", "n8n + Notion", "Tesseract OCR", "Next.js", "driver.js"],
+    image: cvPreview.src,
     github: "",
     demo: "https://cescjavier.dev/es/herramientas/cv"
   },
   {
     // DartShannon (Ficha Viva) — proyecto estrella. Funciona; no desplegado.
     techs: ["Go 1.26 (sin framework)", "PostgreSQL + PostGIS", "H3 · TimescaleDB", "React 19 · Vite", "AES-256-GCM", "JWT propio (80 líneas)", "PWA"],
-    image: "/dartshannon-preview.png",
+    image: dartPreview.src,
     github: "",
     demo: "",
     comingSoon: true
