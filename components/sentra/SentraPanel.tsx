@@ -18,6 +18,7 @@ import {
 } from '@/lib/sentra/api';
 import TargetsCard, { type TargetsDict } from '@/components/sentra/TargetsCard';
 import UpgradeModal, { type UpgradeDict } from '@/components/sentra/UpgradeModal';
+import FounderPayments from '@/components/sentra/FounderPayments';
 import ProAvatar from '@/components/sentra/ProAvatar';
 import OverviewSection, { type OverviewDict } from '@/components/sentra/panel/OverviewSection';
 import ReportsSection, { type ReportsDict } from '@/components/sentra/panel/ReportsSection';
@@ -429,7 +430,13 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
               transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
               className="max-w-4xl"
             >
-              {active === 'overview' && <OverviewSection dict={dict.dashboard.overview} />}
+              {active === 'overview' && (
+                <div className="space-y-6">
+                  {/* Solo visible para el fundador (se auto-oculta si /pending da 403) */}
+                  <FounderPayments />
+                  <OverviewSection dict={dict.dashboard.overview} />
+                </div>
+              )}
               {active === 'tool' && <TargetsCard dict={dict.targets} upgradeDict={dict.upgrade_modal} lang={lang} role={user.role} />}
               {active === 'reports' && (
                 <ReportsSection
@@ -456,7 +463,7 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
         </main>
       </div>
 
-      <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} dict={dict.upgrade_modal} />
+      <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} dict={dict.upgrade_modal} lang={lang as 'es' | 'en'} />
     </section>
   );
 }

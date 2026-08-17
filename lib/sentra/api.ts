@@ -303,6 +303,59 @@ export async function sentraGetBillingPortal(): Promise<string> {
   return res.portal_url;
 }
 
+// ── Cobros manuales (MVP Ecuador) ───────────────────────────────────
+export interface SentraPayMethod {
+  key: string;
+  label: string;
+  instructions: string;
+}
+export interface SentraManualConfig {
+  price_pro: string;
+  price_team: string;
+  contact: string;
+  methods: SentraPayMethod[];
+}
+export interface SentraPaymentRequest {
+  id: string;
+  plan: string;
+  method: string;
+  reference: string;
+  note: string;
+  amount: string;
+  status: string; // pending | approved | rejected
+  created_at: string;
+  reviewed_at: string | null;
+}
+export interface SentraPendingPayment extends SentraPaymentRequest {
+  organization_id: string;
+  organization_name: string;
+  user_email: string;
+}
+
+export async function sentraManualConfig(): Promise<SentraManualConfig> {
+  return request('/api/v1/billing/manual/config', { method: 'GET' }, true);
+}
+export async function sentraSubmitPayment(data: {
+  plan: string;
+  method: string;
+  reference: string;
+  note?: string;
+}): Promise<SentraPaymentRequest> {
+  return request('/api/v1/billing/manual/request', { method: 'POST', body: JSON.stringify(data) }, true);
+}
+export async function sentraMyPayments(): Promise<SentraPaymentRequest[]> {
+  return request('/api/v1/billing/manual/mine', { method: 'GET' }, true);
+}
+export async function sentraPendingPayments(): Promise<SentraPendingPayment[]> {
+  return request('/api/v1/billing/manual/pending', { method: 'GET' }, true);
+}
+export async function sentraApprovePayment(id: string): Promise<void> {
+  await request(`/api/v1/billing/manual/${id}/approve`, { method: 'POST' }, true);
+}
+export async function sentraRejectPayment(id: string): Promise<void> {
+  await request(`/api/v1/billing/manual/${id}/reject`, { method: 'POST' }, true);
+}
+
 // ── Targets (dominios a auditar) ────────────────────────────────────
 
 export interface SentraTarget {

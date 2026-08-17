@@ -115,6 +115,56 @@ def _fmt_period(inicio: str, fin: str) -> str:
     return "Fecha no especificada"
 
 
+# Buckets para re-categorizar habilidades por tipo (candado determinista por si
+# el LLM las amontona en una sola categoría). Cada (nombre, {palabras clave});
+# gana el PRIMER bucket cuya palabra aparezca en la habilidad (substring, lower).
+_SKILL_BUCKETS: list[tuple[str, set[str]]] = [
+    ("Lenguajes de programación", {"python", "c#", "c++", " c ", "java", "javascript", "typescript",
+        "golang", " go", "php", "ruby", "kotlin", "swift", "rust", "sql", "bash", "html", "css"}),
+    ("Bases de datos", {"postgres", "postgresql", "mysql", "mongodb", "sql server", "sqlite",
+        "redis", "oracle", "mariadb", "base de datos", "bases de datos"}),
+    ("Frameworks y librerías", {"react", "node", "next.js", "nextjs", "fastapi", "django",
+        "flask", ".net", "angular", "vue", "express", "spring", "laravel", "tailwind"}),
+    ("Cloud e infraestructura", {"docker", "kubernetes", "aws", "azure", "gcp", "linux", "nginx",
+        "ci/cd", "terraform", "cloudflare", "vps", "redes", "tcp/ip", "infraestructura"}),
+    ("Seguridad", {"owasp", "nmap", "burp", "kali", "rbac", "iam", "cvss", "siem", "pentest",
+        "hacking", "vulnerabilidad", "seguridad", "mitre", "cifrado", "sso", "saml", "oauth"}),
+    ("Herramientas", {"git", "github", "gitlab", "postman", "n8n", "jira", "figma", "excel"}),
+    ("Metodologías", {"scrum", "kanban", "tdd", "agile", "ágil", "devops"}),
+]
+
+
+def _recategorize_skills(groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    Si el LLM devolvió UNA sola categoría con muchas habilidades (el bug de
+    "todo en Lenguajes de Programación"), las re-agrupa por tipo con los buckets.
+    Si ya vienen en ≥2 categorías, se respeta el criterio del modelo.
+    """
+    if len(groups) >= 2:
+        return groups
+    all_items = [i for g in groups for i in g.get("items", [])]
+    if len(all_items) <= 5:
+        return groups
+    buckets: dict[str, list[str]] = {}
+    for item in all_items:
+        low = f" {item.lower()} "
+        cat = "Otras"
+        for name, kws in _SKILL_BUCKETS:
+            if any(kw in low for kw in kws):
+                cat = name
+                break
+        buckets.setdefault(cat, []).append(item)
+    # Orden: categorías nombradas según _SKILL_BUCKETS, y "Otras" al final.
+    result = [
+        {"category": name, "items": buckets[name]}
+        for name, _ in _SKILL_BUCKETS
+        if name in buckets
+    ]
+    if "Otras" in buckets:
+        result.append({"category": "Otras", "items": buckets["Otras"]})
+    return result
+
+
 def map_rich_to_content(rich: dict[str, Any], profile: dict[str, Any]) -> dict[str, Any]:
     """
     Mapea el CV reconstruido (esquema rico) al CVContent plano que consume el
@@ -162,6 +212,8 @@ def map_rich_to_content(rich: dict[str, Any], profile: dict[str, Any]) -> dict[s
         clean_items = [i for i in (items or []) if isinstance(i, str) and i.strip()]
         if clean_items:
             skills.append({"category": (cat or "").strip(), "items": clean_items})
+    # Candado: re-categoriza si el LLM amontonó todo en una sola categoría.
+    skills = _recategorize_skills(skills)
 
     languages = [
         {"language": (i.get("idioma") or "").strip(), "level": (i.get("nivel") or "").strip()}

@@ -192,8 +192,8 @@
       },
       {
         "title": "DartShannon — Ficha Viva",
-        "category": "En desarrollo",
-        "description": "Próximo proyecto en construcción. Pronto más detalles."
+        "category": "Producto · Seguridad de datos",
+        "description": "Una ficha de «SE BUSCA» circula por WhatsApp durante meses; cuando la persona aparece, el afiche sigue igual. Ficha Viva le da a cada caso una URL con estado, así el enlace que ya está circulando cambia solo y la miniatura del chat pasa de «se busca» a «apareció con vida». La privacidad es una decisión de producto tomada antes que la interfaz: la coordenada exacta nunca se guarda —se convierte en celda H3 y se descarta—, al mapa solo salen bandas sin fechas ni conteos, y nada se publica sin revisión humana. Go sin framework (2 dependencias), cifrado AES-256-GCM en el proceso, un verificador JWT propio de 80 líneas que solo conoce HS256, y nueve límites escritos antes de la primera línea de código. Funciona de extremo a extremo; falta facturación de Google Cloud para el mapa."
       },
       {
         "title": "SentinelX",

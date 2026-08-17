@@ -191,9 +191,9 @@
         "description": "A resume builder that tailors your CV to each job with AI: upload a PDF or a photo (OCR), get a structured CV with a match score and actionable suggestions, edit it live and apply with an AI-written email. Freemium with weekly credits."
       },
       {
-        "title": "DartShannon — Living Profile",
-        "category": "In development",
-        "description": "Upcoming project in the works. More details soon."
+        "title": "DartShannon — Ficha Viva",
+        "category": "Product · Data security",
+        "description": "A 'MISSING' flyer travels through WhatsApp for months; when the person is found, the poster stays the same. Ficha Viva gives each case a URL with state, so the link already circulating updates itself and the chat thumbnail changes from 'missing' to 'found safe'. Privacy is a product decision made before the interface: the exact coordinate is never stored —it becomes an H3 cell and is discarded—, the map only shows bands, no dates or counts, and nothing is published without human review. Go with no framework (2 dependencies), AES-256-GCM encryption in-process, an 80-line homegrown JWT verifier that only knows HS256, and nine limits written before the first line of code. It works end to end; only Google Cloud billing is missing for the map."
       },
       {
         "title": "SentinelX",

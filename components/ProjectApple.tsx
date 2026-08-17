@@ -30,8 +30,8 @@ const projectMeta: {
     demo: "https://cescjavier.dev/es/herramientas/cv"
   },
   {
-    // DartShannon (Ficha Viva) — próximamente.
-    techs: [],
+    // DartShannon (Ficha Viva) — proyecto estrella. Funciona; no desplegado.
+    techs: ["Go 1.26 (sin framework)", "PostgreSQL + PostGIS", "H3 · TimescaleDB", "React 19 · Vite", "AES-256-GCM", "JWT propio (80 líneas)", "PWA"],
     image: "/dartshannon-preview.png",
     github: "",
     demo: "",
@@ -162,6 +162,10 @@ export default function ProjectsApple({ dict }: ProjectsAppleProps) {
   const scrollAnimationFrame = useRef<number | null>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
+  // Índices cuya imagen falló al cargar: en vez de ocultarla (tarjeta en negro),
+  // mostramos un placeholder con marca. Robustez ante imágenes ausentes.
+  const [imgFailed, setImgFailed] = useState<Record<number, boolean>>({});
+  const [modalImgFailed, setModalImgFailed] = useState(false);
 
   // ─── NUEVO MOTOR DE SCROLL FLUIDO (ESTILO APPLE TV) ───────────────────────
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -284,6 +288,9 @@ export default function ProjectsApple({ dict }: ProjectsAppleProps) {
     return () => { document.body.style.overflow = 'unset'; };
   }, [activeProject]);
 
+  // Reinicia el estado de fallo de imagen del modal al abrir otro proyecto.
+  useEffect(() => { setModalImgFailed(false); }, [activeProject]);
+
   // Programación defensiva: sin diccionario válido, no renderizamos nada roto.
   if (!dict?.items?.length) {
     console.error("Critical: 'dict.items' is missing in ProjectsApple");
@@ -359,12 +366,16 @@ export default function ProjectsApple({ dict }: ProjectsAppleProps) {
                 </div>
 
                 <div className="relative w-full h-full overflow-hidden">
-                  <img
-                    src={project.image}
-                    alt={project.title}
-                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                    className="w-full h-full object-cover transition-transform duration-[2s] md:group-hover:scale-105"
-                  />
+                  {imgFailed[index] || !project.image ? (
+                    <ProjectPlaceholder title={project.title} />
+                  ) : (
+                    <img
+                      src={project.image}
+                      alt={project.title}
+                      onError={() => setImgFailed((f) => ({ ...f, [index]: true }))}
+                      className="w-full h-full object-cover transition-transform duration-[2s] md:group-hover:scale-105"
+                    />
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/100 via-black/40 to-black/20" />
                 </div>
               </div>
@@ -457,8 +468,12 @@ export default function ProjectsApple({ dict }: ProjectsAppleProps) {
                 <p className="text-apple-blue font-mono text-xs uppercase tracking-widest mb-2">{activeProject.category}</p>
                 <h3 className="text-3xl font-bold text-zinc-900 dark:text-white mb-6">{activeProject.title}</h3>
 
-                <div className="w-full aspect-video rounded-2xl overflow-hidden mb-6 border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-black">
-                  <img src={activeProject.image} alt={activeProject.title} onError={(e) => { e.currentTarget.style.display = 'none'; }} className="w-full h-full object-cover" />
+                <div className="w-full aspect-video rounded-2xl overflow-hidden mb-6 border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-black relative">
+                  {modalImgFailed || !activeProject.image ? (
+                    <ProjectPlaceholder title={activeProject.title} />
+                  ) : (
+                    <img src={activeProject.image} alt={activeProject.title} onError={() => setModalImgFailed(true)} className="w-full h-full object-cover" />
+                  )}
                 </div>
 
                 <p className="text-zinc-600 dark:text-zinc-300 text-base md:text-lg leading-relaxed mb-8">
@@ -501,5 +516,20 @@ export default function ProjectsApple({ dict }: ProjectsAppleProps) {
       </AnimatePresence>
 
     </section>
+  );
+}
+
+// Placeholder con marca cuando una imagen no está disponible (evita la tarjeta
+// en negro). Fondo degradado + patrón de puntos + icono de terminal + título.
+function ProjectPlaceholder({ title }: { title: string }) {
+  return (
+    <div className="relative w-full h-full flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-zinc-800 via-zinc-900 to-black">
+      <div
+        className="absolute inset-0 opacity-[0.07]"
+        style={{ backgroundImage: 'radial-gradient(#60a5fa 1px, transparent 1px)', backgroundSize: '22px 22px' }}
+      />
+      <TerminalSquare className="relative w-14 h-14 text-apple-blue/70" strokeWidth={1.5} />
+      <p className="relative font-mono text-sm text-zinc-400 tracking-wide px-6 text-center">{title}</p>
+    </div>
   );
 }

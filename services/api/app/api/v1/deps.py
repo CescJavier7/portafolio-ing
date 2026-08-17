@@ -106,3 +106,19 @@ def require_role(*allowed_roles: str):
         return user
 
     return _check
+
+
+async def require_founder(user: User = Depends(get_current_user)) -> User:
+    """
+    Gate del DUEÑO del producto (no del OWNER de una org): aprobar pagos manuales
+    afecta a cualquier organización, así que se restringe a los correos fundadores
+    (config FOUNDER_EMAILS). Comparación en minúsculas.
+    """
+    from app.core.config import get_settings
+
+    if user.email.lower() not in get_settings().founder_email_set:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acción reservada al administrador.",
+        )
+    return user

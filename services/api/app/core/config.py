@@ -32,6 +32,26 @@ class Settings(BaseSettings):
     LEMONSQUEEZY_VARIANT_ID_PRO: str
     LEMONSQUEEZY_WEBHOOK_SECRET: str
 
+    # ── Cobros MANUALES (MVP Ecuador, sin pasarela) ──────────
+    # Fundador(es) que aprueban pagos (coma-separados). El pago manual NO lo
+    # aprueba el OWNER de una org, sino el dueño del producto.
+    FOUNDER_EMAILS: str = "javiercaiza220158@gmail.com"
+    # Métodos de pago (vacío = no se muestra). Rellénalos en services/api/.env
+    # del VPS con tus datos REALES (nº De Una, link PayPhone, cuenta, PayPal, USDT).
+    PAY_DEUNA: str = ""
+    PAY_PAYPHONE_LINK: str = ""
+    PAY_BANK: str = ""
+    PAY_PAYPAL: str = ""
+    PAY_USDT: str = ""
+    PAY_CONTACT: str = ""  # WhatsApp/correo para dudas del pago
+    # Plan único TODO-INCLUIDO: Sentra (seguridad) + Sentra CV AI + Academia.
+    PRICE_PRO: str = "USD 10 / mes"
+    PRICE_TEAM: str = "USD 29 / mes"
+
+    @property
+    def founder_email_set(self) -> set[str]:
+        return {e.strip().lower() for e in self.FOUNDER_EMAILS.split(",") if e.strip()}
+
     # ── Email (Resend — mismo dominio/key que usa el portafolio) ──
     RESEND_API_KEY: str
     EMAIL_FROM: str = "Sentra <admin@cescjavier.dev>"
