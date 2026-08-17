@@ -20,6 +20,7 @@ import { matchColor } from '@/lib/sentra/matchScore';
 import { useAutoSave, clearDraft } from '@/lib/sentra/useAutoSave';
 import CVTour, { type CVTourDict } from '@/components/tools/CVTour';
 import CVWizard from '@/components/tools/CVWizard';
+import CVAutomationPanel from '@/components/tools/CVAutomationPanel';
 
 // Chequeo cliente de "texto legible" (espejo EXACTO del backend text_guard):
 // la señal fuerte es la longitud media de palabra. Un PDF de Canva (glifos sin
@@ -727,6 +728,9 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
                 );
               })()}
             </div>
+
+            {/* Automatización: motor por API + blueprint de n8n → Notion */}
+            <CVAutomationPanel lang={lang as 'es' | 'en'} plan={user?.plan} />
           </>
         )}
 

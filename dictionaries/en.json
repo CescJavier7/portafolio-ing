@@ -20,9 +20,8 @@
     "services": "Services",
     "sentinel": "Sentra",
     "tools": "Sentra CV AI",
-    "toolsBadge": "New",
+    "suite": "Suite",
     "academy": "Academy",
-    "academyBadge": "In progress",
     "blog": "Blog",
     "session": {
       "login": "Sign in",
@@ -477,7 +476,7 @@
       "upgrade": "Upgrade to Pro — $10/mo",
       "upgrading": "Opening checkout…",
       "upgradeError": "Could not start the payment. Try again in a moment.",
-      "testModeNote": "Payments run in test mode while Sentra is in early access.",
+      "testModeNote": "Verified manual payment: bank transfer, De Una, PayPhone, PayPal or USDT. We activate your plan once we confirm the receipt.",
       "targets": {
         "title": "Domains",
         "desc": "Register the domains you want to audit. You must verify ownership before scanning them.",

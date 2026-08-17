@@ -3,11 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, KeyRound, Gem, LayoutDashboard, Radar, FileText, UserCog, BellRing, Route, Share2, Code2, Users, ScrollText } from 'lucide-react';
+import { LogOut, KeyRound, Gem, Check, LayoutDashboard, Radar, FileText, UserCog, BellRing, Route, Share2, Code2, Users, ScrollText } from 'lucide-react';
 import {
   sentraChangePassword,
-  sentraCreateCheckout,
-  sentraGetBillingPortal,
   sentraGetSubscription,
   sentraHasToken,
   sentraLogout,
@@ -84,41 +82,14 @@ type SectionId = 'overview' | 'tool' | 'reports' | 'account' | 'dns' | 'traffic'
 const inputClass =
   'w-full rounded-xl bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-4 py-3 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition';
 
-function PlanCard({ dict }: { dict: Dict }) {
+function PlanCard({ dict, onUpgrade }: { dict: Dict; onUpgrade: () => void }) {
   const [plan, setPlan] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     sentraGetSubscription()
       .then((sub) => setPlan(sub.plan))
       .catch(() => setPlan('FREE')); // sin drama: el plan por defecto es FREE
   }, []);
-
-  async function handleUpgrade() {
-    setBusy(true);
-    setError(null);
-    try {
-      const url = await sentraCreateCheckout();
-      // Checkout hosteado: navegamos, no abrimos popup (los bloqueadores
-      // de popups matarían la venta).
-      window.location.href = url;
-    } catch {
-      setError(dict.upgradeError);
-      setBusy(false);
-    }
-  }
-
-  async function handlePortal() {
-    setBusy(true);
-    setError(null);
-    try {
-      window.location.href = await sentraGetBillingPortal();
-    } catch {
-      setError(dict.manageError);
-      setBusy(false);
-    }
-  }
 
   const isPro = plan === 'PRO';
 
@@ -150,37 +121,23 @@ function PlanCard({ dict }: { dict: Dict }) {
 
       {!isPro && (
         <>
+          {/* Abre el flujo de pago MANUAL (transferencia / De Una / PayPhone /
+              PayPal). Ya no vamos a Lemon Squeezy. */}
           <button
-            onClick={handleUpgrade}
-            disabled={busy || plan === null}
-            className="px-6 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-60 disabled:hover:scale-100"
+            onClick={onUpgrade}
+            disabled={plan === null}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-60 disabled:hover:scale-100"
           >
-            {busy ? dict.upgrading : dict.upgrade}
+            <Gem className="w-4 h-4" /> {dict.upgrade}
           </button>
-          {error && (
-            <p className="mt-4 text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
-              {error}
-            </p>
-          )}
           <p className="mt-4 text-[11px] text-zinc-400 dark:text-zinc-500">{dict.testModeNote}</p>
         </>
       )}
 
       {isPro && (
-        <>
-          <button
-            onClick={handlePortal}
-            disabled={busy}
-            className="px-5 py-2.5 rounded-full border border-zinc-300 dark:border-zinc-700 text-sm font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors disabled:opacity-60"
-          >
-            {busy ? dict.managing : dict.manageBtn}
-          </button>
-          {error && (
-            <p className="mt-4 text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
-              {error}
-            </p>
-          )}
-        </>
+        <div className="inline-flex items-center gap-2 rounded-full bg-green-500/10 border border-green-500/20 px-4 py-2 text-sm font-semibold text-green-600 dark:text-green-400">
+          <Check className="w-4 h-4" /> {dict.planProDesc}
+        </div>
       )}
     </div>
   );
@@ -448,7 +405,7 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
               )}
               {active === 'account' && (
                 <AccountSection dict={dict.dashboard.account} user={user} onUpdated={setUser}>
-                  <PlanCard dict={dict} />
+                  <PlanCard dict={dict} onUpgrade={() => setUpgradeOpen(true)} />
                   <ChangePasswordCard dict={dict} />
                 </AccountSection>
               )}

@@ -10,17 +10,28 @@ propia organización (Target.organization_id == key de la request), nunca
 dominios ajenos. No es un oráculo público de "cualquier dominio del
 mundo" — es "los dominios que TÚ ya verificaste con Sentra".
 """
+import asyncio
+import json
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi.concurrency import run_in_threadpool
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.deps import get_api_key_org
+from app.core.config import get_settings
+from app.core.plans import plan_for
 from app.core.rate_limit import limiter
 from app.db.session import get_db
 from app.models.organization import Organization
 from app.models.scan import Scan
 from app.models.target import Target
+from app.schemas.cv import CVContent, CVGenerateRequest
 from app.schemas.public import PublicFindingsOut, PublicGateOut, PublicScoreOut
+from app.services import cv_service
+from app.services.cv_prompts import rebuild_cv
+from app.services.text_guard import assert_readable
 
 router = APIRouter(prefix="/public", tags=["public-api"])
 
@@ -100,3 +111,84 @@ async def public_findings(
         scanned_at=scan.created_at,
         findings=scan.findings or [],
     )
+
+
+@router.post("/cv/generate", response_model=CVContent)
+@limiter.limit("20/hour")
+async def public_cv_generate(
+    request: Request,
+    payload: CVGenerateRequest,
+    org: Organization = Depends(get_api_key_org),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Genera y adapta un CV a una oferta, autenticado por API KEY (no por sesión).
+
+    Es el motor de la AUTOMATIZACIÓN de Sentra CV AI: un flujo de n8n (o un
+    script propio) manda el perfil + la oferta y recibe el CV ya adaptado en
+    JSON — listo para guardarlo en Notion, enviarlo o registrarlo como
+    postulación. STATELESS a propósito: no hay usuario dueño, así que NO se
+    persiste nada; solo transforma. Reutiliza exactamente el mismo pipeline
+    anclado por ids del panel (services/cv_service + cv_prompts), para que la
+    calidad y las garantías anti-invención sean idénticas.
+    """
+    settings = get_settings()
+    if not settings.GROQ_API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="El generador de CV no está disponible por el momento.",
+        )
+
+    # Gate de plan: la generación consume tokens de IA, así que se reserva a
+    # planes con acceso a API (Pro+). Una key podría sobrevivir a un downgrade.
+    if not plan_for(org.plan).api_access:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tu plan no incluye acceso a la API. Actualiza a Pro para automatizar.",
+        )
+
+    try:
+        assert_readable(payload.profile_text)
+        assert_readable(payload.job_posting)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+
+    try:
+        profile, analysis = await asyncio.wait_for(
+            asyncio.gather(
+                run_in_threadpool(cv_service.extract_profile, payload.profile_text),
+                run_in_threadpool(cv_service.analyze_offer, payload.job_posting),
+            ),
+            timeout=65,
+        )
+        llm_output = await asyncio.wait_for(
+            run_in_threadpool(cv_service.adapt_cv, profile, analysis),
+            timeout=45,
+        )
+    except asyncio.TimeoutError:
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="La generación tardó demasiado. Inténtalo de nuevo.",
+        )
+    except (json.JSONDecodeError, ValidationError):
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="No se pudo generar un CV válido. Inténtalo de nuevo.",
+        )
+    except Exception as exc:  # noqa: BLE001
+        print(f"[CV/API] Fallo generando CV para org {org.id}: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="El servicio de IA no respondió. Inténtalo más tarde.",
+        )
+
+    rich, _ = rebuild_cv(profile, llm_output)
+    try:
+        cv_content = CVContent(**cv_service.map_rich_to_content(rich, profile))
+    except ValidationError:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="No se pudo generar un CV válido. Inténtalo de nuevo.",
+        )
+    cv_content.match_score = max(0, min(100, cv_content.match_score))
+    return cv_content

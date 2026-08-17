@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Shield, Moon, Sun, Menu, X, ChevronDown, ChevronRight, LayoutDashboard, LogOut } from 'lucide-react';
+import { Shield, FileText, Moon, Sun, Menu, X, ChevronDown, ChevronRight, LayoutDashboard, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -35,9 +35,8 @@ interface NavBarProps {
     services: string;
     sentinel: string;
     tools: string;
-    toolsBadge?: string;
+    suite?: string;
     academy?: string;
-    academyBadge?: string;
     blog: string;
     session?: SessionDict;
   };
@@ -52,10 +51,13 @@ const SESSION_FALLBACK: SessionDict = {
 
 export default function NavBar({ dict, lang }: NavBarProps) {
   const router = useRouter();
+  const isEn = lang === 'en';
   const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false); // menú móvil
-  const [aboutOpen, setAboutOpen] = useState(false); // dropdown desktop
+  // Un solo dropdown abierto a la vez en desktop ('about' | 'suite' | null).
+  const [openMenu, setOpenMenu] = useState<'about' | 'suite' | null>(null);
   const [mobileAboutOpen, setMobileAboutOpen] = useState(false); // acordeón móvil
+  const [mobileSuiteOpen, setMobileSuiteOpen] = useState(false);
   const { theme, setTheme, resolvedTheme } = useTheme();
   const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -88,15 +90,34 @@ export default function NavBar({ dict, lang }: NavBarProps) {
     [dict, lang]
   );
 
-  // Los 3 (+Blog) ítems principales, tal como pediste: sin milanesa de links
-  const primaryLinks = useMemo<
-    { name: string; href: string; accent?: boolean; badge?: string }[]
-  >(
+  // La "Suite": los dos SaaS agrupados en un solo menú (como pediste), para
+  // que el navbar no se sature. La Academia va aparte, en su propia pestaña.
+  const suiteLinks = useMemo(
     () => [
-      { name: dict.services, href: `/${lang}/services` },
-      { name: dict.sentinel, href: `/${lang}/sentinel`, accent: true },
-      { name: dict.tools, href: `/${lang}/herramientas/cv`, badge: dict.toolsBadge },
-      ...(dict.academy ? [{ name: dict.academy, href: `/${lang}/academia`, badge: dict.academyBadge }] : []),
+      {
+        name: dict.sentinel,
+        href: `/${lang}/sentinel`,
+        desc: isEn ? 'Continuous web security & scanning' : 'Seguridad web continua y escaneo',
+        Icon: Shield,
+      },
+      {
+        name: dict.tools,
+        href: `/${lang}/herramientas/cv`,
+        desc: isEn ? 'AI résumé that beats the ATS' : 'CV con IA que pasa el ATS',
+        Icon: FileText,
+      },
+    ],
+    [dict, lang, isEn]
+  );
+
+  // Links planos, sin los SaaS (ya viven en la Suite) y sin badges.
+  const beforeSuite = useMemo(
+    () => [{ name: dict.services, href: `/${lang}/services` }],
+    [dict, lang]
+  );
+  const afterSuite = useMemo(
+    () => [
+      ...(dict.academy ? [{ name: dict.academy, href: `/${lang}/academia` }] : []),
       { name: dict.blog, href: `/${lang}/blog` },
     ],
     [dict, lang]
@@ -106,15 +127,20 @@ export default function NavBar({ dict, lang }: NavBarProps) {
     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
   };
 
-  // Apertura/cierre del dropdown con pequeño delay, como en apple.com,
-  // para que no se cierre si el mouse pasa entre el trigger y el panel.
-  const handleEnter = () => {
+  const suiteLabel = dict.suite ?? 'Suite';
+
+  // Apertura/cierre de dropdowns con pequeño delay, como en apple.com, para
+  // que no se cierren si el mouse pasa entre el trigger y el panel.
+  const openNow = (menu: 'about' | 'suite') => {
     if (closeTimeout.current) clearTimeout(closeTimeout.current);
-    setAboutOpen(true);
+    setOpenMenu(menu);
   };
-  const handleLeave = () => {
-    closeTimeout.current = setTimeout(() => setAboutOpen(false), 150);
+  const scheduleClose = () => {
+    closeTimeout.current = setTimeout(() => setOpenMenu(null), 150);
   };
+
+  const linkClass =
+    'text-[11px] font-semibold text-zinc-600 dark:text-zinc-300 hover:text-apple-blue dark:hover:text-apple-blue transition-colors uppercase tracking-wider';
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-white/70 dark:bg-black/70 backdrop-blur-xl border-b border-black/5 dark:border-white/10 transition-colors duration-300">
@@ -125,23 +151,23 @@ export default function NavBar({ dict, lang }: NavBarProps) {
         </Link>
 
         {/* ===== DESKTOP ===== */}
-        <div className="hidden md:flex gap-8 items-center">
+        <div className="hidden md:flex gap-6 lg:gap-8 items-center">
           {/* Dropdown "Sobre mí" */}
           <div
             className="relative"
-            onMouseEnter={handleEnter}
-            onMouseLeave={handleLeave}
+            onMouseEnter={() => openNow('about')}
+            onMouseLeave={scheduleClose}
           >
             <button
-              className="flex items-center gap-1 text-[11px] font-semibold text-zinc-600 dark:text-zinc-300 hover:text-apple-blue dark:hover:text-apple-blue transition-colors uppercase tracking-wider"
-              aria-expanded={aboutOpen}
+              className={`flex items-center gap-1 ${linkClass}`}
+              aria-expanded={openMenu === 'about'}
             >
               {dict.aboutMe}
-              <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${aboutOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${openMenu === 'about' ? 'rotate-180' : ''}`} />
             </button>
 
             <AnimatePresence>
-              {aboutOpen && (
+              {openMenu === 'about' && (
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -153,7 +179,7 @@ export default function NavBar({ dict, lang }: NavBarProps) {
                     <Link
                       key={link.name}
                       href={link.href}
-                      onClick={() => setAboutOpen(false)}
+                      onClick={() => setOpenMenu(null)}
                       className="block px-5 py-2.5 text-[13px] font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-apple-blue dark:hover:text-apple-blue transition-colors"
                     >
                       {link.name}
@@ -164,22 +190,61 @@ export default function NavBar({ dict, lang }: NavBarProps) {
             </AnimatePresence>
           </div>
 
-          {primaryLinks.map((link) => (
-            <Link
-              key={link.name}
-              href={link.href}
-              className={`inline-flex items-center gap-1.5 text-[11px] font-semibold transition-colors uppercase tracking-wider ${
-                link.accent
-                  ? 'text-apple-blue hover:text-zinc-900 dark:hover:text-white'
-                  : 'text-zinc-600 dark:text-zinc-300 hover:text-apple-blue dark:hover:text-apple-blue'
-              }`}
-            >
+          {beforeSuite.map((link) => (
+            <Link key={link.name} href={link.href} className={linkClass}>
               {link.name}
-              {link.badge && (
-                <span className="rounded-full bg-green-500/15 text-green-600 dark:text-green-400 border border-green-500/30 px-1.5 py-0.5 text-[9px] font-bold leading-none tracking-normal normal-case">
-                  {link.badge}
-                </span>
+            </Link>
+          ))}
+
+          {/* Dropdown "Suite" — los dos SaaS agrupados */}
+          <div
+            className="relative"
+            onMouseEnter={() => openNow('suite')}
+            onMouseLeave={scheduleClose}
+          >
+            <button
+              className={`flex items-center gap-1 ${linkClass}`}
+              aria-expanded={openMenu === 'suite'}
+            >
+              {suiteLabel}
+              <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${openMenu === 'suite' ? 'rotate-180' : ''}`} />
+            </button>
+
+            <AnimatePresence>
+              {openMenu === 'suite' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                  className="absolute left-1/2 -translate-x-1/2 top-full mt-3 w-72 rounded-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden p-2"
+                >
+                  {suiteLinks.map(({ name, href, desc, Icon }) => (
+                    <Link
+                      key={name}
+                      href={href}
+                      onClick={() => setOpenMenu(null)}
+                      className="flex items-start gap-3 rounded-xl px-3 py-2.5 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors group"
+                    >
+                      <span className="mt-0.5 w-9 h-9 shrink-0 rounded-lg bg-apple-blue/10 border border-apple-blue/20 flex items-center justify-center">
+                        <Icon className="w-4 h-4 text-apple-blue" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-[13px] font-bold text-zinc-900 dark:text-white group-hover:text-apple-blue transition-colors">
+                          {name}
+                        </span>
+                        <span className="block text-[11px] text-zinc-500 dark:text-zinc-400 leading-snug">{desc}</span>
+                      </span>
+                    </Link>
+                  ))}
+                </motion.div>
               )}
+            </AnimatePresence>
+          </div>
+
+          {afterSuite.map((link) => (
+            <Link key={link.name} href={link.href} className={linkClass}>
+              {link.name}
             </Link>
           ))}
         </div>
@@ -254,21 +319,61 @@ export default function NavBar({ dict, lang }: NavBarProps) {
 
             <div className="w-16 h-px bg-zinc-200 dark:bg-zinc-800" />
 
-            {primaryLinks.map((link) => (
+            {beforeSuite.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
                 onClick={() => setIsOpen(false)}
-                className={`inline-flex items-center gap-2 text-xl font-bold tracking-tight transition-colors ${
-                  link.accent ? 'text-apple-blue' : 'text-zinc-900 dark:text-white hover:text-apple-blue'
-                }`}
+                className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white hover:text-apple-blue transition-colors"
               >
                 {link.name}
-                {link.badge && (
-                  <span className="rounded-full bg-green-500/15 text-green-600 dark:text-green-400 border border-green-500/30 px-2 py-0.5 text-[10px] font-bold leading-none">
-                    {link.badge}
-                  </span>
-                )}
+              </Link>
+            ))}
+
+            {/* Acordeón "Suite" */}
+            <button
+              onClick={() => setMobileSuiteOpen(!mobileSuiteOpen)}
+              className="flex items-center gap-1.5 text-xl font-bold tracking-tight text-zinc-900 dark:text-white"
+            >
+              {suiteLabel}
+              <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${mobileSuiteOpen ? 'rotate-180' : ''}`} />
+            </button>
+            <AnimatePresence>
+              {mobileSuiteOpen && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="flex flex-col items-center gap-5 overflow-hidden"
+                >
+                  {suiteLinks.map(({ name, href, desc, Icon }) => (
+                    <Link
+                      key={name}
+                      href={href}
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-3 text-center"
+                    >
+                      <span className="w-9 h-9 shrink-0 rounded-lg bg-apple-blue/10 border border-apple-blue/20 flex items-center justify-center">
+                        <Icon className="w-4 h-4 text-apple-blue" />
+                      </span>
+                      <span className="text-left">
+                        <span className="block text-base font-bold text-zinc-900 dark:text-white">{name}</span>
+                        <span className="block text-[12px] text-zinc-500 dark:text-zinc-400">{desc}</span>
+                      </span>
+                    </Link>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {afterSuite.map((link) => (
+              <Link
+                key={link.name}
+                href={link.href}
+                onClick={() => setIsOpen(false)}
+                className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white hover:text-apple-blue transition-colors"
+              >
+                {link.name}
               </Link>
             ))}
 

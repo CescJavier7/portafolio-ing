@@ -15,5 +15,11 @@ export default async function SentraPricingPage({
   const { lang } = await params;
   const dict = await getDictionary(lang);
 
-  return <PricingPage lang={lang} dict={dict.sentraPricing} />;
+  return (
+    <PricingPage
+      lang={lang}
+      dict={dict.sentraPricing}
+      upgradeDict={dict.sentraAuth.panel.upgrade_modal}
+    />
+  );
 }

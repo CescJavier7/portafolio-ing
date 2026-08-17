@@ -1,9 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Check, ArrowUpRight, Sparkles } from 'lucide-react';
 import { useSentraSession } from '@/lib/sentra/useSession';
+import UpgradeModal, { type UpgradeDict } from '@/components/sentra/UpgradeModal';
 
 interface Plan {
   id: string; // 'free' | 'pro' | 'team' (viene del JSON de i18n)
@@ -29,16 +31,37 @@ interface PricingDict {
 // Correo de contacto para el plan Empresa/Team ("Hablemos").
 const CONTACT_EMAIL = 'javiercaiza220158@gmail.com';
 
-export default function PricingPage({ lang, dict }: { lang: string; dict: PricingDict }) {
+export default function PricingPage({
+  lang,
+  dict,
+  upgradeDict,
+}: {
+  lang: string;
+  dict: PricingDict;
+  upgradeDict: UpgradeDict;
+}) {
   const { user } = useSentraSession();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
-  // Con sesión, el CTA lleva al panel (donde se hace el upgrade real vía
-  // Lemon Squeezy); sin sesión, al registro. El plan Empresa siempre a contacto.
+  // El plan Empresa siempre va a contacto. Sin sesión, al registro (necesitas
+  // cuenta antes de pagar). El botón Pro con sesión abre el pago manual aquí
+  // mismo (ver `openManual` abajo) — ya no vamos a Lemon Squeezy.
   function ctaHref(id: string): string {
     if (id === 'team') return `mailto:${CONTACT_EMAIL}?subject=Sentra%20Empresa`;
     if (user) return `/${lang}/sentinel/panel`;
     return `/${lang}/sentinel/register`;
   }
+
+  // ¿Este CTA debe abrir el modal de pago manual en vez de navegar?
+  // Solo el plan Pro y solo si ya hay sesión (si no, primero se registran).
+  const opensManual = (id: string) => id === 'pro' && !!user;
+
+  const ctaClass = (featured: boolean) =>
+    `block w-full text-center px-5 py-3 rounded-full text-sm font-bold transition-transform hover:scale-[1.02] active:scale-[0.98] mb-7 ${
+      featured
+        ? 'bg-green-500 text-black'
+        : 'border border-zinc-300 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/5'
+    }`;
 
   return (
     <section className="min-h-screen pt-32 pb-24 bg-zinc-50 dark:bg-[#020617] transition-colors duration-500 selection:bg-green-500/30">
@@ -97,16 +120,15 @@ export default function PricingPage({ lang, dict }: { lang: string; dict: Pricin
                   </span>
                 </div>
 
-                <Link
-                  href={ctaHref(plan.id)}
-                  className={`block text-center px-5 py-3 rounded-full text-sm font-bold transition-transform hover:scale-[1.02] active:scale-[0.98] mb-7 ${
-                    featured
-                      ? 'bg-green-500 text-black'
-                      : 'border border-zinc-300 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/5'
-                  }`}
-                >
-                  {plan.cta}
-                </Link>
+                {opensManual(plan.id) ? (
+                  <button onClick={() => setUpgradeOpen(true)} className={ctaClass(featured)}>
+                    {plan.cta}
+                  </button>
+                ) : (
+                  <Link href={ctaHref(plan.id)} className={ctaClass(featured)}>
+                    {plan.cta}
+                  </Link>
+                )}
 
                 <ul className="space-y-2.5">
                   {plan.features.map((f) => (
@@ -140,14 +162,30 @@ export default function PricingPage({ lang, dict }: { lang: string; dict: Pricin
 
         {/* CTA final */}
         <div className="text-center mt-16">
-          <Link
-            href={user ? `/${lang}/sentinel/panel` : `/${lang}/sentinel/register`}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-105 transition-transform"
-          >
-            {user ? dict.plans[1].cta : dict.plans[0].cta} <ArrowUpRight className="w-4 h-4" />
-          </Link>
+          {user ? (
+            <button
+              onClick={() => setUpgradeOpen(true)}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-105 transition-transform"
+            >
+              {dict.plans[1].cta} <ArrowUpRight className="w-4 h-4" />
+            </button>
+          ) : (
+            <Link
+              href={`/${lang}/sentinel/register`}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-105 transition-transform"
+            >
+              {dict.plans[0].cta} <ArrowUpRight className="w-4 h-4" />
+            </Link>
+          )}
         </div>
       </div>
+
+      <UpgradeModal
+        open={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+        dict={upgradeDict}
+        lang={lang as 'es' | 'en'}
+      />
     </section>
   );
 }
