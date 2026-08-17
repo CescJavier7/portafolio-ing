@@ -1194,8 +1194,8 @@
       "intro": {
         "personal": "Tu nombre, titular profesional y un resumen orientado a la oferta.",
         "experience": "Reordena y afina tus experiencias. Un logro por línea.",
-        "education": "Tu formación académica. Una línea por título o curso.",
-        "skills": "Habilidades e idiomas relevantes para la vacante.",
+        "education": "Tu formación académica y certificaciones. Un registro por cada una.",
+        "skills": "Agrupa tus habilidades por categoría e indica tus idiomas con su nivel.",
         "review": "Revisa el análisis del match y envía tu postulación."
       },
       "stepOf": "Paso {n} de {total}",
@@ -1237,7 +1237,17 @@
       "certName": "Nombre del certificado",
       "certIssuer": "Entidad",
       "certYear": "Año",
-      "certAdd": "Añadir certificación"
+      "certAdd": "Añadir certificación",
+      "eduDegree": "Título / grado",
+      "eduInstitution": "Institución",
+      "eduPeriod": "Período",
+      "eduAdd": "Añadir formación",
+      "skillCategory": "Categoría (ej. Lenguajes, Bases de datos)",
+      "skillItems": "Habilidades (una por línea)",
+      "skillAddGroup": "Añadir categoría",
+      "langName": "Idioma",
+      "langLevel": "Nivel (ej. Nativo, B2)",
+      "langAdd": "Añadir idioma"
     },
     "pdf": {
       "summary": "Resumen profesional",

@@ -532,33 +532,39 @@ function StepBody({
   }
 
   if (step === 'education') {
+    const edu = c.education ?? [];
     const certs = c.certifications ?? [];
     return (
       <div className="space-y-5">
+        {/* Formación — field array: Título · Institución · Período */}
         <div>
-          <label className={fieldLabel}>
-            {dict.educationTitle} <span className="normal-case font-normal text-zinc-400">· {dict.linesHint}</span>
-          </label>
-          <textarea
-            rows={5}
-            value={c.education.join('\n')}
-            onChange={(e) => cvWizard.setField('education', e.target.value.split('\n'))}
-            className={`${inputBase} resize-y`}
-          />
+          <label className={fieldLabel}>{dict.educationTitle}</label>
+          <div className="space-y-2.5">
+            {edu.map((e, i) => (
+              <div key={i} className="relative rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4">
+                <button type="button" onClick={() => cvWizard.removeEducation(i)} className="absolute top-3 right-3 text-zinc-400 hover:text-red-500" aria-label="Quitar">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+                <div className="grid grid-cols-1 sm:grid-cols-[1.4fr_1fr_7rem] gap-2.5 pr-8">
+                  <input placeholder={dict.wizard.eduDegree} value={e.degree} onChange={(ev) => cvWizard.setEducation(i, { degree: ev.target.value })} className={inputBase} />
+                  <input placeholder={dict.wizard.eduInstitution} value={e.institution} onChange={(ev) => cvWizard.setEducation(i, { institution: ev.target.value })} className={inputBase} />
+                  <input placeholder={dict.wizard.eduPeriod} value={e.period} onChange={(ev) => cvWizard.setEducation(i, { period: ev.target.value })} className={inputBase} />
+                </div>
+              </div>
+            ))}
+            <button type="button" onClick={() => cvWizard.addEducation()} className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-green-600 dark:text-green-400 hover:underline">
+              <Plus className="w-3.5 h-3.5" /> {dict.wizard.eduAdd}
+            </button>
+          </div>
         </div>
 
-        {/* Certificaciones — field array con labels (Nombre · Entidad · Año) */}
+        {/* Certificaciones — field array: Nombre · Entidad · Año */}
         <div>
           <label className={fieldLabel}>{dict.wizard.certTitle}</label>
           <div className="space-y-2.5">
             {certs.map((cert, i) => (
               <div key={i} className="relative rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4">
-                <button
-                  type="button"
-                  onClick={() => cvWizard.removeCertification(i)}
-                  className="absolute top-3 right-3 text-zinc-400 hover:text-red-500"
-                  aria-label="Quitar"
-                >
+                <button type="button" onClick={() => cvWizard.removeCertification(i)} className="absolute top-3 right-3 text-zinc-400 hover:text-red-500" aria-label="Quitar">
                   <Trash2 className="w-4 h-4" />
                 </button>
                 <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_5.5rem] gap-2.5 pr-8">
@@ -568,11 +574,7 @@ function StepBody({
                 </div>
               </div>
             ))}
-            <button
-              type="button"
-              onClick={() => cvWizard.addCertification()}
-              className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-green-600 dark:text-green-400 hover:underline"
-            >
+            <button type="button" onClick={() => cvWizard.addCertification()} className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-green-600 dark:text-green-400 hover:underline">
               <Plus className="w-3.5 h-3.5" /> {dict.wizard.certAdd}
             </button>
           </div>
@@ -582,29 +584,48 @@ function StepBody({
   }
 
   if (step === 'skills') {
+    const groups = c.skills ?? [];
+    const langs = c.languages ?? [];
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="space-y-5">
+        {/* Habilidades AGRUPADAS por categoría (Categoría + ítems, uno por línea) */}
         <div>
-          <label className={fieldLabel}>
-            {dict.skillsTitle} <span className="normal-case font-normal text-zinc-400">· {dict.linesHint}</span>
-          </label>
-          <textarea
-            rows={7}
-            value={c.skills.join('\n')}
-            onChange={(e) => cvWizard.setField('skills', e.target.value.split('\n'))}
-            className={`${inputBase} resize-y`}
-          />
+          <label className={fieldLabel}>{dict.skillsTitle}</label>
+          <div className="space-y-2.5">
+            {groups.map((g, i) => (
+              <div key={i} className="relative rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-2.5">
+                <button type="button" onClick={() => cvWizard.removeSkillGroup(i)} className="absolute top-3 right-3 text-zinc-400 hover:text-red-500" aria-label="Quitar">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+                <input placeholder={dict.wizard.skillCategory} value={g.category} onChange={(e) => cvWizard.setSkillGroup(i, { category: e.target.value })} className={`${inputBase} pr-8 font-semibold`} />
+                <textarea placeholder={dict.wizard.skillItems} rows={2} value={g.items.join('\n')} onChange={(e) => cvWizard.setSkillGroup(i, { items: e.target.value.split('\n') })} className={`${inputBase} resize-y`} />
+              </div>
+            ))}
+            <button type="button" onClick={() => cvWizard.addSkillGroup()} className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-green-600 dark:text-green-400 hover:underline">
+              <Plus className="w-3.5 h-3.5" /> {dict.wizard.skillAddGroup}
+            </button>
+          </div>
         </div>
+
+        {/* Idiomas — field array: Idioma · Nivel */}
         <div>
-          <label className={fieldLabel}>
-            {dict.languagesTitle} <span className="normal-case font-normal text-zinc-400">· {dict.linesHint}</span>
-          </label>
-          <textarea
-            rows={7}
-            value={c.languages.join('\n')}
-            onChange={(e) => cvWizard.setField('languages', e.target.value.split('\n'))}
-            className={`${inputBase} resize-y`}
-          />
+          <label className={fieldLabel}>{dict.languagesTitle}</label>
+          <div className="space-y-2.5">
+            {langs.map((l, i) => (
+              <div key={i} className="relative rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4">
+                <button type="button" onClick={() => cvWizard.removeLanguage(i)} className="absolute top-3 right-3 text-zinc-400 hover:text-red-500" aria-label="Quitar">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pr-8">
+                  <input placeholder={dict.wizard.langName} value={l.language} onChange={(e) => cvWizard.setLanguage(i, { language: e.target.value })} className={inputBase} />
+                  <input placeholder={dict.wizard.langLevel} value={l.level} onChange={(e) => cvWizard.setLanguage(i, { level: e.target.value })} className={inputBase} />
+                </div>
+              </div>
+            ))}
+            <button type="button" onClick={() => cvWizard.addLanguage()} className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-green-600 dark:text-green-400 hover:underline">
+              <Plus className="w-3.5 h-3.5" /> {dict.wizard.langAdd}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -858,9 +879,11 @@ function CVPreviewA4({
   empty: string;
 }) {
   const c = content;
-  const skills = c.skills.filter((s) => s.trim());
-  const languages = c.languages.filter((s) => s.trim());
-  const education = c.education.filter((s) => s.trim());
+  const skills = (c.skills ?? [])
+    .map((g) => ({ ...g, items: g.items.filter((i) => i.trim()) }))
+    .filter((g) => g.items.length > 0 || g.category.trim());
+  const languages = (c.languages ?? []).filter((l) => l.language.trim());
+  const education = (c.education ?? []).filter((e) => e.degree.trim() || e.institution.trim());
   const certifications = (c.certifications ?? []).filter((cert) => cert.name.trim());
   const experience = c.experience.filter((e) => e.role.trim() || e.company.trim() || e.highlights.some((h) => h.trim()));
   const isEmpty = !c.full_name.trim() && !c.summary.trim() && experience.length === 0 && skills.length === 0;
@@ -968,13 +991,15 @@ function CVPreviewA4({
               {education.length > 0 && (
                 <>
                   <Section>{labels.education}</Section>
-                  <ul className="list-disc pl-4 space-y-0.5">
-                    {education.map((s, i) => (
-                      <li key={i} className="text-[10.5px] text-gray-800 leading-snug break-words">
-                        {s}
-                      </li>
-                    ))}
-                  </ul>
+                  {education.map((e, i) => (
+                    <div key={i} className="mb-1 flex justify-between items-baseline gap-3">
+                      <p className="text-[11px] text-gray-900 min-w-0 break-words">
+                        <span className="font-semibold">{e.degree}</span>
+                        {e.institution && <span className="text-gray-600"> · {e.institution}</span>}
+                      </p>
+                      {e.period && <span className="text-[10px] text-gray-500 shrink-0 whitespace-nowrap">{e.period}</span>}
+                    </div>
+                  ))}
                 </>
               )}
 
@@ -996,9 +1021,14 @@ function CVPreviewA4({
               {skills.length > 0 && (
                 <>
                   <Section>{labels.skills}</Section>
-                  <p className="text-[10.5px] text-gray-800 leading-relaxed break-words">
-                    {skills.join('  ·  ')}
-                  </p>
+                  <div className="space-y-0.5">
+                    {skills.map((g, i) => (
+                      <p key={i} className="text-[10.5px] text-gray-800 leading-relaxed break-words">
+                        {g.category && <span className="font-semibold text-gray-900">{g.category}: </span>}
+                        {g.items.join('  ·  ')}
+                      </p>
+                    ))}
+                  </div>
                 </>
               )}
 
@@ -1006,7 +1036,7 @@ function CVPreviewA4({
                 <>
                   <Section>{labels.languages}</Section>
                   <p className="text-[10.5px] text-gray-800 leading-relaxed break-words">
-                    {languages.join('  ·  ')}
+                    {languages.map((l) => (l.level ? `${l.language} (${l.level})` : l.language)).join('  ·  ')}
                   </p>
                 </>
               )}

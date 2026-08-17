@@ -28,9 +28,6 @@ function esc(s: string): string {
 }
 
 export function openCVPdf(cv: CVContent, labels: CVPdfLabels): void {
-  // Estilo Harvard: habilidades/idiomas como texto separado por "·", sin chips.
-  const tags = (items: string[]) => `<p class="tags">${items.map((s) => esc(s)).join('  ·  ')}</p>`;
-
   const expHtml = cv.experience
     .map(
       (e) => `
@@ -48,8 +45,33 @@ export function openCVPdf(cv: CVContent, labels: CVPdfLabels): void {
     )
     .join('');
 
-  const eduHtml = cv.education.length
-    ? `<ul>${cv.education.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>`
+  const eduList = (cv.education ?? []).filter((e) => e.degree.trim() || e.institution.trim());
+  const eduHtml = eduList.length
+    ? `<ul>${eduList
+        .map((e) => {
+          const inst = e.institution.trim() ? ` — ${esc(e.institution.trim())}` : '';
+          const per = e.period.trim() ? ` (${esc(e.period.trim())})` : '';
+          return `<li>${esc(e.degree.trim())}${inst}${per}</li>`;
+        })
+        .join('')}</ul>`
+    : '';
+
+  // Habilidades por categoría: "Categoría: item · item".
+  const skillGroups = (cv.skills ?? [])
+    .map((g) => ({ category: g.category, items: g.items.filter((i) => i.trim()) }))
+    .filter((g) => g.items.length > 0 || g.category.trim());
+  const skillsHtml = skillGroups
+    .map((g) => {
+      const cat = g.category.trim() ? `<strong>${esc(g.category.trim())}:</strong> ` : '';
+      return `<p class="tags">${cat}${g.items.map((i) => esc(i.trim())).join('  ·  ')}</p>`;
+    })
+    .join('');
+
+  const langList = (cv.languages ?? []).filter((l) => l.language.trim());
+  const langsHtml = langList.length
+    ? `<p class="tags">${langList
+        .map((l) => esc(l.level.trim() ? `${l.language.trim()} (${l.level.trim()})` : l.language.trim()))
+        .join('  ·  ')}</p>`
     : '';
 
   const certList = (cv.certifications ?? []).filter((c) => c.name.trim());
@@ -120,8 +142,8 @@ export function openCVPdf(cv: CVContent, labels: CVPdfLabels): void {
   ${expHtml ? `<h2>${esc(labels.experience)}</h2>${expHtml}` : ''}
   ${eduHtml ? `<h2>${esc(labels.education)}</h2>${eduHtml}` : ''}
   ${certHtml ? `<h2>${esc(labels.certifications)}</h2>${certHtml}` : ''}
-  ${cv.skills.length ? `<h2>${esc(labels.skills)}</h2>${tags(cv.skills)}` : ''}
-  ${cv.languages.length ? `<h2>${esc(labels.languages)}</h2>${tags(cv.languages)}` : ''}
+  ${skillsHtml ? `<h2>${esc(labels.skills)}</h2>${skillsHtml}` : ''}
+  ${langsHtml ? `<h2>${esc(labels.languages)}</h2>${langsHtml}` : ''}
   <div class="foot">${esc(labels.generatedBy)} — cescjavier.dev</div>
 </body></html>`;
 

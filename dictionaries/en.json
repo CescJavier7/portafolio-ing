@@ -1194,8 +1194,8 @@
       "intro": {
         "personal": "Your name, professional headline and a summary tailored to the role.",
         "experience": "Reorder and refine your experience. One achievement per line.",
-        "education": "Your academic background. One line per degree or course.",
-        "skills": "Skills and languages relevant to the position.",
+        "education": "Your education and certifications. One entry each.",
+        "skills": "Group your skills by category and list your languages with level.",
         "review": "Review the match analysis and send your application."
       },
       "stepOf": "Step {n} of {total}",
@@ -1237,7 +1237,17 @@
       "certName": "Certificate name",
       "certIssuer": "Issuer",
       "certYear": "Year",
-      "certAdd": "Add certification"
+      "certAdd": "Add certification",
+      "eduDegree": "Degree",
+      "eduInstitution": "Institution",
+      "eduPeriod": "Period",
+      "eduAdd": "Add education",
+      "skillCategory": "Category (e.g. Languages, Databases)",
+      "skillItems": "Skills (one per line)",
+      "skillAddGroup": "Add category",
+      "langName": "Language",
+      "langLevel": "Level (e.g. Native, B2)",
+      "langAdd": "Add language"
     },
     "pdf": {
       "summary": "Professional summary",

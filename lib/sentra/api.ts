@@ -618,16 +618,32 @@ export interface CVCertification {
   year: string;
 }
 
+export interface CVEducation {
+  degree: string;
+  institution: string;
+  period: string;
+}
+
+export interface CVLanguage {
+  language: string;
+  level: string;
+}
+
+export interface CVSkillGroup {
+  category: string;
+  items: string[];
+}
+
 export interface CVContent {
   full_name: string;
   headline: string;
   contact: CVContact;
   summary: string;
   experience: CVExperienceItem[];
-  education: string[];
+  education: CVEducation[];
   certifications: CVCertification[];
-  skills: string[];
-  languages: string[];
+  skills: CVSkillGroup[];
+  languages: CVLanguage[];
   match_score: number;
   missing_requirements: string[];
   actionable_suggestions: string[];

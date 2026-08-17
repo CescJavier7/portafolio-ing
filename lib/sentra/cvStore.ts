@@ -14,7 +14,15 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
-import type { CVContent, CVContact, CVCertification, CVExperienceItem } from '@/lib/sentra/api';
+import type {
+  CVContent,
+  CVContact,
+  CVCertification,
+  CVEducation,
+  CVExperienceItem,
+  CVLanguage,
+  CVSkillGroup,
+} from '@/lib/sentra/api';
 
 // El ORDEN es el flujo del asistente. 'review' = revisión final + envío.
 export const CV_STEPS = ['personal', 'experience', 'education', 'skills', 'review'] as const;
@@ -85,14 +93,62 @@ function clampStep(step: number): number {
   return Math.max(0, Math.min(CV_STEPS.length - 1, step));
 }
 
-// Garantiza que existan los campos añadidos DESPUÉS de que hubiera CVs guardados
-// (contact, certifications). Sin esto, el editor/preview accede a
-// content.contact.email o content.certifications.map(...) sobre undefined.
+// Normalizadores RETROCOMPATIBLES: los CVs guardados antes de la migración a
+// objetos tienen education/skills/languages como string[]. Aquí se convierten al
+// vuelo a la forma nueva (objetos), espejo del backend, para que el editor y la
+// vista previa nunca fallen sobre la forma vieja.
+function normEducation(raw: unknown): CVEducation[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((e): CVEducation => {
+      const x = e as { degree?: string; institution?: string; period?: string };
+      return typeof e === 'string'
+        ? { degree: e, institution: '', period: '' }
+        : { degree: x?.degree ?? '', institution: x?.institution ?? '', period: x?.period ?? '' };
+    })
+    .filter((e) => e.degree || e.institution || e.period);
+}
+
+function normLanguages(raw: unknown): CVLanguage[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((l): CVLanguage => {
+      if (typeof l === 'string') {
+        const m = l.match(/^(.*?)\s*[(:]\s*(.*?)\)?\s*$/);
+        return m ? { language: m[1].trim(), level: m[2].trim() } : { language: l.trim(), level: '' };
+      }
+      const x = l as { language?: string; level?: string };
+      return { language: x?.language ?? '', level: x?.level ?? '' };
+    })
+    .filter((l) => l.language);
+}
+
+function normSkills(raw: unknown): CVSkillGroup[] {
+  if (!Array.isArray(raw) || raw.length === 0) return [];
+  // Forma vieja: string[] → un único grupo sin categoría.
+  if (raw.every((s) => typeof s === 'string')) {
+    const items = (raw as string[]).map((s) => s.trim()).filter(Boolean);
+    return items.length ? [{ category: '', items }] : [];
+  }
+  return raw.map((g): CVSkillGroup => {
+    const x = g as { category?: string; items?: unknown };
+    return {
+      category: x?.category ?? '',
+      items: Array.isArray(x?.items) ? (x.items as unknown[]).filter((i): i is string => typeof i === 'string') : [],
+    };
+  });
+}
+
+// Garantiza la forma NUEVA de todos los campos que evolucionaron después de que
+// ya hubiera CVs guardados (contact, certifications, education, languages, skills).
 function withContact(content: CVContent): CVContent {
   return {
     ...content,
     contact: { ...emptyContact, ...(content.contact ?? {}) },
     certifications: Array.isArray(content.certifications) ? content.certifications : [],
+    education: normEducation(content.education),
+    languages: normLanguages(content.languages),
+    skills: normSkills(content.skills),
   };
 }
 
@@ -174,6 +230,72 @@ export const cvWizard = {
       },
     });
   },
+  setEducation(index: number, patch: Partial<CVEducation>): void {
+    commit({
+      ...state,
+      content: {
+        ...state.content,
+        education: (state.content.education ?? []).map((e, i) => (i === index ? { ...e, ...patch } : e)),
+      },
+    });
+  },
+  addEducation(): void {
+    commit({
+      ...state,
+      content: {
+        ...state.content,
+        education: [...(state.content.education ?? []), { degree: '', institution: '', period: '' }],
+      },
+    });
+  },
+  removeEducation(index: number): void {
+    commit({
+      ...state,
+      content: { ...state.content, education: (state.content.education ?? []).filter((_, i) => i !== index) },
+    });
+  },
+  setLanguage(index: number, patch: Partial<CVLanguage>): void {
+    commit({
+      ...state,
+      content: {
+        ...state.content,
+        languages: (state.content.languages ?? []).map((l, i) => (i === index ? { ...l, ...patch } : l)),
+      },
+    });
+  },
+  addLanguage(): void {
+    commit({
+      ...state,
+      content: { ...state.content, languages: [...(state.content.languages ?? []), { language: '', level: '' }] },
+    });
+  },
+  removeLanguage(index: number): void {
+    commit({
+      ...state,
+      content: { ...state.content, languages: (state.content.languages ?? []).filter((_, i) => i !== index) },
+    });
+  },
+  setSkillGroup(index: number, patch: Partial<CVSkillGroup>): void {
+    commit({
+      ...state,
+      content: {
+        ...state.content,
+        skills: (state.content.skills ?? []).map((g, i) => (i === index ? { ...g, ...patch } : g)),
+      },
+    });
+  },
+  addSkillGroup(): void {
+    commit({
+      ...state,
+      content: { ...state.content, skills: [...(state.content.skills ?? []), { category: '', items: [] }] },
+    });
+  },
+  removeSkillGroup(index: number): void {
+    commit({
+      ...state,
+      content: { ...state.content, skills: (state.content.skills ?? []).filter((_, i) => i !== index) },
+    });
+  },
   setCvId(cvId: string): void {
     commit({ ...state, cvId });
   },
@@ -197,9 +319,11 @@ export const cvWizard = {
 export function cleanCVContent(x: CVContent): CVContent {
   return {
     ...x,
-    education: x.education.filter((s) => s.trim()),
-    skills: x.skills.filter((s) => s.trim()),
-    languages: x.languages.filter((s) => s.trim()),
+    education: (x.education ?? []).filter((e) => e.degree.trim() || e.institution.trim()),
+    languages: (x.languages ?? []).filter((l) => l.language.trim()),
+    skills: (x.skills ?? [])
+      .map((g) => ({ ...g, items: g.items.filter((i) => i.trim()) }))
+      .filter((g) => g.category.trim() || g.items.length > 0),
     certifications: (x.certifications ?? []).filter((c) => c.name.trim()),
     experience: x.experience
       .map((e) => ({ ...e, highlights: e.highlights.filter((h) => h.trim()) }))

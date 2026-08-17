@@ -166,6 +166,16 @@ export interface CVDict {
     certIssuer: string;
     certYear: string;
     certAdd: string;
+    eduDegree: string;
+    eduInstitution: string;
+    eduPeriod: string;
+    eduAdd: string;
+    skillCategory: string;
+    skillItems: string;
+    skillAddGroup: string;
+    langName: string;
+    langLevel: string;
+    langAdd: string;
   };
   pdf: {
     summary: string;

@@ -35,18 +35,31 @@ const contactSchema = z
   .partial()
   .optional();
 
+// Formación (objetos): completa = al menos una con título/degree.
+const educationSchema = z
+  .array(z.object({ degree: z.string(), institution: z.string(), period: z.string() }).partial())
+  .refine((arr) => arr.some((e) => (e.degree ?? '').trim().length > 0));
+
+// Habilidades (grupos por categoría): completa = al menos un ítem con contenido.
+const skillsSchema = z
+  .array(z.object({ category: z.string(), items: z.array(z.string()) }).partial())
+  .refine((arr) => arr.some((g) => (g.items ?? []).some((i) => i.trim().length > 0)));
+
 export const cvCompleteSchema = z.object({
   full_name: z.string().trim().min(1),
   headline: z.string().trim().min(1),
   contact: contactSchema,
   summary: z.string().trim().min(20),
   experience: z.array(experienceSchema).min(1),
-  education: z.array(z.string()).refine(hasContent),
-  // Certificaciones: opcionales (un CV es válido sin ellas). No bloquean.
+  education: educationSchema,
+  // Certificaciones e idiomas: opcionales (un CV es válido sin ellos). No bloquean.
   certifications: z
     .array(z.object({ name: z.string(), issuer: z.string(), year: z.string() }).partial())
     .optional(),
-  skills: z.array(z.string()).refine(hasContent),
+  languages: z
+    .array(z.object({ language: z.string(), level: z.string() }).partial())
+    .optional(),
+  skills: skillsSchema,
 });
 
 export interface CVFieldErrors {

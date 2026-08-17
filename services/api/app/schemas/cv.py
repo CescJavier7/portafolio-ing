@@ -78,6 +78,23 @@ class CVCertification(BaseModel):
     year: str = ""
 
 
+class CVEducation(BaseModel):
+    degree: str = ""
+    institution: str = ""
+    period: str = ""
+
+
+class CVLanguage(BaseModel):
+    language: str = ""
+    level: str = ""
+
+
+class CVSkillGroup(BaseModel):
+    # Habilidades agrupadas por categoría (ej. "Lenguajes": ["Python", "C#"]).
+    category: str = ""
+    items: list[str] = []
+
+
 class CVContent(BaseModel):
     # Se valida la salida del LLM contra esto: si devuelve basura, falla
     # ruidosamente en el router (500 controlado) en vez de guardar un CV roto.
@@ -86,10 +103,10 @@ class CVContent(BaseModel):
     contact: CVContact = Field(default_factory=CVContact)
     summary: str = ""
     experience: list[CVExperienceItem] = []
-    education: list[str] = []
+    education: list[CVEducation] = []
     certifications: list[CVCertification] = []
-    skills: list[str] = []
-    languages: list[str] = []
+    skills: list[CVSkillGroup] = []
+    languages: list[CVLanguage] = []
     match_score: int = 0            # % de requisitos cubiertos (0-100)
     missing_requirements: list[str] = []  # requisitos de la oferta NO cubiertos
     # Sugerencias accionables para subir el match. `tips` se mantiene como alias

@@ -14,10 +14,18 @@ subida por cualquiera. Se inyecta al modelo DELIMITADO y etiquetado como DATOS,
 y el system prompt ordena ignorar cualquier instrucción incrustada en ellos.
 """
 import json
+import re
 from typing import Any
 
 from app.core.config import get_settings
-from app.schemas.cv import CVCertification, CVContact, CVContent
+from app.schemas.cv import (
+    CVCertification,
+    CVContact,
+    CVContent,
+    CVEducation,
+    CVLanguage,
+    CVSkillGroup,
+)
 from app.services.cv_prompts import (
     ADAPT_SYSTEM_PROMPT,
     ANALYZE_SYSTEM_PROMPT,
@@ -126,18 +134,17 @@ def map_rich_to_content(rich: dict[str, Any], profile: dict[str, Any]) -> dict[s
         for exp in rich.get("experiencia", [])
     ]
 
-    education: list[str] = []
+    education = []
     for e in rich.get("educacion", []):
         titulo = (e.get("titulo") or "").strip()
-        inst = (e.get("institucion") or "").strip()
+        if not titulo:
+            continue
         per = _fmt_period(e.get("inicio", ""), e.get("fin", ""))
-        s = titulo
-        if inst:
-            s = f"{s} — {inst}" if s else inst
-        if per and per != "Fecha no especificada":
-            s = f"{s} ({per})" if s else per
-        if s.strip():
-            education.append(s)
+        education.append({
+            "degree": titulo,
+            "institution": (e.get("institucion") or "").strip(),
+            "period": "" if per == "Fecha no especificada" else per,
+        })
 
     certifications = [
         {
@@ -149,17 +156,18 @@ def map_rich_to_content(rich: dict[str, Any], profile: dict[str, Any]) -> dict[s
         if (cert.get("nombre") or "").strip()
     ]
 
-    skills: list[str] = []
-    for _cat, items in (rich.get("habilidades") or {}).items():
-        skills.extend([i for i in items if isinstance(i, str) and i.strip()])
+    # Habilidades AGRUPADAS por categoría (ej. "Lenguajes": ["Python", "C#"]).
+    skills = []
+    for cat, items in (rich.get("habilidades") or {}).items():
+        clean_items = [i for i in (items or []) if isinstance(i, str) and i.strip()]
+        if clean_items:
+            skills.append({"category": (cat or "").strip(), "items": clean_items})
 
-    languages: list[str] = []
-    for i in rich.get("idiomas", []):
-        idioma = (i.get("idioma") or "").strip()
-        nivel = (i.get("nivel") or "").strip()
-        if not idioma:
-            continue
-        languages.append(f"{idioma} ({nivel})" if nivel else idioma)
+    languages = [
+        {"language": (i.get("idioma") or "").strip(), "level": (i.get("nivel") or "").strip()}
+        for i in rich.get("idiomas", [])
+        if (i.get("idioma") or "").strip()
+    ]
 
     cubiertas = [k for k in (rich.get("keywords_cubiertas") or []) if k]
     no_cubiertas = [k for k in (rich.get("keywords_no_cubiertas") or []) if k]
@@ -188,6 +196,59 @@ def map_rich_to_content(rich: dict[str, Any], profile: dict[str, Any]) -> dict[s
         "actionable_suggestions": sugerencias,
         "tips": sugerencias,
     }
+
+
+# ── Preservación de secciones "de hecho" (no las toca el LLM adaptador). Son
+# DEFENSIVAS: aceptan la forma NUEVA (objetos) o la VIEJA (strings) de un CV ya
+# guardado, para no romper al mejorar/editar CVs previos a esta migración. ──
+
+def preserve_education(raw: Any) -> list[CVEducation]:
+    out: list[CVEducation] = []
+    for e in raw or []:
+        if isinstance(e, str) and e.strip():
+            out.append(CVEducation(degree=e.strip()))
+        elif isinstance(e, dict) and str(e.get("degree", "")).strip():
+            out.append(CVEducation(
+                degree=str(e.get("degree", "")).strip(),
+                institution=str(e.get("institution", "")).strip(),
+                period=str(e.get("period", "")).strip(),
+            ))
+    return out
+
+
+def preserve_languages(raw: Any) -> list[CVLanguage]:
+    out: list[CVLanguage] = []
+    for lang in raw or []:
+        if isinstance(lang, str) and lang.strip():
+            # "Español (Nativo)" / "Inglés: B1" → {language, level}
+            m = re.match(r"^(.*?)\s*[\(:]\s*(.*?)\)?\s*$", lang.strip())
+            if m:
+                out.append(CVLanguage(language=m.group(1).strip(), level=m.group(2).strip()))
+            else:
+                out.append(CVLanguage(language=lang.strip()))
+        elif isinstance(lang, dict) and str(lang.get("language", "")).strip():
+            out.append(CVLanguage(
+                language=str(lang.get("language", "")).strip(),
+                level=str(lang.get("level", "")).strip(),
+            ))
+    return out
+
+
+def preserve_skills(raw: Any) -> list[CVSkillGroup]:
+    if not raw:
+        return []
+    # Forma VIEJA: lista de strings → un único grupo sin categoría.
+    if all(isinstance(s, str) for s in raw):
+        items = [s.strip() for s in raw if s.strip()]
+        return [CVSkillGroup(category="", items=items)] if items else []
+    out: list[CVSkillGroup] = []
+    for g in raw:
+        if not isinstance(g, dict):
+            continue
+        items = [i for i in (g.get("items") or []) if isinstance(i, str) and i.strip()]
+        if items or str(g.get("category", "")).strip():
+            out.append(CVSkillGroup(category=str(g.get("category", "")).strip(), items=items))
+    return out
 
 
 SYSTEM_PROMPT = """Eres un experto en redacción de CVs y selección de personal.
@@ -343,15 +404,18 @@ def improve_cv(current_content: dict, job_posting: str) -> CVContent:
     )
 
     data = json.loads(completion.choices[0].message.content or "{}")
+    # El LLM devuelve education/skills/languages en forma PLANA (su esquema) y NO
+    # debe tocar los datos "de hecho". Quitamos esas claves de su salida para que
+    # no rompan la validación del esquema nuevo (objetos), y las PRESERVAMOS del
+    # CV de entrada. Así "mejorar" solo reescribe resumen/experiencia.
+    for _k in ("education", "skills", "languages", "certifications", "contact"):
+        data.pop(_k, None)
     cv = CVContent(**data)
-    # El CONTACTO no lo toca el LLM (no está en su esquema de salida): se
-    # conserva tal cual del CV de entrada. Evita que "mejorar" borre la cabecera.
+
     prev_contact = current_content.get("contact") or {}
     cv.contact = CVContact(**{
         k: prev_contact.get(k, "") for k in ("location", "email", "phone", "website")
     })
-    # Certificaciones tampoco las toca el LLM (son un hecho del perfil): se
-    # conservan del CV de entrada.
     cv.certifications = [
         CVCertification(
             name=str(c.get("name", "")), issuer=str(c.get("issuer", "")), year=str(c.get("year", ""))
@@ -359,6 +423,9 @@ def improve_cv(current_content: dict, job_posting: str) -> CVContent:
         for c in (current_content.get("certifications") or [])
         if isinstance(c, dict) and str(c.get("name", "")).strip()
     ]
+    cv.education = preserve_education(current_content.get("education"))
+    cv.languages = preserve_languages(current_content.get("languages"))
+    cv.skills = preserve_skills(current_content.get("skills"))
     # CANDADO MONOTÓNICO (no confiamos solo en el prompt): el score mejorado
     # nunca puede quedar por debajo del que traía el CV de entrada. Elimina el
     # bug de fluctuación 90 -> 85 -> 80: cada "Mejorar con IA" solo puede subir
