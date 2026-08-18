@@ -66,8 +66,13 @@ de seguridad web. Dos apps que se despliegan juntas en un VPS.
   `PAY_BANK`, `PAY_CONTACT`, `PRICE_PRO="USD 10 / mes"`): NO son secretos (se le muestran al
   cliente), así que traen los datos reales por defecto y funcionan sin tocar el `.env` del
   VPS. El QR de De Una es `public/pago-deuna-qr.png` (servido por el frontend).
-- El modal de compra (`UpgradeModal.tsx`) es el ÚNICO camino de upgrade (panel + precios).
-  **Nada** debe volver a enrutar a Lemon Squeezy (`sentraCreateCheckout` quedó sin uso).
+- El modal de compra (`UpgradeModal.tsx`) es el ÚNICO camino de upgrade (panel + precios);
+  tiene tema **CyberPunk (siempre oscuro, neón cian/magenta)**. **Nada** debe volver a enrutar
+  a Lemon Squeezy (`sentraCreateCheckout` quedó sin uso).
+- **Política de NO reembolsos** (servicio digital de acceso inmediato) — está en los Términos
+  (`dict.legal.terms`) y en el footnote de precios. **Cancelar suscripción**: `POST /billing/cancel`
+  (OWNER/ADMIN) baja YA a FREE (`subscription_status="cancelled"`), sin reembolso; botón en el
+  `PlanCard` del panel. No hay recurrencia automática (cobro mensual puntual).
 - **PayPhone (cobro con tarjeta AUTOMÁTICO) YA integrado** — Botón de Pago por redirección:
   `payphone_billing.py` (`/billing/payphone/prepare` + `/confirm`), `payphone_service.py`,
   página de retorno `app/[lang]/sentinel/pago/confirmar`. Config en `core/config.py`
