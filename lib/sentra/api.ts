@@ -315,6 +315,8 @@ export interface SentraPayMethod {
   instructions: string;
   image?: string | null; // QR (De Una) u otra imagen para escanear/pagar
   url?: string | null; // enlace de pago (PayPhone/PayPal) → botón "Pagar"
+  copy_value?: string | null; // dato esencial a copiar (nº de cuenta), destacado
+  copy_label?: string | null;
 }
 export interface SentraManualConfig {
   price_pro: string;

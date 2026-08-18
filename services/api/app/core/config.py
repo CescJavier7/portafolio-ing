@@ -40,18 +40,19 @@ class Settings(BaseSettings):
     # se le muestran al cliente para que pague. Traen los datos REALES por
     # defecto para no depender del .env del VPS; se pueden sobreescribir ahí.
     PAY_DEUNA: str = (
-        "Paga escaneando el QR con tu app bancaria (opción «Pagar con QR»), o "
-        "envía por De Una a Banco Pichincha a nombre de Kevin Javier Montatixe "
-        "Caiza. Luego pega el número de comprobante aquí abajo."
+        "Escanea el QR con tu app bancaria (opción «Pagar con QR») y envía "
+        "exactamente USD 10 a Kevin Javier Montatixe Caiza."
     )
     # URL de la imagen del QR de De Una (vive en el /public del frontend).
     PAY_DEUNA_QR: str = "https://cescjavier.dev/pago-deuna-qr.png"
     PAY_PAYPHONE_LINK: str = ""
     PAY_BANK: str = (
-        "Banco Pichincha · Cuenta de ahorros transaccional · Nº 2205330629 · "
-        "Kevin Javier Montatixe Caiza. Envía $10, guarda el comprobante y pega "
-        "aquí el número de transacción."
+        "Banco Pichincha · Cuenta de ahorros transaccional a nombre de Kevin "
+        "Javier Montatixe Caiza. Envía exactamente USD 10 y pega abajo el nº de "
+        "comprobante."
     )
+    # Nº de cuenta (dato a copiar, mostrado destacado). No es secreto.
+    PAY_BANK_ACCOUNT: str = "2205330629"
     PAY_PAYPAL: str = ""
     PAY_USDT: str = ""
     PAY_CONTACT: str = "javiercaiza220158@gmail.com"  # correo para dudas del pago

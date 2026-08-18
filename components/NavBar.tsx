@@ -285,7 +285,7 @@ export default function NavBar({ dict, lang }: NavBarProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="md:hidden absolute top-14 left-0 w-full max-h-[calc(100vh-56px)] overflow-y-auto bg-white/95 dark:bg-black/95 backdrop-blur-3xl border-b border-zinc-200 dark:border-white/10 flex flex-col items-center py-8 gap-6 shadow-2xl"
+            className="md:hidden absolute top-14 left-0 w-full max-h-[calc(100vh-56px)] overflow-y-auto bg-white dark:bg-black border-b border-zinc-200 dark:border-white/10 flex flex-col items-center py-8 gap-6 shadow-2xl"
           >
             {/* Acordeón "Sobre mí" */}
             <button

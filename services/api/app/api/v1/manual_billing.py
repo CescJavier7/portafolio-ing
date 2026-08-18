@@ -86,7 +86,13 @@ def _available_methods() -> list[PayMethodOut]:
 
     if settings.PAY_BANK.strip():
         out.append(
-            PayMethodOut(key="transfer", label=_METHOD_LABELS["transfer"], instructions=settings.PAY_BANK.strip())
+            PayMethodOut(
+                key="transfer",
+                label=_METHOD_LABELS["transfer"],
+                instructions=settings.PAY_BANK.strip(),
+                copy_value=settings.PAY_BANK_ACCOUNT.strip() or None,
+                copy_label="Número de cuenta",
+            )
         )
 
     paypal = settings.PAY_PAYPAL.strip()

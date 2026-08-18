@@ -301,21 +301,39 @@ export default function UpgradeModal({
                                 </div>
                               )}
 
-                              {activeMethod && (
-                                <div className="relative rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-[13px] text-zinc-200 whitespace-pre-wrap break-words">
-                                  {activeMethod.instructions}
-                                  <button
-                                    onClick={() => {
-                                      navigator.clipboard.writeText(activeMethod.instructions);
-                                      setCopied(true);
-                                      setTimeout(() => setCopied(false), 1500);
-                                    }}
-                                    className="absolute top-2 right-2 inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-500 hover:text-cyan-300"
-                                  >
-                                    {copied ? <Check className="w-3.5 h-3.5 text-cyan-300" /> : <Copy className="w-3.5 h-3.5" />}
-                                    {copied ? t.copied : t.copy}
-                                  </button>
+                              {/* Dato ESENCIAL a copiar (nº de cuenta): destacado, con
+                                  su propio botón que copia SOLO el valor. */}
+                              {activeMethod?.copy_value && (
+                                <div className="rounded-xl bg-cyan-500/10 border border-cyan-400/30 px-4 py-3">
+                                  {activeMethod.copy_label && (
+                                    <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-cyan-300/70 mb-1">
+                                      {activeMethod.copy_label}
+                                    </p>
+                                  )}
+                                  <div className="flex items-center justify-between gap-3">
+                                    <span className="text-lg font-mono font-bold text-cyan-200 tracking-wide break-all">
+                                      {activeMethod.copy_value}
+                                    </span>
+                                    <button
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(activeMethod.copy_value!);
+                                        setCopied(true);
+                                        setTimeout(() => setCopied(false), 1500);
+                                      }}
+                                      className="shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold text-cyan-300 hover:text-white transition-colors"
+                                    >
+                                      {copied ? <Check className="w-3.5 h-3.5 text-cyan-300" /> : <Copy className="w-3.5 h-3.5" />}
+                                      {copied ? t.copied : t.copy}
+                                    </button>
+                                  </div>
                                 </div>
+                              )}
+
+                              {/* Descripción de apoyo: texto plano legible (no textarea). */}
+                              {activeMethod?.instructions && (
+                                <p className="text-[13px] text-zinc-400 leading-relaxed whitespace-pre-wrap break-words">
+                                  {activeMethod.instructions}
+                                </p>
                               )}
 
                               {activeMethod?.url && (

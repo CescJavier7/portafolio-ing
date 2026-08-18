@@ -50,6 +50,10 @@ class PayMethodOut(BaseModel):
     # Enlace de pago opcional (p. ej. link de PayPhone/PayPal): el modal lo
     # muestra como botón "Pagar" que abre el checkout hospedado del proveedor.
     url: str | None = None
+    # Dato ESENCIAL a copiar (p. ej. el nº de cuenta), mostrado destacado en un
+    # recuadro con su propio botón "Copiar" — copia SOLO esto, no la descripción.
+    copy_value: str | None = None
+    copy_label: str | None = None
 
 
 class ManualConfigOut(BaseModel):
