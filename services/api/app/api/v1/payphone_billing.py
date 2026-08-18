@@ -95,12 +95,15 @@ async def prepare(
         )
     except Exception as exc:  # noqa: BLE001
         print(f"[PayPhone] Prepare error (org {current_user.organization_id}): {exc}")
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="No se pudo iniciar el pago con PayPhone.")
+        # 400 (no 502) A PROPÓSITO: Cloudflare intercepta los 5xx y les quita la
+        # cabecera CORS → el navegador no puede leer el motivo y muestra un genérico
+        # "No se pudo conectar". Con 4xx el error real llega al usuario.
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"PayPhone: {str(exc)[:220]}")
 
     # payWithCard = checkout anónimo con tarjeta (no exige tener la app PayPhone).
     pay_url = prep.get("payWithCard") or prep.get("payWithPayPhone")
     if not pay_url:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="PayPhone no devolvió la URL de pago.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="PayPhone no devolvió una URL de pago válida.")
 
     pr = PaymentRequest(
         organization_id=current_user.organization_id,
@@ -157,7 +160,8 @@ async def confirm(request: Request, payload: ConfirmIn, db: AsyncSession = Depen
         )
     except Exception as exc:  # noqa: BLE001
         print(f"[PayPhone] Confirm error (tx {payload.id}): {exc}")
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="No se pudo confirmar el pago con PayPhone.")
+        # 4xx, no 5xx: ver nota en /prepare (Cloudflare + CORS).
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"PayPhone: {str(exc)[:220]}")
 
     approved = conf.get("transactionStatus") == "Approved" or conf.get("statusCode") == 3
     paid_cents = int(conf.get("amount") or 0)

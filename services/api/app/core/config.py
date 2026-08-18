@@ -64,9 +64,11 @@ class Settings(BaseSettings):
     # el pago, redirige a PAYPHONE_RESPONSE_URL con (id, clientTransactionId) para
     # que confirmemos y activemos el plan al instante.
     #  · TOKEN  = SECRETO (pestaña Credenciales de la app) → poner en el .env del VPS.
-    #  · STORE_ID = el "Identificador" de la app (no es secreto; viaja client-side).
+    #  · STORE_ID = el "Store ID" de la TIENDA (pestaña Credenciales → listado de
+    #    tiendas). OJO: NO es el "Identificador" ni el "Id Cliente" de la pestaña
+    #    Detalles (esos dan HTTP 404 "La tienda asociada no existe"). Va en el .env.
     PAYPHONE_TOKEN: str = ""
-    PAYPHONE_STORE_ID: str = "s7pdsplKzECtt08aFQ7Ng"
+    PAYPHONE_STORE_ID: str = ""
     PAYPHONE_API_BASE: str = "https://pay.payphonetodoesposible.com/api/button"
     # DEBE coincidir con la "Url de respuesta" registrada en la app de PayPhone.
     PAYPHONE_RESPONSE_URL: str = "https://cescjavier.dev/es/sentinel/pago/confirmar"
