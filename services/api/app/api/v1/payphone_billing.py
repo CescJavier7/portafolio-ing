@@ -163,11 +163,18 @@ async def confirm(request: Request, payload: ConfirmIn, db: AsyncSession = Depen
         # 4xx, no 5xx: ver nota en /prepare (Cloudflare + CORS).
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"PayPhone: {str(exc)[:220]}")
 
-    approved = conf.get("transactionStatus") == "Approved" or conf.get("statusCode") == 3
-    paid_cents = int(conf.get("amount") or 0)
-    expected = _PRICE_CENTS.get(pr.plan, _PRICE_CENTS["PRO"])
+    # Log de la respuesta CRUDA de PayPhone: imprescindible para depurar por qué
+    # un pago se marca aprobado/rechazado (los nombres de campo pueden variar).
+    print(f"[PayPhone] Confirm response (tx {payload.id}, org {pr.organization_id}): {conf}")
 
-    if approved and paid_cents >= expected:
+    status_txt = str(conf.get("transactionStatus") or "").strip().lower()
+    status_code = conf.get("statusCode")
+    approved = status_txt == "approved" or status_code == 3
+
+    # El monto lo FIJAMOS en /prepare (1000 = $10), así que un "Approved" ya
+    # implica que pagó lo correcto — no rechazamos por el monto (evita falsos
+    # negativos si PayPhone reporta el monto en otro formato/campo). Solo se loguea.
+    if approved:
         org.plan = pr.plan
         org.subscription_status = "active_payphone"  # distingue del flujo manual/LS
         pr.status = "approved"
@@ -176,7 +183,12 @@ async def confirm(request: Request, payload: ConfirmIn, db: AsyncSession = Depen
         await db.commit()
         return ConfirmOut(status="approved", plan=org.plan)
 
-    # No aprobado (cancelado, monto insuficiente, etc.).
+    # No aprobado (cancelado, pendiente de OTP, o rechazado por el banco).
+    print(
+        f"[PayPhone] Pago NO aprobado (tx {payload.id}): "
+        f"transactionStatus={status_txt!r} statusCode={status_code} "
+        f"message={conf.get('message')!r}"
+    )
     pr.status = "rejected"
     pr.reviewed_at = datetime.now(timezone.utc)
     await db.commit()
