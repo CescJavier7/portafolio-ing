@@ -51,6 +51,7 @@ class ConfirmIn(BaseModel):
 class ConfirmOut(BaseModel):
     status: str  # 'approved' | 'rejected'
     plan: str | None = None
+    message: str | None = None  # motivo de PayPhone si se rechazó (p. ej. banco declinó)
 
 
 def _guard_enabled() -> None:
@@ -192,4 +193,4 @@ async def confirm(request: Request, payload: ConfirmIn, db: AsyncSession = Depen
     pr.status = "rejected"
     pr.reviewed_at = datetime.now(timezone.utc)
     await db.commit()
-    return ConfirmOut(status="rejected")
+    return ConfirmOut(status="rejected", message=conf.get("message"))

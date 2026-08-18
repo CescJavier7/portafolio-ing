@@ -45,6 +45,7 @@ export default function PayphoneConfirm({ lang }: { lang: 'es' | 'en' }) {
   const id = params.get('id');
   const clientTransactionId = params.get('clientTransactionId');
   const [state, setState] = useState<State>('confirming');
+  const [detail, setDetail] = useState<string | null>(null); // motivo del banco si rechazó
   const ran = useRef(false);
 
   useEffect(() => {
@@ -63,6 +64,7 @@ export default function PayphoneConfirm({ lang }: { lang: 'es' | 'en' }) {
           // Refresca la sesión para que el badge/plan se actualicen sin recargar.
           window.dispatchEvent(new Event(SENTRA_AUTH_EVENT));
         } else {
+          setDetail(res.message ?? null); // p. ej. "el banco declinó el pago"
           setState('rejected');
         }
       })
@@ -81,7 +83,7 @@ export default function PayphoneConfirm({ lang }: { lang: 'es' | 'en' }) {
   const title =
     state === 'approved' ? t.approved : state === 'confirming' ? t.confirming : state === 'rejected' ? t.rejected : state === 'missing' ? t.missing : t.error;
   const sub =
-    state === 'approved' ? t.approvedSub : state === 'confirming' ? t.confirmingSub : state === 'rejected' ? t.rejectedSub : state === 'missing' ? t.missingSub : t.errorSub;
+    state === 'approved' ? t.approvedSub : state === 'confirming' ? t.confirmingSub : state === 'rejected' ? (detail || t.rejectedSub) : state === 'missing' ? t.missingSub : t.errorSub;
 
   return (
     <section className="min-h-screen flex items-center justify-center px-4 bg-zinc-50 dark:bg-[#020617] transition-colors duration-500">

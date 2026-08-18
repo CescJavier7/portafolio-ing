@@ -368,7 +368,7 @@ export async function sentraPayphonePrepare(): Promise<{ pay_url: string; client
 export async function sentraPayphoneConfirm(
   id: number,
   clientTransactionId: string
-): Promise<{ status: string; plan?: string }> {
+): Promise<{ status: string; plan?: string; message?: string | null }> {
   return request('/api/v1/billing/card/confirm', {
     method: 'POST',
     body: JSON.stringify({ id, clientTransactionId }),
