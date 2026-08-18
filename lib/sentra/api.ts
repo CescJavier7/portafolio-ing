@@ -356,8 +356,10 @@ export async function sentraMyPayments(): Promise<SentraPaymentRequest[]> {
 }
 
 // ── PayPhone (cobro con tarjeta automático) ──────────────────────────
+// Ruta NEUTRA (/billing/card, no /payphone): los adblockers bloquean URLs con
+// "payphone" → rompería el pago a usuarios reales con bloqueador. Ver backend.
 export async function sentraPayphonePrepare(): Promise<{ pay_url: string; client_transaction_id: string }> {
-  return request('/api/v1/billing/payphone/prepare', { method: 'POST' }, true);
+  return request('/api/v1/billing/card/prepare', { method: 'POST' }, true);
 }
 // Confirmación tras la redirección de PayPhone. SIN auth: la identidad la da
 // el par (id, clientTransactionId) verificado contra PayPhone (ver backend).
@@ -365,7 +367,7 @@ export async function sentraPayphoneConfirm(
   id: number,
   clientTransactionId: string
 ): Promise<{ status: string; plan?: string }> {
-  return request('/api/v1/billing/payphone/confirm', {
+  return request('/api/v1/billing/card/confirm', {
     method: 'POST',
     body: JSON.stringify({ id, clientTransactionId }),
   });

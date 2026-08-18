@@ -28,7 +28,11 @@ from app.models.user import User
 from app.services import payphone_service
 
 settings = get_settings()
-router = APIRouter(prefix="/billing/payphone", tags=["billing-payphone"])
+# OJO: el prefijo es "/billing/card" (neutro) a propósito. Si la URL contuviera
+# "payphone", los bloqueadores de anuncios/privacidad (Brave Shields, uBlock,
+# EasyPrivacy) la bloquean del lado del cliente → el pago fallaría para usuarios
+# reales con adblocker. El nombre visible en la UI sí puede decir "PayPhone".
+router = APIRouter(prefix="/billing/card", tags=["billing-payphone"])
 
 # Precio en CENTAVOS por plan (PayPhone trabaja con enteros).
 _PRICE_CENTS = {"PRO": 1000, "TEAM": 2900}
