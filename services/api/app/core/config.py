@@ -80,8 +80,12 @@ class Settings(BaseSettings):
 
     @property
     def payphone_enabled(self) -> bool:
-        """El cobro automático con tarjeta requiere token (secreto) + store id."""
-        return bool(self.PAYPHONE_TOKEN.strip() and self.PAYPHONE_STORE_ID.strip())
+        """
+        El cobro con tarjeta solo requiere el TOKEN. El STORE_ID es opcional
+        (solo para comercios con varias tiendas); con una sola tienda se omite
+        y PayPhone usa la tienda por defecto del token.
+        """
+        return bool(self.PAYPHONE_TOKEN.strip())
 
     # ── Email (Resend — mismo dominio/key que usa el portafolio) ──
     RESEND_API_KEY: str

@@ -54,10 +54,16 @@ def prepare_payment(*, amount_cents: int, client_tx_id: str, reference: str) -> 
         "tip": 0,
         "currency": "USD",
         "clientTransactionId": client_tx_id,
-        "storeId": settings.PAYPHONE_STORE_ID,
         "reference": reference,
         "responseUrl": settings.PAYPHONE_RESPONSE_URL,
     }
+    # storeId SOLO se envía si el comercio maneja varias tiendas/sucursales.
+    # Con una sola tienda se OMITE y PayPhone usa la tienda por defecto del
+    # token (docs oficiales). Enviar un storeId inválido da error 100
+    # "La tienda asociada no existe", así que mejor omitirlo si no está.
+    store_id = settings.PAYPHONE_STORE_ID.strip()
+    if store_id:
+        payload["storeId"] = store_id
     resp = requests.post(f"{settings.PAYPHONE_API_BASE}/Prepare", json=payload, headers=_headers(), timeout=15)
     if not resp.ok:
         # El body dice el motivo REAL (token inválido, storeId incorrecto,
