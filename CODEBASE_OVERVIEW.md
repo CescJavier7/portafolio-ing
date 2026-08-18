@@ -182,7 +182,9 @@ services/api/
 - Uvicorn (`--proxy-headers --forwarded-allow-ips=*`).
 
 **Servicios externos**
-- **Lemon Squeezy** (Merchant of Record) — cobros. HOY en **Test Mode**.
+- **Cobro manual verificado** (De Una/QR Banco Pichincha, transferencia) — el fundador
+  aprueba en el panel (`manual_billing.py`). Lemon Squeezy/Kushki rechazaron la cuenta;
+  el código de Lemon Squeezy (`billing.py`) sigue en el repo pero SIN uso.
 - **Resend** — correos (`admin@cescjavier.dev`).
 - **Groq** — LLM. Chatbot MekaSenku y reportes de Sentra usan `llama-3.3-70b-versatile`.
 
@@ -235,8 +237,12 @@ d1a5c8b34e07 processed webhook events   ← HEAD
 
 - **auth** — register, verify-email, resend-verification, login, refresh, logout, me,
   profile (PATCH), change-password.
-- **billing** — subscription (GET), checkout-session (POST), portal (GET),
-  webhook (POST, firma HMAC + idempotencia persistente).
+- **billing** — subscription (GET). checkout-session/portal/webhook de Lemon Squeezy
+  siguen definidos pero SIN uso (descartado).
+- **billing/manual** — config (GET), request (POST), mine (GET); pending/approve/reject
+  (fundador). Flujo de cobro VIVO. Métodos y QR salen de `core/config.py` (PAY_*).
+- **public/cv/generate** (POST) — genera/adapta un CV por **API key** (Pro+), stateless;
+  motor de la automatización con n8n → Notion. Ver `public.py`.
 - **targets** — CRUD dominios, instructions, verify (DNS TXT), scan, scans (historial),
   scans/{id}/report (PUT), discover (superficie), exposure, monitoring (PATCH).
   → acciones sensibles gateadas con `require_role`.
@@ -332,7 +338,8 @@ docker compose logs -f sentra-api --tail=40
 - **`services/api/venv/` commiteado** al repo (miles de archivos) — pendiente limpiar
   (agregar a `.gitignore` + `git rm -r --cached`).
 - **`services/api/get-pip.py`** commiteado (artefacto de instalación) — puede borrarse.
-- **Lemon Squeezy en Test Mode** — cobros reales pendientes de aprobación de la cuenta.
+- **Cobro aún manual** (aprobación del fundador) — falta pasarela con confirmación
+  programática (PayPhone «Botón de Pagos» + Confirm, o PayPal webhook) para automatizarlo.
 - **Deploy no corre migraciones** — riesgo de olvido; candidato a automatizar en el
   arranque del contenedor (entrypoint `alembic upgrade head`).
 - **`SENTRA_API_INTERNAL_URL`** valida tokens de Sentra desde el portafolio por red interna.

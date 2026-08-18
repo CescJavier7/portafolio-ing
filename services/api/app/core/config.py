@@ -36,14 +36,25 @@ class Settings(BaseSettings):
     # Fundador(es) que aprueban pagos (coma-separados). El pago manual NO lo
     # aprueba el OWNER de una org, sino el dueño del producto.
     FOUNDER_EMAILS: str = "javiercaiza220158@gmail.com"
-    # Métodos de pago (vacío = no se muestra). Rellénalos en services/api/.env
-    # del VPS con tus datos REALES (nº De Una, link PayPhone, cuenta, PayPal, USDT).
-    PAY_DEUNA: str = ""
+    # Métodos de pago (vacío = no se muestra). Estos datos NO son secretos:
+    # se le muestran al cliente para que pague. Traen los datos REALES por
+    # defecto para no depender del .env del VPS; se pueden sobreescribir ahí.
+    PAY_DEUNA: str = (
+        "Paga escaneando el QR con tu app bancaria (opción «Pagar con QR»), o "
+        "envía por De Una a Banco Pichincha a nombre de Kevin Javier Montatixe "
+        "Caiza. Luego pega el número de comprobante aquí abajo."
+    )
+    # URL de la imagen del QR de De Una (vive en el /public del frontend).
+    PAY_DEUNA_QR: str = "https://cescjavier.dev/pago-deuna-qr.png"
     PAY_PAYPHONE_LINK: str = ""
-    PAY_BANK: str = ""
+    PAY_BANK: str = (
+        "Banco Pichincha · Cuenta de ahorros transaccional · Nº 2205330629 · "
+        "Kevin Javier Montatixe Caiza. Envía $10, guarda el comprobante y pega "
+        "aquí el número de transacción."
+    )
     PAY_PAYPAL: str = ""
     PAY_USDT: str = ""
-    PAY_CONTACT: str = ""  # WhatsApp/correo para dudas del pago
+    PAY_CONTACT: str = "javiercaiza220158@gmail.com"  # correo para dudas del pago
     # Plan único TODO-INCLUIDO: Sentra (seguridad) + Sentra CV AI + Academia.
     PRICE_PRO: str = "USD 10 / mes"
     PRICE_TEAM: str = "USD 29 / mes"

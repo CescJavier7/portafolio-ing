@@ -52,7 +52,9 @@ es bajo; el riesgo de **go-to-market (lanzar + conseguir usuarios + cobrar)** es
 que domina ahora.
 
 - Auth + billing + producto completo, **funcionando en producción** en `cescjavier.dev`.
-- Billing validado end-to-end **en Test Mode** de Lemon Squeezy (aún no cobra dinero real).
+- Billing = **cobro manual verificado** y REAL: De Una/QR de Banco Pichincha + transferencia,
+  con aprobación del fundador (Lemon Squeezy y Kushki rechazaron la cuenta). Plan único
+  todo-incluido **$10/mes** (Sentra + Sentra CV AI + Academia).
 - **0 usuarios reales de pago.** Una publicación de LinkedIn hecha como primer alcance.
 
 ---
@@ -158,13 +160,15 @@ GitHub Actions están sin minutos.
 
 ## 8. Modelo de negocio y planes
 
-Freemium con Merchant of Record (Lemon Squeezy emite factura y maneja impuestos).
+Freemium con **cobro manual verificado** (Ecuador): el cliente paga por De Una/QR de Banco
+Pichincha o transferencia y el fundador aprueba en el panel. Plan Pro **único y todo-incluido**
+(Sentra + Sentra CV AI + Academia) a **$10/mes**. Lemon Squeezy y Kushki rechazaron la cuenta.
 
 | Plan | Precio | Dominios | Escaneos | Extras |
 |------|--------|----------|----------|--------|
 | FREE | $0 | 3 | 3 / 24h | score básico |
-| PRO | $30/mes | 10 | ilimitados | IA, API, 1 webhook, 3 miembros |
-| TEAM | (por definir) | 50 | ilimitados | +webhooks, 10 miembros |
+| PRO | **$10/mes** | 10 | ilimitados | IA, API (incl. CV por API), 1 webhook, 3 miembros, **CV AI + Academia** |
+| TEAM | $29/mes | 50 | ilimitados | +webhooks, 10 miembros |
 | ENTERPRISE | (por definir) | 1000 | ilimitados | 50 miembros |
 
 ---
@@ -174,12 +178,15 @@ Freemium con Merchant of Record (Lemon Squeezy emite factura y maneja impuestos)
 En orden de impacto sobre "ganancias" (actualizado: precios/legales/seguridad, escáner
 gancho, SEO y blog YA están hechos):
 
-1. **Cobros reales (BLOQUEADOR #1):** Lemon Squeezy sigue en Test Mode. Hasta que
-   aprueben la cuenta y se pongan las keys Live, literalmente no entra dinero. NO es
-   código — es esperar la aprobación de la cuenta.
-2. **Seguridad de cobro antes de Live:** idempotencia del webhook de Lemon Squeezy vive
-   en memoria (billing.py) → riesgo de doble aplicación de suscripción si reinicia el
-   contenedor. Debe pasar a una tabla Postgres ANTES de cobrar dinero real.
+1. **Automatizar el cobro (BLOQUEADOR #1):** hoy YA se cobra (manual verificado: De Una/QR/
+   transferencia + aprobación del fundador), pero cada venta necesita que Kevin apruebe a
+   mano. Para activación instantánea sin fricción hay que integrar una pasarela con
+   confirmación programática: en Ecuador la más accesible es **PayPhone** («Botón de Pagos»
+   + endpoint Confirm) o **PayPal** (webhook). Requiere abrir la cuenta de comercio y pasar
+   credenciales. Lemon Squeezy/Kushki DESCARTADOS (rechazaron la cuenta).
+2. **Fricción de aprobación:** mientras siga manual, revisar y aprobar rápido en el panel del
+   fundador (`FounderPayments`) para que el cliente no espere. El QR de De Una ya está embebido
+   en el modal para que pagar tome segundos.
 3. **Distribución / primeros usuarios:** 0 usuarios. El SEO y el blog ya están; falta
    activar Google Search Console (enviar sitemap) + un canal de adquisición repetible
    (Product Hunt, comunidades de devs/seguridad, backlinks desde LinkedIn/GitHub).
@@ -198,18 +205,21 @@ gancho, SEO y blog YA están hechos):
 
 ## 10. Deuda técnica conocida (TODOs reales en el código)
 
-- `_processed_event_ids` del webhook de Lemon Squeezy vive en memoria (billing.py).
+- Cobro Lemon Squeezy DESCARTADO (rechazaron la cuenta): el código de `billing.py`
+  (checkout/webhook) sigue en el repo pero SIN uso; el flujo vivo es `manual_billing.py`.
 - `services/api/venv/` está commiteado al repo (miles de archivos) — limpiar.
 - Falta registro **DMARC** en Cloudflare (mejora entregabilidad del correo).
-- Lemon Squeezy Live pendiente de aprobación de la cuenta.
+- Cobro aún manual (aprobación del fundador) — falta pasarela con confirmación programática.
 - Supuestos de una sola réplica (idempotencia, rate limit en memoria de slowapi).
 
 ---
 
 ## 11. Roadmap sugerido (orientado a ingresos, no a features)
 
-1. **Lemon Squeezy Live** cuando aprueben → desbloquea el dinero. (No-código.)
-2. **Idempotencia del webhook en Postgres** → seguridad de cobro antes de Live.
+1. **Automatizar el cobro** (PayPhone «Botón de Pagos» + Confirm, o PayPal webhook) →
+   activación instantánea sin aprobar a mano. Requiere abrir cuenta de comercio.
+2. **Reducir fricción del cobro manual** mientras tanto: aprobar rápido en el panel del
+   fundador; el QR de De Una ya está embebido en el modal.
 3. **Google Search Console** (enviar sitemap) + backlinks → activar el SEO ya hecho.
 4. **Onboarding pulido** + **panel del fundador** (métricas) → conversión + visibilidad.
 5. **Cosecha del motor de datos**: stats agregadas + "compárate con tu sector".

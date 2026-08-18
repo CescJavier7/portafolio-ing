@@ -308,6 +308,8 @@ export interface SentraPayMethod {
   key: string;
   label: string;
   instructions: string;
+  image?: string | null; // QR (De Una) u otra imagen para escanear/pagar
+  url?: string | null; // enlace de pago (PayPhone/PayPal) → botón "Pagar"
 }
 export interface SentraManualConfig {
   price_pro: string;

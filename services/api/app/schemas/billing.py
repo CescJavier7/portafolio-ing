@@ -45,6 +45,11 @@ class PayMethodOut(BaseModel):
     key: str
     label: str
     instructions: str
+    # URL de imagen opcional (p. ej. el QR de De Una) para mostrar en el modal.
+    image: str | None = None
+    # Enlace de pago opcional (p. ej. link de PayPhone/PayPal): el modal lo
+    # muestra como botón "Pagar" que abre el checkout hospedado del proveedor.
+    url: str | None = None
 
 
 class ManualConfigOut(BaseModel):

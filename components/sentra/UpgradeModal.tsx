@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gem, Check, X, ArrowLeft, Loader2, Copy, Clock } from 'lucide-react';
+import { Gem, Check, X, ArrowLeft, Loader2, Copy, Clock, ExternalLink } from 'lucide-react';
 import {
   sentraManualConfig,
   sentraSubmitPayment,
@@ -45,6 +45,8 @@ const T = {
     genericErr: 'No se pudo enviar. Inténtalo de nuevo.',
     copy: 'Copiar',
     copied: 'Copiado',
+    scanQr: 'Escanea el QR con tu app bancaria y paga',
+    payNow: 'Pagar con tarjeta',
   },
   en: {
     payTitle: 'Complete your payment',
@@ -66,6 +68,8 @@ const T = {
     genericErr: 'Could not submit. Please try again.',
     copy: 'Copy',
     copied: 'Copied',
+    scanQr: 'Scan the QR with your banking app and pay',
+    payNow: 'Pay by card',
   },
 };
 
@@ -225,6 +229,20 @@ export default function UpgradeModal({
                         </div>
                       </div>
 
+                      {activeMethod?.image && (
+                        <div className="flex flex-col items-center gap-2 rounded-xl bg-white border border-zinc-200 dark:border-zinc-700 p-4">
+                          {/* QR de De Una: escanear y pagar sin copiar nada */}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={activeMethod.image}
+                            alt="QR De Una — Banco Pichincha"
+                            className="w-44 h-44 object-contain"
+                            loading="lazy"
+                          />
+                          <p className="text-[11px] font-semibold text-zinc-500 text-center">{t.scanQr}</p>
+                        </div>
+                      )}
+
                       {activeMethod && (
                         <div className="relative rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-[13px] text-zinc-700 dark:text-zinc-200 whitespace-pre-wrap break-words">
                           {activeMethod.instructions}
@@ -240,6 +258,17 @@ export default function UpgradeModal({
                             {copied ? t.copied : t.copy}
                           </button>
                         </div>
+                      )}
+
+                      {activeMethod?.url && (
+                        <a
+                          href={activeMethod.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-black text-sm font-bold hover:opacity-90 active:scale-[0.98] transition"
+                        >
+                          <ExternalLink className="w-4 h-4" /> {t.payNow}
+                        </a>
                       )}
 
                       <div>

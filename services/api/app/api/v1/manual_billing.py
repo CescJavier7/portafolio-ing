@@ -43,19 +43,61 @@ _METHOD_LABELS = {
 
 
 def _available_methods() -> list[PayMethodOut]:
-    """Solo los métodos configurados (con datos reales en el .env del VPS)."""
-    mapping = [
-        ("deuna", settings.PAY_DEUNA),
-        ("payphone", settings.PAY_PAYPHONE_LINK),
-        ("transfer", settings.PAY_BANK),
-        ("paypal", settings.PAY_PAYPAL),
-        ("usdt", settings.PAY_USDT),
-    ]
-    return [
-        PayMethodOut(key=k, label=_METHOD_LABELS[k], instructions=v.strip())
-        for k, v in mapping
-        if v.strip()
-    ]
+    """
+    Solo los métodos configurados (con datos reales).
+      - De Una lleva QR (image) para escanear.
+      - PayPhone/PayPal, si su valor es un enlace de pago, se muestran como botón
+        "Pagar" (url) que abre el checkout hospedado del proveedor (acepta tarjeta).
+    """
+    out: list[PayMethodOut] = []
+
+    if settings.PAY_DEUNA.strip():
+        out.append(
+            PayMethodOut(
+                key="deuna",
+                label=_METHOD_LABELS["deuna"],
+                instructions=settings.PAY_DEUNA.strip(),
+                image=settings.PAY_DEUNA_QR.strip() or None,
+            )
+        )
+
+    link = settings.PAY_PAYPHONE_LINK.strip()
+    if link:
+        out.append(
+            PayMethodOut(
+                key="payphone",
+                label=_METHOD_LABELS["payphone"],
+                instructions="Paga con tarjeta de forma segura vía PayPhone. Al terminar, "
+                "pega aquí el número de comprobante para activar tu plan.",
+                url=link,
+            )
+        )
+
+    if settings.PAY_BANK.strip():
+        out.append(
+            PayMethodOut(key="transfer", label=_METHOD_LABELS["transfer"], instructions=settings.PAY_BANK.strip())
+        )
+
+    paypal = settings.PAY_PAYPAL.strip()
+    if paypal:
+        is_link = paypal.startswith("http")
+        out.append(
+            PayMethodOut(
+                key="paypal",
+                label=_METHOD_LABELS["paypal"],
+                instructions="Paga con PayPal y pega aquí el ID de la transacción."
+                if is_link
+                else paypal,
+                url=paypal if is_link else None,
+            )
+        )
+
+    if settings.PAY_USDT.strip():
+        out.append(
+            PayMethodOut(key="usdt", label=_METHOD_LABELS["usdt"], instructions=settings.PAY_USDT.strip())
+        )
+
+    return out
 
 
 def _price_for(plan: str) -> str:

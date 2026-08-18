@@ -19,11 +19,16 @@ de seguridad web. Dos apps que se despliegan juntas en un VPS.
 - **Portafolio (Next.js 16):** home, servicios, blog (markdown), páginas legales,
   precios, seguridad, panel admin `/meka-admin` (NextAuth+Prisma), chatbot MekaSenku (Groq).
 - **Sentra (FastAPI en `services/api/`):** auth propia (Argon2id + JWT + refresh
-  rotativo), billing Lemon Squeezy (Test Mode), targets con verificación DNS TXT,
-  scanner pasivo + Security Score, historial, reportes IA (Groq), monitoreo continuo +
-  alertas, descubrimiento de superficie, inteligencia de exposición, API pública +
-  API keys + gate CI/CD, equipos/RBAC, webhooks salientes (HMAC), registro de auditoría,
-  escáner público gratis (`/free/scan`, sin login), y motor de datos (`scan_observations`).
+  rotativo), **cobro manual verificado** (De Una/Banco Pichincha + QR / transferencia,
+  aprobación del fundador — Lemon Squeezy y Kushki rechazaron la cuenta), targets con
+  verificación DNS TXT, scanner pasivo + Security Score, historial, reportes IA (Groq),
+  monitoreo continuo + alertas, descubrimiento de superficie, inteligencia de exposición,
+  API pública + API keys + gate CI/CD (incl. **generación de CV por API** para automatizar
+  con n8n), equipos/RBAC, webhooks salientes (HMAC), registro de auditoría, escáner público
+  gratis (`/free/scan`, sin login), y motor de datos (`scan_observations`).
+- **Suite todo-en-uno ($10/mes):** un plan Pro único que incluye Sentra (seguridad) +
+  Sentra CV AI (empleabilidad) + Academia (aprendizaje). El navbar agrupa los SaaS en un
+  dropdown "Suite"; la Academia es pestaña propia.
 - **SEO:** metadata bilingüe + hreflang + JSON-LD + sitemap dinámico + robots + blog.
 
 ---
@@ -52,6 +57,20 @@ de seguridad web. Dos apps que se despliegan juntas en un VPS.
   Argon2 solo para contraseñas.
 - `require_role(...)` para acciones sensibles del panel (RBAC enforced en backend).
 
+**Cobros (MVP manual — Lemon Squeezy/Kushki rechazaron la cuenta):**
+- Flujo: el cliente paga por fuera (De Una/QR de Banco Pichincha, transferencia, etc.) y
+  pega la **referencia** → el **fundador** (`require_founder`, correos en `FOUNDER_EMAILS`,
+  NO el OWNER de la org) la aprueba en el panel → `org.plan = PRO`, `subscription_status =
+  "active_manual"`. Backend en `api/v1/manual_billing.py`, modelo `PaymentRequest`.
+- Los datos de pago viven como **defaults en `core/config.py`** (`PAY_DEUNA`, `PAY_DEUNA_QR`,
+  `PAY_BANK`, `PAY_CONTACT`, `PRICE_PRO="USD 10 / mes"`): NO son secretos (se le muestran al
+  cliente), así que traen los datos reales por defecto y funcionan sin tocar el `.env` del
+  VPS. El QR de De Una es `public/pago-deuna-qr.png` (servido por el frontend).
+- El modal de compra (`UpgradeModal.tsx`) es el ÚNICO camino de upgrade (panel + precios).
+  **Nada** debe volver a enrutar a Lemon Squeezy (`sentraCreateCheckout` quedó sin uso).
+- Automatización de cobro real (activación sin aprobar a mano) = pendiente: requiere pasarela
+  con confirmación programática (PayPhone «Botón de Pagos» + Confirm, o PayPal webhook).
+
 **Convenciones:**
 - i18n: `dictionaries/{es,en}.json`, editar preservando orden (`OrderedDict`,
   `ensure_ascii=False`). Blog: mismo slug en `content/blog/es` y `/en` (para hreflang).
@@ -73,7 +92,11 @@ servicio que cambió: `portfolio-app` (frontend) y/o `sentra-api` (backend, + mi
 
 ## Pendientes reales (orientados a ingresos, no a features)
 
-1. **Lemon Squeezy Live** (esperar aprobación de la cuenta) — bloqueador #1, no-código.
+1. **Automatizar el cobro** (bloqueador #1): hoy es manual verificado (De Una/QR/transferencia
+   + aprobación del fundador). Para activación instantánea sin aprobar a mano, integrar una
+   pasarela con confirmación programática — en Ecuador la más accesible es **PayPhone**
+   («Botón de Pagos» + endpoint Confirm) o **PayPal** (webhook). Requiere que Kevin abra la
+   cuenta de comercio y pase credenciales. Lemon Squeezy/Kushki DESCARTADOS (rechazaron).
 2. **Google Search Console** (enviar sitemap) — activa el SEO ya hecho.
 3. **Onboarding** pulido + **panel del fundador** (métricas) + **cosecha del motor de
    datos** (benchmarks "compárate con tu sector").
