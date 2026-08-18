@@ -974,10 +974,10 @@
         {
           "heading": "Plans, payments and NO-refund policy",
           "body": [
-            "The free plan requires no payment. The Pro plan costs USD 10 per month and includes Sentra (security), Sentra CV AI and the Academy. It is a MONTHLY subscription: to keep Pro access you must pay for each period.",
+            "The free plan requires no payment. The Pro plan costs USD 10 per month and includes Sentra (security), Sentra CV AI and the Academy. It is a MONTHLY subscription that renews each period unless you cancel; to keep Pro access the payment for each renewal must be made.",
             "Payments are made by card through PayPhone, or via verified manual payment (De Una / bank transfer to Banco Pichincha). The card payment form is hosted by the provider: we do NOT store your card details.",
             "THERE ARE NO REFUNDS. As this is a digital service with immediate access, all payments are final and non-refundable, in whole or in part, including unused time if you cancel before the period ends. By paying, you expressly accept this no-refund policy.",
-            "You may cancel your subscription at any time from your panel. Cancellation stops renewal and ends your Pro access immediately; it does not generate a refund for the period already paid."
+            "You may cancel renewal at any time from your panel. When you cancel, you keep Pro access until the end of the period already paid and it will not renew afterwards; cancellation does not generate a refund for the current period."
           ]
         },
         {
@@ -996,7 +996,7 @@
         {
           "heading": "Suspension and termination",
           "body": [
-            "We may suspend or close accounts that breach these Terms, especially unauthorized scanning. You may cancel your subscription or account at any time from your panel; cancellation is immediate and generates no refunds (see the payments section)."
+            "We may suspend or close accounts that breach these Terms, especially unauthorized scanning. You may cancel your subscription or account at any time from your panel; when you cancel you keep Pro access until the end of the paid period and there are no refunds (see the payments section)."
           ]
         },
         {

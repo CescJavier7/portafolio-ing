@@ -26,8 +26,17 @@ from app.models.organization import Organization
 from app.models.processed_webhook_event import ProcessedWebhookEvent
 from app.models.user import User
 from app.services.lemonsqueezy_service import create_checkout_url, get_customer_portal_url, verify_webhook_signature
+from app.services.subscription import is_expired, next_period_end
 
 router = APIRouter(prefix="/billing", tags=["billing"])
+
+
+def _sub_out(org: Organization) -> dict:
+    return {
+        "plan": org.plan,
+        "subscription_status": org.subscription_status,
+        "plan_expires_at": org.plan_expires_at.isoformat() if org.plan_expires_at else None,
+    }
 
 
 @router.get("/subscription")
@@ -35,10 +44,16 @@ async def get_subscription(current_user: User = Depends(get_current_user), db: A
     org = await db.get(Organization, current_user.organization_id)
     if org is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organización no encontrada.")
-    return {
-        "plan": org.plan,
-        "subscription_status": org.subscription_status,
-    }
+
+    # Downgrade PEREZOSO: si el período pagado venció y no se renovó, baja a FREE
+    # aquí (no hay cron). Este endpoint lo consulta el panel al abrir.
+    if org.plan != "FREE" and is_expired(org.plan_expires_at):
+        org.plan = "FREE"
+        org.subscription_status = "expired"
+        org.plan_expires_at = None
+        await db.commit()
+
+    return _sub_out(org)
 
 
 @router.post("/cancel")
@@ -47,18 +62,39 @@ async def cancel_subscription(
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Cancela la suscripción de la organización. Como el cobro es MENSUAL y no
-    recurrente automático (De Una / transferencia / PayPhone puntual), cancelar
-    = detener la renovación y bajar YA a FREE. No hay reembolso del período en
-    curso (política de no devoluciones — ver Términos). Solo OWNER/ADMIN.
+    Cancela la RENOVACIÓN, no el acceso: el usuario mantiene Pro hasta que
+    termine el período ya pagado (`plan_expires_at`), como Netflix/Spotify.
+    No hay reembolso del período en curso (política de no devoluciones — ver
+    Términos). Solo OWNER/ADMIN.
     """
     org = await db.get(Organization, current_user.organization_id)
     if org is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organización no encontrada.")
-    org.plan = "FREE"
-    org.subscription_status = "cancelled"
+    if org.plan == "FREE":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No tienes una suscripción activa.")
+
+    # Legacy sin período definido: dale 30 días para no cortarlo de golpe.
+    if org.plan_expires_at is None:
+        org.plan_expires_at = next_period_end(None)
+    org.subscription_status = "cancelled"  # NO baja el plan; vence solo al terminar el período
     await db.commit()
-    return {"status": "cancelled", "plan": org.plan}
+    return {"status": "cancelled", **_sub_out(org)}
+
+
+@router.post("/reactivate")
+async def reactivate_subscription(
+    current_user: User = Depends(require_role("OWNER", "ADMIN")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Deshace una cancelación mientras el período sigue vigente (vuelve a renovar)."""
+    org = await db.get(Organization, current_user.organization_id)
+    if org is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organización no encontrada.")
+    if org.plan == "FREE" or is_expired(org.plan_expires_at):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No hay una suscripción vigente que reactivar.")
+    org.subscription_status = "active_manual"
+    await db.commit()
+    return {"status": "active", **_sub_out(org)}
 
 
 @router.post("/checkout-session")

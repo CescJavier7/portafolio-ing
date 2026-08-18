@@ -26,6 +26,7 @@ from app.models.organization import Organization
 from app.models.payment_request import PaymentRequest
 from app.models.user import User
 from app.services import payphone_service
+from app.services.subscription import next_period_end
 
 settings = get_settings()
 # OJO: el prefijo es "/billing/card" (neutro) a propósito. Si la URL contuviera
@@ -177,6 +178,7 @@ async def confirm(request: Request, payload: ConfirmIn, db: AsyncSession = Depen
     # negativos si PayPhone reporta el monto en otro formato/campo). Solo se loguea.
     if approved:
         org.plan = pr.plan
+        org.plan_expires_at = next_period_end(org.plan_expires_at)  # +30 días (apila si renueva)
         org.subscription_status = "active_payphone"  # distingue del flujo manual/LS
         pr.status = "approved"
         pr.reviewed_at = datetime.now(timezone.utc)

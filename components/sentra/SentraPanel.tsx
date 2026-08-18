@@ -8,6 +8,7 @@ import {
   sentraChangePassword,
   sentraGetSubscription,
   sentraCancelSubscription,
+  sentraReactivateSubscription,
   sentraHasToken,
   sentraLogout,
   sentraMe,
@@ -86,21 +87,37 @@ const inputClass =
 const CANCEL_T = {
   es: {
     active: 'Plan Pro activo',
+    renewsOn: 'Se renueva el',
+    endsOn: 'Acceso Pro hasta el',
+    wontRenew: 'No se renovará',
     cancel: 'Cancelar suscripción',
-    title: '¿Cancelar tu plan Pro?',
-    body: 'Bajarás al plan Gratis de inmediato y perderás el acceso Pro. No hay reembolsos por el período en curso.',
+    reactivate: 'Reactivar renovación',
+    reactivating: 'Reactivando…',
+    title: '¿Cancelar la renovación?',
+    body: (d: string) =>
+      `Seguirás con acceso Pro hasta el ${d}. No se renovará después y no hay reembolsos por el período en curso.`,
+    bodyNoDate:
+      'Seguirás con acceso Pro hasta que termine tu período. No se renovará después y no hay reembolsos.',
     yes: 'Sí, cancelar',
-    no: 'Mantener Pro',
+    no: 'Mantener',
     cancelling: 'Cancelando…',
     err: 'No se pudo cancelar. Inténtalo de nuevo.',
   },
   en: {
     active: 'Pro plan active',
+    renewsOn: 'Renews on',
+    endsOn: 'Pro access until',
+    wontRenew: 'Will not renew',
     cancel: 'Cancel subscription',
-    title: 'Cancel your Pro plan?',
-    body: 'You will drop to the Free plan immediately and lose Pro access. There are no refunds for the current period.',
+    reactivate: 'Reactivate renewal',
+    reactivating: 'Reactivating…',
+    title: 'Cancel renewal?',
+    body: (d: string) =>
+      `You keep Pro access until ${d}. It will not renew after that, and there are no refunds for the current period.`,
+    bodyNoDate:
+      'You keep Pro access until your period ends. It will not renew after that, and there are no refunds.',
     yes: 'Yes, cancel',
-    no: 'Keep Pro',
+    no: 'Keep it',
     cancelling: 'Cancelling…',
     err: 'Could not cancel. Please try again.',
   },
@@ -108,30 +125,63 @@ const CANCEL_T = {
 
 function PlanCard({ dict, lang, onUpgrade }: { dict: Dict; lang: string; onUpgrade: () => void }) {
   const [plan, setPlan] = useState<string | null>(null);
+  const [subStatus, setSubStatus] = useState<string | null>(null);
+  const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelBusy, setCancelBusy] = useState(false);
+  const [reactBusy, setReactBusy] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
   const ct = CANCEL_T[lang === 'en' ? 'en' : 'es'];
 
   useEffect(() => {
     sentraGetSubscription()
-      .then((sub) => setPlan(sub.plan))
+      .then((sub) => {
+        setPlan(sub.plan);
+        setSubStatus(sub.subscription_status);
+        setExpiresAt(sub.plan_expires_at);
+      })
       .catch(() => setPlan('FREE')); // sin drama: el plan por defecto es FREE
   }, []);
 
-  const isPro = plan === 'PRO';
+  const isPaid = plan !== null && plan !== 'FREE';
+  const isCancelled = subStatus === 'cancelled';
+  const fmtDate = (iso: string | null) =>
+    iso
+      ? new Date(iso).toLocaleDateString(lang === 'en' ? 'en-US' : 'es-ES', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+      : '';
+  const dateStr = fmtDate(expiresAt);
 
   async function handleCancel() {
     setCancelBusy(true);
     setCancelError(null);
     try {
-      await sentraCancelSubscription();
-      setPlan('FREE');
+      const res = await sentraCancelSubscription();
+      // NO baja a FREE: mantiene Pro hasta el fin del período, solo marca cancelado.
+      setSubStatus(res.subscription_status);
+      setExpiresAt(res.plan_expires_at);
       setCancelOpen(false);
     } catch (err) {
       setCancelError(err instanceof SentraApiError ? err.detail : ct.err);
     } finally {
       setCancelBusy(false);
+    }
+  }
+
+  async function handleReactivate() {
+    setReactBusy(true);
+    setCancelError(null);
+    try {
+      const res = await sentraReactivateSubscription();
+      setSubStatus(res.subscription_status);
+      setExpiresAt(res.plan_expires_at);
+    } catch (err) {
+      setCancelError(err instanceof SentraApiError ? err.detail : ct.err);
+    } finally {
+      setReactBusy(false);
     }
   }
 
@@ -148,23 +198,22 @@ function PlanCard({ dict, lang, onUpgrade }: { dict: Dict; lang: string; onUpgra
         </div>
         <span
           className={`px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest border ${
-            isPro
+            isPaid
               ? 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20'
               : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700'
           }`}
         >
-          {plan === null ? '…' : isPro ? 'Pro' : dict.planFree}
+          {plan === null ? '…' : isPaid ? (plan === 'TEAM' ? 'Team' : 'Pro') : dict.planFree}
         </span>
       </div>
 
       <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
-        {isPro ? dict.planProDesc : dict.planDesc}
+        {isPaid ? dict.planProDesc : dict.planDesc}
       </p>
 
-      {!isPro && (
+      {!isPaid && (
         <>
-          {/* Abre el flujo de pago MANUAL (transferencia / De Una / PayPhone /
-              PayPal). Ya no vamos a Lemon Squeezy. */}
+          {/* Abre el flujo de pago (tarjeta PayPhone / De Una / transferencia). */}
           <button
             onClick={onUpgrade}
             disabled={plan === null}
@@ -176,13 +225,32 @@ function PlanCard({ dict, lang, onUpgrade }: { dict: Dict; lang: string; onUpgra
         </>
       )}
 
-      {isPro && (
+      {isPaid && (
         <div className="space-y-4">
           <div className="inline-flex items-center gap-2 rounded-full bg-green-500/10 border border-green-500/20 px-4 py-2 text-sm font-semibold text-green-600 dark:text-green-400">
             <Check className="w-4 h-4" /> {ct.active}
           </div>
 
-          {!cancelOpen ? (
+          {/* Estado del período: renueva (activo) vs termina (cancelado) */}
+          {dateStr && (
+            <p className={`text-[13px] font-medium ${isCancelled ? 'text-amber-600 dark:text-amber-400' : 'text-zinc-500 dark:text-zinc-400'}`}>
+              {isCancelled ? (
+                <>⏳ {ct.endsOn} <span className="font-bold">{dateStr}</span> · {ct.wontRenew}</>
+              ) : (
+                <>🔁 {ct.renewsOn} <span className="font-bold">{dateStr}</span></>
+              )}
+            </p>
+          )}
+
+          {isCancelled ? (
+            <button
+              onClick={handleReactivate}
+              disabled={reactBusy}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-green-500 text-black text-[13px] font-bold hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-60"
+            >
+              {reactBusy ? ct.reactivating : ct.reactivate}
+            </button>
+          ) : !cancelOpen ? (
             <button
               onClick={() => setCancelOpen(true)}
               className="block text-[13px] font-semibold text-zinc-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
@@ -192,7 +260,9 @@ function PlanCard({ dict, lang, onUpgrade }: { dict: Dict; lang: string; onUpgra
           ) : (
             <div className="rounded-2xl border border-red-500/30 bg-red-500/5 p-4 max-w-sm">
               <p className="text-sm font-bold text-zinc-900 dark:text-white mb-1">{ct.title}</p>
-              <p className="text-[13px] text-zinc-500 dark:text-zinc-400 leading-relaxed mb-3">{ct.body}</p>
+              <p className="text-[13px] text-zinc-500 dark:text-zinc-400 leading-relaxed mb-3">
+                {dateStr ? ct.body(dateStr) : ct.bodyNoDate}
+              </p>
               {cancelError && <p className="text-[13px] text-red-500 mb-2">{cancelError}</p>}
               <div className="flex gap-2">
                 <button

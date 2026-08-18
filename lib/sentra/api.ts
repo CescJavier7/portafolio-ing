@@ -279,16 +279,23 @@ export async function sentraFreeScan(domain: string): Promise<SentraFreeScan> {
 
 // ── Billing ─────────────────────────────────────────────────────────
 
-export async function sentraGetSubscription(): Promise<{
+export interface SentraSubscription {
   plan: string;
   subscription_status: string | null;
-}> {
+  plan_expires_at: string | null; // ISO — fin del período pagado
+}
+export async function sentraGetSubscription(): Promise<SentraSubscription> {
   return request('/api/v1/billing/subscription', { method: 'GET' }, true);
 }
 
-// Cancela la suscripción (baja a FREE). Solo OWNER/ADMIN. Sin reembolsos.
-export async function sentraCancelSubscription(): Promise<{ status: string; plan: string }> {
+// Cancela la RENOVACIÓN (no el acceso): sigue Pro hasta plan_expires_at. Sin
+// reembolsos. Solo OWNER/ADMIN.
+export async function sentraCancelSubscription(): Promise<SentraSubscription & { status: string }> {
   return request('/api/v1/billing/cancel', { method: 'POST' }, true);
+}
+// Deshace la cancelación mientras el período sigue vigente (vuelve a renovar).
+export async function sentraReactivateSubscription(): Promise<SentraSubscription & { status: string }> {
+  return request('/api/v1/billing/reactivate', { method: 'POST' }, true);
 }
 
 // Devuelve la URL del Checkout hosteado de Lemon Squeezy: el navegador

@@ -69,10 +69,17 @@ de seguridad web. Dos apps que se despliegan juntas en un VPS.
 - El modal de compra (`UpgradeModal.tsx`) es el ÚNICO camino de upgrade (panel + precios);
   tiene tema **CyberPunk (siempre oscuro, neón cian/magenta)**. **Nada** debe volver a enrutar
   a Lemon Squeezy (`sentraCreateCheckout` quedó sin uso).
-- **Política de NO reembolsos** (servicio digital de acceso inmediato) — está en los Términos
-  (`dict.legal.terms`) y en el footnote de precios. **Cancelar suscripción**: `POST /billing/cancel`
-  (OWNER/ADMIN) baja YA a FREE (`subscription_status="cancelled"`), sin reembolso; botón en el
-  `PlanCard` del panel. No hay recurrencia automática (cobro mensual puntual).
+- **Política de NO reembolsos** (servicio digital de acceso inmediato) — Términos + footnote de precios.
+- **Ciclo de suscripción** (`services/subscription.py`): cada pago aprobado extiende
+  `organizations.plan_expires_at` +30 días (apila si renueva antes de vencer). **Cancelar**
+  (`POST /billing/cancel`, OWNER/ADMIN) NO baja a FREE: mantiene Pro hasta `plan_expires_at`
+  y marca `subscription_status="cancelled"` (como Netflix). `POST /billing/reactivate` deshace
+  la cancelación si el período sigue vigente. **Downgrade PEREZOSO**: `GET /billing/subscription`
+  baja a FREE si venció (no hay cron; futuro: barrido programado). Migración `f1a2b3c4d5e6`
+  (auto-corre en el deploy vía entrypoint.sh).
+- **Auto-cobro recurrente (pendiente)**: PayPhone tiene tokenización para cobrar sin re-pedir
+  tarjeta, PERO requiere **autorización previa de PayPhone** + guardar el token + agendar cobros.
+  Hoy la "renovación" es re-pagar. Es el siguiente paso para auto-billing real.
 - **PayPhone (cobro con tarjeta AUTOMÁTICO) YA integrado** — Botón de Pago por redirección:
   `payphone_billing.py` (`/billing/payphone/prepare` + `/confirm`), `payphone_service.py`,
   página de retorno `app/[lang]/sentinel/pago/confirmar`. Config en `core/config.py`

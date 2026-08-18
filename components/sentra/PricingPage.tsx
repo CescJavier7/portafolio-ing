@@ -92,10 +92,10 @@ export default function PricingPage({
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.08, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className={`relative rounded-3xl p-7 md:p-8 border shadow-sm ${
+                className={`relative rounded-3xl p-7 md:p-8 border ${
                   featured
-                    ? 'bg-zinc-900 dark:bg-black border-green-500/40 md:-mt-4 md:mb-4'
-                    : 'bg-white dark:bg-zinc-900/40 border-zinc-200 dark:border-zinc-800'
+                    ? 'bg-zinc-900 dark:bg-black border-green-500/50 md:-mt-4 md:mb-4 md:scale-[1.03] shadow-[0_0_55px_-12px_rgba(34,197,94,0.55)]'
+                    : 'bg-white dark:bg-zinc-900/40 border-zinc-200 dark:border-zinc-800 shadow-sm'
                 }`}
               >
                 {featured && (
@@ -128,6 +128,12 @@ export default function PricingPage({
                   <Link href={ctaHref(plan.id)} className={ctaClass(featured)}>
                     {plan.cta}
                   </Link>
+                )}
+
+                {plan.id === 'pro' && (
+                  <p className={`text-[11px] text-center -mt-5 mb-6 ${featured ? 'text-zinc-400' : 'text-zinc-500 dark:text-zinc-400'}`}>
+                    {lang === 'en' ? 'Monthly · cancel anytime, no lock-in' : 'Renovación mensual · cancela cuando quieras'}
+                  </p>
                 )}
 
                 <ul className="space-y-2.5">

@@ -21,7 +21,10 @@ class Organization(Base):
     # — ni tocamos datos de tarjeta, así que ni siquiera aplica PCI-DSS).
     lemonsqueezy_customer_id: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
     lemonsqueezy_subscription_id: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
-    subscription_status: Mapped[str | None] = mapped_column(String(30), nullable=True)  # active, past_due, canceled...
+    subscription_status: Mapped[str | None] = mapped_column(String(30), nullable=True)  # active_*, cancelled, expired
+    # Fin del período pagado. Mientras now < plan_expires_at el acceso Pro sigue
+    # (aunque esté 'cancelled'). Al vencer sin renovar, se baja a FREE.
+    plan_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 

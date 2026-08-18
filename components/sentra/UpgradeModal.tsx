@@ -51,6 +51,7 @@ const T = {
     payCardNow: 'Pagar con tarjeta',
     payCardNote: 'Te llevamos al pago seguro de PayPhone. Al volver, tu plan Pro se activa solo.',
     redirecting: 'Abriendo pago seguro…',
+    renewNote: 'Renovación mensual · cancela cuando quieras, sin permanencia.',
   },
   en: {
     payTitle: 'Complete your payment',
@@ -77,6 +78,7 @@ const T = {
     payCardNow: 'Pay by card',
     payCardNote: "We'll take you to PayPhone's secure checkout. When you return, your Pro plan activates automatically.",
     redirecting: 'Opening secure checkout…',
+    renewNote: 'Monthly renewal · cancel anytime, no lock-in.',
   },
 };
 
@@ -232,7 +234,8 @@ export default function UpgradeModal({
                       <button onClick={goPay} className={neonBtn}>
                         {dict.cta} — {dict.price}
                       </button>
-                      <button onClick={onClose} className="w-full mt-2 py-2.5 text-sm font-semibold text-zinc-500 hover:text-zinc-300 transition-colors">
+                      <p className="text-[11px] text-zinc-500 text-center mt-2.5">{t.renewNote}</p>
+                      <button onClick={onClose} className="w-full mt-1 py-2.5 text-sm font-semibold text-zinc-500 hover:text-zinc-300 transition-colors">
                         {dict.later}
                       </button>
                     </div>

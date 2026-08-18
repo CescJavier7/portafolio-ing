@@ -22,6 +22,7 @@ from app.db.session import get_db
 from app.models.organization import Organization
 from app.models.payment_request import PaymentRequest
 from app.models.user import User
+from app.services.subscription import next_period_end
 from app.schemas.billing import (
     ManualConfigOut,
     ManualPaymentCreate,
@@ -225,6 +226,7 @@ async def approve(
     if org is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organización no encontrada.")
     org.plan = pr.plan
+    org.plan_expires_at = next_period_end(org.plan_expires_at)  # +30 días (apila si renueva)
     org.subscription_status = "active_manual"  # distingue del flujo Lemon Squeezy
     pr.status = "approved"
     pr.reviewed_at = datetime.now(timezone.utc)
