@@ -41,6 +41,26 @@ async def get_subscription(current_user: User = Depends(get_current_user), db: A
     }
 
 
+@router.post("/cancel")
+async def cancel_subscription(
+    current_user: User = Depends(require_role("OWNER", "ADMIN")),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Cancela la suscripción de la organización. Como el cobro es MENSUAL y no
+    recurrente automático (De Una / transferencia / PayPhone puntual), cancelar
+    = detener la renovación y bajar YA a FREE. No hay reembolso del período en
+    curso (política de no devoluciones — ver Términos). Solo OWNER/ADMIN.
+    """
+    org = await db.get(Organization, current_user.organization_id)
+    if org is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organización no encontrada.")
+    org.plan = "FREE"
+    org.subscription_status = "cancelled"
+    await db.commit()
+    return {"status": "cancelled", "plan": org.plan}
+
+
 @router.post("/checkout-session")
 async def create_checkout(current_user: User = Depends(require_role("OWNER", "ADMIN")), db: AsyncSession = Depends(get_db)):
     org = await db.get(Organization, current_user.organization_id)

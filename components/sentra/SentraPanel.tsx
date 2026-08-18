@@ -7,6 +7,7 @@ import { LogOut, KeyRound, Gem, Check, LayoutDashboard, Radar, FileText, UserCog
 import {
   sentraChangePassword,
   sentraGetSubscription,
+  sentraCancelSubscription,
   sentraHasToken,
   sentraLogout,
   sentraMe,
@@ -82,8 +83,35 @@ type SectionId = 'overview' | 'tool' | 'reports' | 'account' | 'dns' | 'traffic'
 const inputClass =
   'w-full rounded-xl bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-4 py-3 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition';
 
-function PlanCard({ dict, onUpgrade }: { dict: Dict; onUpgrade: () => void }) {
+const CANCEL_T = {
+  es: {
+    active: 'Plan Pro activo',
+    cancel: 'Cancelar suscripción',
+    title: '¿Cancelar tu plan Pro?',
+    body: 'Bajarás al plan Gratis de inmediato y perderás el acceso Pro. No hay reembolsos por el período en curso.',
+    yes: 'Sí, cancelar',
+    no: 'Mantener Pro',
+    cancelling: 'Cancelando…',
+    err: 'No se pudo cancelar. Inténtalo de nuevo.',
+  },
+  en: {
+    active: 'Pro plan active',
+    cancel: 'Cancel subscription',
+    title: 'Cancel your Pro plan?',
+    body: 'You will drop to the Free plan immediately and lose Pro access. There are no refunds for the current period.',
+    yes: 'Yes, cancel',
+    no: 'Keep Pro',
+    cancelling: 'Cancelling…',
+    err: 'Could not cancel. Please try again.',
+  },
+};
+
+function PlanCard({ dict, lang, onUpgrade }: { dict: Dict; lang: string; onUpgrade: () => void }) {
   const [plan, setPlan] = useState<string | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelBusy, setCancelBusy] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const ct = CANCEL_T[lang === 'en' ? 'en' : 'es'];
 
   useEffect(() => {
     sentraGetSubscription()
@@ -92,6 +120,20 @@ function PlanCard({ dict, onUpgrade }: { dict: Dict; onUpgrade: () => void }) {
   }, []);
 
   const isPro = plan === 'PRO';
+
+  async function handleCancel() {
+    setCancelBusy(true);
+    setCancelError(null);
+    try {
+      await sentraCancelSubscription();
+      setPlan('FREE');
+      setCancelOpen(false);
+    } catch (err) {
+      setCancelError(err instanceof SentraApiError ? err.detail : ct.err);
+    } finally {
+      setCancelBusy(false);
+    }
+  }
 
   return (
     <div className="rounded-3xl bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 shadow-sm p-8 mt-6">
@@ -135,8 +177,41 @@ function PlanCard({ dict, onUpgrade }: { dict: Dict; onUpgrade: () => void }) {
       )}
 
       {isPro && (
-        <div className="inline-flex items-center gap-2 rounded-full bg-green-500/10 border border-green-500/20 px-4 py-2 text-sm font-semibold text-green-600 dark:text-green-400">
-          <Check className="w-4 h-4" /> {dict.planProDesc}
+        <div className="space-y-4">
+          <div className="inline-flex items-center gap-2 rounded-full bg-green-500/10 border border-green-500/20 px-4 py-2 text-sm font-semibold text-green-600 dark:text-green-400">
+            <Check className="w-4 h-4" /> {ct.active}
+          </div>
+
+          {!cancelOpen ? (
+            <button
+              onClick={() => setCancelOpen(true)}
+              className="block text-[13px] font-semibold text-zinc-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+            >
+              {ct.cancel}
+            </button>
+          ) : (
+            <div className="rounded-2xl border border-red-500/30 bg-red-500/5 p-4 max-w-sm">
+              <p className="text-sm font-bold text-zinc-900 dark:text-white mb-1">{ct.title}</p>
+              <p className="text-[13px] text-zinc-500 dark:text-zinc-400 leading-relaxed mb-3">{ct.body}</p>
+              {cancelError && <p className="text-[13px] text-red-500 mb-2">{cancelError}</p>}
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCancel}
+                  disabled={cancelBusy}
+                  className="px-4 py-2 rounded-full bg-red-500 text-white text-[13px] font-bold hover:bg-red-600 transition-colors disabled:opacity-60"
+                >
+                  {cancelBusy ? ct.cancelling : ct.yes}
+                </button>
+                <button
+                  onClick={() => setCancelOpen(false)}
+                  disabled={cancelBusy}
+                  className="px-4 py-2 rounded-full border border-zinc-300 dark:border-zinc-700 text-[13px] font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors disabled:opacity-60"
+                >
+                  {ct.no}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -405,7 +480,7 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
               )}
               {active === 'account' && (
                 <AccountSection dict={dict.dashboard.account} user={user} onUpdated={setUser}>
-                  <PlanCard dict={dict} onUpgrade={() => setUpgradeOpen(true)} />
+                  <PlanCard dict={dict} lang={lang} onUpgrade={() => setUpgradeOpen(true)} />
                   <ChangePasswordCard dict={dict} />
                 </AccountSection>
               )}

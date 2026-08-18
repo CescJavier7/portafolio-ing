@@ -286,6 +286,11 @@ export async function sentraGetSubscription(): Promise<{
   return request('/api/v1/billing/subscription', { method: 'GET' }, true);
 }
 
+// Cancela la suscripción (baja a FREE). Solo OWNER/ADMIN. Sin reembolsos.
+export async function sentraCancelSubscription(): Promise<{ status: string; plan: string }> {
+  return request('/api/v1/billing/cancel', { method: 'POST' }, true);
+}
+
 // Devuelve la URL del Checkout hosteado de Lemon Squeezy: el navegador
 // debe navegar a ella (window.location.href), no abrirla con fetch.
 export async function sentraCreateCheckout(): Promise<string> {
