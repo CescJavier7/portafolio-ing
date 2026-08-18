@@ -57,3 +57,7 @@ class ManualConfigOut(BaseModel):
     price_team: str
     contact: str
     methods: list[PayMethodOut]
+    # ¿Está activo el cobro con tarjeta AUTOMÁTICO (PayPhone)? Si es true, el
+    # método 'payphone' se paga con redirección + activación instantánea, no
+    # con comprobante manual.
+    payphone_auto: bool = False

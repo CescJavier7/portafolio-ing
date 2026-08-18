@@ -68,8 +68,15 @@ de seguridad web. Dos apps que se despliegan juntas en un VPS.
   VPS. El QR de De Una es `public/pago-deuna-qr.png` (servido por el frontend).
 - El modal de compra (`UpgradeModal.tsx`) es el ÚNICO camino de upgrade (panel + precios).
   **Nada** debe volver a enrutar a Lemon Squeezy (`sentraCreateCheckout` quedó sin uso).
-- Automatización de cobro real (activación sin aprobar a mano) = pendiente: requiere pasarela
-  con confirmación programática (PayPhone «Botón de Pagos» + Confirm, o PayPal webhook).
+- **PayPhone (cobro con tarjeta AUTOMÁTICO) YA integrado** — Botón de Pago por redirección:
+  `payphone_billing.py` (`/billing/payphone/prepare` + `/confirm`), `payphone_service.py`,
+  página de retorno `app/[lang]/sentinel/pago/confirmar`. Config en `core/config.py`
+  (`PAYPHONE_TOKEN` = SECRETO → `.env` del VPS; `PAYPHONE_STORE_ID` = el "Identificador" de
+  la app; `PAYPHONE_RESPONSE_URL` debe coincidir con la registrada en PayPhone). El `/confirm`
+  NO lleva auth de sesión a propósito (ventana de 5 min de PayPhone; se revierte solo si no se
+  confirma). Activa `org.subscription_status="active_payphone"`. Contrato oficial:
+  docs.payphone.app/boton-de-pago-por-redireccion (Confirm usa `clientTxId`, montos en centavos).
+  ⚠️ Si `PAYPHONE_STORE_ID` (Identificador) diera error en Prepare, probar con el "Id Cliente".
 
 **Convenciones:**
 - i18n: `dictionaries/{es,en}.json`, editar preservando orden (`OrderedDict`,
@@ -92,11 +99,11 @@ servicio que cambió: `portfolio-app` (frontend) y/o `sentra-api` (backend, + mi
 
 ## Pendientes reales (orientados a ingresos, no a features)
 
-1. **Automatizar el cobro** (bloqueador #1): hoy es manual verificado (De Una/QR/transferencia
-   + aprobación del fundador). Para activación instantánea sin aprobar a mano, integrar una
-   pasarela con confirmación programática — en Ecuador la más accesible es **PayPhone**
-   («Botón de Pagos» + endpoint Confirm) o **PayPal** (webhook). Requiere que Kevin abra la
-   cuenta de comercio y pase credenciales. Lemon Squeezy/Kushki DESCARTADOS (rechazaron).
+1. **Cobro automático PayPhone — YA integrado; falta activar:** poner `PAYPHONE_TOKEN` en el
+   `.env` del VPS (cuenta de comercio a nombre de Angela Del Pilar Caiza Caiza, madre de Kevin,
+   con consentimiento) + **prueba real de $10** para verificar el contrato. De Una/QR/
+   transferencia siguen como cobro manual (aprobación del fundador). Lemon Squeezy/Kushki
+   DESCARTADOS (rechazaron la cuenta).
 2. **Google Search Console** (enviar sitemap) — activa el SEO ya hecho.
 3. **Onboarding** pulido + **panel del fundador** (métricas) + **cosecha del motor de
    datos** (benchmarks "compárate con tu sector").

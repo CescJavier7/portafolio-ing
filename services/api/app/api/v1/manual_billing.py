@@ -62,7 +62,18 @@ def _available_methods() -> list[PayMethodOut]:
         )
 
     link = settings.PAY_PAYPHONE_LINK.strip()
-    if link:
+    if settings.payphone_enabled:
+        # Cobro con tarjeta AUTOMÁTICO (Botón de Pago): el modal usa el flujo de
+        # redirección (no pide comprobante). Ver payphone_billing.py.
+        out.append(
+            PayMethodOut(
+                key="payphone",
+                label="Tarjeta (PayPhone)",
+                instructions="Paga con tarjeta de crédito o débito. Tu plan Pro se activa al instante.",
+            )
+        )
+    elif link:
+        # Fallback: solo hay un link de pago manual (sin activación automática).
         out.append(
             PayMethodOut(
                 key="payphone",
@@ -121,6 +132,7 @@ async def manual_config(current_user: User = Depends(get_current_user)):
         price_team=settings.PRICE_TEAM,
         contact=settings.PAY_CONTACT,
         methods=_available_methods(),
+        payphone_auto=settings.payphone_enabled,
     )
 
 

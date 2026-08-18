@@ -59,9 +59,26 @@ class Settings(BaseSettings):
     PRICE_PRO: str = "USD 10 / mes"
     PRICE_TEAM: str = "USD 29 / mes"
 
+    # ── PayPhone (Botón de Pago por redirección) — cobro con tarjeta AUTOMÁTICO ──
+    # PayPhone hostea el formulario de tarjeta (fuera del alcance de PCI) y, tras
+    # el pago, redirige a PAYPHONE_RESPONSE_URL con (id, clientTransactionId) para
+    # que confirmemos y activemos el plan al instante.
+    #  · TOKEN  = SECRETO (pestaña Credenciales de la app) → poner en el .env del VPS.
+    #  · STORE_ID = el "Identificador" de la app (no es secreto; viaja client-side).
+    PAYPHONE_TOKEN: str = ""
+    PAYPHONE_STORE_ID: str = "s7pdsplKzECtt08aFQ7Ng"
+    PAYPHONE_API_BASE: str = "https://pay.payphonetodoesposible.com/api/button"
+    # DEBE coincidir con la "Url de respuesta" registrada en la app de PayPhone.
+    PAYPHONE_RESPONSE_URL: str = "https://cescjavier.dev/es/sentinel/pago/confirmar"
+
     @property
     def founder_email_set(self) -> set[str]:
         return {e.strip().lower() for e in self.FOUNDER_EMAILS.split(",") if e.strip()}
+
+    @property
+    def payphone_enabled(self) -> bool:
+        """El cobro automático con tarjeta requiere token (secreto) + store id."""
+        return bool(self.PAYPHONE_TOKEN.strip() and self.PAYPHONE_STORE_ID.strip())
 
     # ── Email (Resend — mismo dominio/key que usa el portafolio) ──
     RESEND_API_KEY: str

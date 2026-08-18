@@ -316,6 +316,7 @@ export interface SentraManualConfig {
   price_team: string;
   contact: string;
   methods: SentraPayMethod[];
+  payphone_auto?: boolean; // cobro con tarjeta automático (PayPhone) activo
 }
 export interface SentraPaymentRequest {
   id: string;
@@ -347,6 +348,22 @@ export async function sentraSubmitPayment(data: {
 }
 export async function sentraMyPayments(): Promise<SentraPaymentRequest[]> {
   return request('/api/v1/billing/manual/mine', { method: 'GET' }, true);
+}
+
+// ── PayPhone (cobro con tarjeta automático) ──────────────────────────
+export async function sentraPayphonePrepare(): Promise<{ pay_url: string; client_transaction_id: string }> {
+  return request('/api/v1/billing/payphone/prepare', { method: 'POST' }, true);
+}
+// Confirmación tras la redirección de PayPhone. SIN auth: la identidad la da
+// el par (id, clientTransactionId) verificado contra PayPhone (ver backend).
+export async function sentraPayphoneConfirm(
+  id: number,
+  clientTransactionId: string
+): Promise<{ status: string; plan?: string }> {
+  return request('/api/v1/billing/payphone/confirm', {
+    method: 'POST',
+    body: JSON.stringify({ id, clientTransactionId }),
+  });
 }
 export async function sentraPendingPayments(): Promise<SentraPendingPayment[]> {
   return request('/api/v1/billing/manual/pending', { method: 'GET' }, true);

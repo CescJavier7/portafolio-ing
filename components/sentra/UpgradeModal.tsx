@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gem, Check, X, ArrowLeft, Loader2, Copy, Clock, ExternalLink } from 'lucide-react';
+import { Gem, Check, X, ArrowLeft, Loader2, Copy, Clock, ExternalLink, CreditCard } from 'lucide-react';
 import {
   sentraManualConfig,
   sentraSubmitPayment,
+  sentraPayphonePrepare,
   SentraApiError,
   type SentraManualConfig,
 } from '@/lib/sentra/api';
@@ -47,6 +48,9 @@ const T = {
     copied: 'Copiado',
     scanQr: 'Escanea el QR con tu app bancaria y paga',
     payNow: 'Pagar con tarjeta',
+    payCardNow: 'Pagar con tarjeta',
+    payCardNote: 'Te llevamos al pago seguro de PayPhone. Al volver, tu plan Pro se activa solo.',
+    redirecting: 'Abriendo pago seguro…',
   },
   en: {
     payTitle: 'Complete your payment',
@@ -70,6 +74,9 @@ const T = {
     copied: 'Copied',
     scanQr: 'Scan the QR with your banking app and pay',
     payNow: 'Pay by card',
+    payCardNow: 'Pay by card',
+    payCardNote: "We'll take you to PayPhone's secure checkout. When you return, your Pro plan activates automatically.",
+    redirecting: 'Opening secure checkout…',
   },
 };
 
@@ -97,8 +104,23 @@ export default function UpgradeModal({
   const [reference, setReference] = useState('');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
+  const [ppBusy, setPpBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Cobro con tarjeta AUTOMÁTICO (PayPhone): preparamos el pago y redirigimos
+  // al checkout hosteado. Al volver, /pago/confirmar activa el plan solo.
+  async function startPayphone() {
+    setPpBusy(true);
+    setError(null);
+    try {
+      const { pay_url } = await sentraPayphonePrepare();
+      window.location.href = pay_url; // navegamos (no popup: los bloqueadores matan la venta)
+    } catch (err) {
+      setError(err instanceof SentraApiError ? err.detail : t.genericErr);
+      setPpBusy(false);
+    }
+  }
 
   async function goPay() {
     setStep('pay');
@@ -132,6 +154,7 @@ export default function UpgradeModal({
   }
 
   const activeMethod = config?.methods.find((m) => m.key === method) ?? null;
+  const isPayphoneAuto = activeMethod?.key === 'payphone' && !!config?.payphone_auto;
   const price = config?.price_pro ?? dict.price;
 
   return (
@@ -229,6 +252,23 @@ export default function UpgradeModal({
                         </div>
                       </div>
 
+                      {isPayphoneAuto ? (
+                        <>
+                          <button
+                            onClick={startPayphone}
+                            disabled={ppBusy}
+                            className="w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-full bg-green-500 text-black text-sm font-bold hover:brightness-105 active:scale-[0.98] transition-all disabled:opacity-60"
+                          >
+                            {ppBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+                            {ppBusy ? t.redirecting : t.payCardNow}
+                          </button>
+                          <p className="text-[12px] text-zinc-400 dark:text-zinc-500 text-center">{t.payCardNote}</p>
+                          {error && (
+                            <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5">{error}</p>
+                          )}
+                        </>
+                      ) : (
+                        <>
                       {activeMethod?.image && (
                         <div className="flex flex-col items-center gap-2 rounded-xl bg-white border border-zinc-200 dark:border-zinc-700 p-4">
                           {/* QR de De Una: escanear y pagar sin copiar nada */}
@@ -302,6 +342,8 @@ export default function UpgradeModal({
                         {busy && <Loader2 className="w-4 h-4 animate-spin" />}
                         {busy ? t.submitting : t.submit}
                       </button>
+                        </>
+                      )}
                     </>
                   )}
                   <button onClick={() => setStep('sell')} className="w-full inline-flex items-center justify-center gap-1.5 py-2 text-sm font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
