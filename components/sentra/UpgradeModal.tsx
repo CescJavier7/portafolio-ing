@@ -186,14 +186,14 @@ export default function UpgradeModal({
             exit={{ opacity: 0, scale: 0.95, y: 16 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-md rounded-3xl p-px bg-gradient-to-br from-cyan-500/60 via-fuchsia-500/40 to-cyan-500/5 shadow-[0_0_70px_-15px_rgba(217,70,239,0.55)]"
+            className="relative w-full max-w-md sm:max-w-lg md:max-w-2xl rounded-3xl p-px bg-gradient-to-br from-cyan-500/60 via-fuchsia-500/40 to-cyan-500/5 shadow-[0_0_70px_-15px_rgba(217,70,239,0.55)]"
           >
             <div className="relative rounded-[23px] bg-[#0a0a12] overflow-hidden max-h-[92vh] flex flex-col">
               {/* Cuadrícula neón de fondo */}
               <div aria-hidden className="pointer-events-none absolute inset-0" style={gridBg} />
 
               {/* ── Cabecera ── */}
-              <div className="relative px-7 pt-7 pb-6 bg-gradient-to-br from-cyan-500/12 via-fuchsia-500/8 to-transparent shrink-0 border-b border-white/5">
+              <div className="relative px-7 md:px-9 pt-7 md:pt-8 pb-6 bg-gradient-to-br from-cyan-500/12 via-fuchsia-500/8 to-transparent shrink-0 border-b border-white/5">
                 <button onClick={onClose} className="absolute top-4 right-4 p-1 text-zinc-500 hover:text-cyan-300 transition-colors">
                   <X className="w-5 h-5" />
                 </button>
@@ -209,7 +209,7 @@ export default function UpgradeModal({
                 </p>
               </div>
 
-              <div className="relative px-7 pb-7 pt-6 overflow-y-auto">
+              <div className="relative px-7 md:px-9 pb-7 md:pb-8 pt-6 overflow-y-auto">
                 {/* ── Paso 1: venta ── */}
                 {step === 'sell' && (
                   <>
@@ -218,7 +218,7 @@ export default function UpgradeModal({
                         {reason}
                       </p>
                     )}
-                    <ul className="space-y-2.5 mb-6">
+                    <ul className="grid sm:grid-cols-2 gap-x-5 gap-y-2.5 mb-6">
                       {dict.benefits.map((b, i) => (
                         <li key={i} className="flex items-start gap-2.5 text-sm text-zinc-300">
                           <span className="shrink-0 w-5 h-5 mt-0.5 rounded-md bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center">
@@ -228,12 +228,14 @@ export default function UpgradeModal({
                         </li>
                       ))}
                     </ul>
-                    <button onClick={goPay} className={neonBtn}>
-                      {dict.cta} — {dict.price}
-                    </button>
-                    <button onClick={onClose} className="w-full mt-2 py-2.5 text-sm font-semibold text-zinc-500 hover:text-zinc-300 transition-colors">
-                      {dict.later}
-                    </button>
+                    <div className="md:max-w-md md:mx-auto">
+                      <button onClick={goPay} className={neonBtn}>
+                        {dict.cta} — {dict.price}
+                      </button>
+                      <button onClick={onClose} className="w-full mt-2 py-2.5 text-sm font-semibold text-zinc-500 hover:text-zinc-300 transition-colors">
+                        {dict.later}
+                      </button>
+                    </div>
                   </>
                 )}
 
@@ -269,7 +271,7 @@ export default function UpgradeModal({
                         </div>
 
                         {isPayphoneAuto ? (
-                          <>
+                          <div className="space-y-4 md:max-w-sm md:mx-auto">
                             <button onClick={startPayphone} disabled={ppBusy} className={neonBtn}>
                               {ppBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
                               {ppBusy ? t.redirecting : t.payCardNow}
@@ -278,79 +280,89 @@ export default function UpgradeModal({
                             {error && (
                               <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/25 rounded-xl px-4 py-2.5">{error}</p>
                             )}
-                          </>
+                          </div>
                         ) : (
-                          <>
-                            {activeMethod?.image && (
-                              <div className="flex flex-col items-center gap-2 rounded-2xl bg-white border border-cyan-400/40 p-4 shadow-[0_0_25px_-8px_rgba(34,211,238,0.6)]">
-                                {/* QR de De Una: escanear y pagar sin copiar nada */}
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src={activeMethod.image}
-                                  alt="QR De Una — Banco Pichincha"
-                                  className="w-44 h-44 object-contain"
-                                  loading="lazy"
-                                />
-                                <p className="text-[11px] font-semibold text-zinc-500 text-center">{t.scanQr}</p>
-                              </div>
-                            )}
+                          // Desktop: 2 columnas (izq. cómo pagar · der. comprobante).
+                          // Móvil: se apilan. Da aire al modal en pantallas grandes.
+                          <div className="md:grid md:grid-cols-2 md:gap-6 md:items-start">
+                            {/* Columna izquierda: cómo pagar */}
+                            <div className="space-y-4">
+                              {activeMethod?.image && (
+                                <div className="flex flex-col items-center gap-2 rounded-2xl bg-white border border-cyan-400/40 p-4 shadow-[0_0_25px_-8px_rgba(34,211,238,0.6)]">
+                                  {/* QR de De Una: escanear y pagar sin copiar nada */}
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={activeMethod.image}
+                                    alt="QR De Una — Banco Pichincha"
+                                    className="w-44 h-44 object-contain"
+                                    loading="lazy"
+                                  />
+                                  <p className="text-[11px] font-semibold text-zinc-500 text-center">{t.scanQr}</p>
+                                </div>
+                              )}
 
-                            {activeMethod && (
-                              <div className="relative rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-[13px] text-zinc-200 whitespace-pre-wrap break-words">
-                                {activeMethod.instructions}
-                                <button
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(activeMethod.instructions);
-                                    setCopied(true);
-                                    setTimeout(() => setCopied(false), 1500);
-                                  }}
-                                  className="absolute top-2 right-2 inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-500 hover:text-cyan-300"
+                              {activeMethod && (
+                                <div className="relative rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-[13px] text-zinc-200 whitespace-pre-wrap break-words">
+                                  {activeMethod.instructions}
+                                  <button
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(activeMethod.instructions);
+                                      setCopied(true);
+                                      setTimeout(() => setCopied(false), 1500);
+                                    }}
+                                    className="absolute top-2 right-2 inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-500 hover:text-cyan-300"
+                                  >
+                                    {copied ? <Check className="w-3.5 h-3.5 text-cyan-300" /> : <Copy className="w-3.5 h-3.5" />}
+                                    {copied ? t.copied : t.copy}
+                                  </button>
+                                </div>
+                              )}
+
+                              {activeMethod?.url && (
+                                <a
+                                  href={activeMethod.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl border border-cyan-400/40 text-cyan-200 text-sm font-bold hover:bg-cyan-400/10 active:scale-[0.98] transition"
                                 >
-                                  {copied ? <Check className="w-3.5 h-3.5 text-cyan-300" /> : <Copy className="w-3.5 h-3.5" />}
-                                  {copied ? t.copied : t.copy}
-                                </button>
+                                  <ExternalLink className="w-4 h-4" /> {t.payNow}
+                                </a>
+                              )}
+                            </div>
+
+                            {/* Columna derecha: comprobante */}
+                            <div className="space-y-4 mt-4 md:mt-0">
+                              <div>
+                                <label className={labelCls}>{t.ref}</label>
+                                <input
+                                  value={reference}
+                                  onChange={(e) => setReference(e.target.value.replace(/\D/g, ''))}
+                                  placeholder={t.refPh}
+                                  inputMode="numeric"
+                                  pattern="[0-9]*"
+                                  className={`${inputCls} font-mono`}
+                                />
                               </div>
-                            )}
+                              <div>
+                                <label className={labelCls}>{t.note}</label>
+                                <input
+                                  value={note}
+                                  onChange={(e) => setNote(e.target.value)}
+                                  placeholder={t.notePh}
+                                  className={inputCls}
+                                />
+                              </div>
 
-                            {activeMethod?.url && (
-                              <a
-                                href={activeMethod.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl border border-cyan-400/40 text-cyan-200 text-sm font-bold hover:bg-cyan-400/10 active:scale-[0.98] transition"
-                              >
-                                <ExternalLink className="w-4 h-4" /> {t.payNow}
-                              </a>
-                            )}
+                              {error && (
+                                <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/25 rounded-xl px-4 py-2.5">{error}</p>
+                              )}
 
-                            <div>
-                              <label className={labelCls}>{t.ref}</label>
-                              <input
-                                value={reference}
-                                onChange={(e) => setReference(e.target.value)}
-                                placeholder={t.refPh}
-                                className={`${inputCls} font-mono`}
-                              />
+                              <button onClick={submit} disabled={busy} className={neonBtn}>
+                                {busy && <Loader2 className="w-4 h-4 animate-spin" />}
+                                {busy ? t.submitting : t.submit}
+                              </button>
                             </div>
-                            <div>
-                              <label className={labelCls}>{t.note}</label>
-                              <input
-                                value={note}
-                                onChange={(e) => setNote(e.target.value)}
-                                placeholder={t.notePh}
-                                className={inputCls}
-                              />
-                            </div>
-
-                            {error && (
-                              <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/25 rounded-xl px-4 py-2.5">{error}</p>
-                            )}
-
-                            <button onClick={submit} disabled={busy} className={neonBtn}>
-                              {busy && <Loader2 className="w-4 h-4 animate-spin" />}
-                              {busy ? t.submitting : t.submit}
-                            </button>
-                          </>
+                          </div>
                         )}
                       </>
                     )}
@@ -362,7 +374,7 @@ export default function UpgradeModal({
 
                 {/* ── Paso 3: recibido ── */}
                 {step === 'done' && (
-                  <div className="text-center py-2">
+                  <div className="text-center py-2 max-w-sm mx-auto">
                     <div className="w-14 h-14 mx-auto rounded-2xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center mb-4 shadow-[0_0_25px_-6px_rgba(34,211,238,0.7)]">
                       <Clock className="w-7 h-7 text-cyan-300" />
                     </div>
