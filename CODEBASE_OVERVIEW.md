@@ -20,9 +20,14 @@ ciberseguridad. Contiene **dos aplicaciones** que se despliegan juntas en un VPS
 2. **API de Sentra (backend)** — FastAPI independiente en `api.cescjavier.dev`,
    bajo `services/api/`. Es el cerebro del SaaS de seguridad. Contenedor: `sentra-api`.
 
-**Sentra** es un SaaS de auditoría y monitoreo continuo de seguridad web (escaneo
-pasivo → Security Score → informes → alertas). Ver `SENTRA_CONTEXT.md` para el detalle
-de producto.
+El SaaS se vende como una **suite todo-en-uno a USD 10/mes** (plan Pro único):
+- **Sentra** — auditoría y monitoreo continuo de seguridad web (escaneo pasivo → Security
+  Score → informes IA → alertas).
+- **Sentra CV AI** — generador/adaptador de CV con IA (ATS) + automatización por API (n8n).
+- **Academia** — cursos de ingeniería de software y ciberseguridad (en desarrollo).
+
+Cobro: **tarjeta automático (PayPhone)** + manual verificado (De Una/QR/transferencia).
+Suscripción mensual; cancelar mantiene acceso hasta fin de período. Ver `SENTRA_CONTEXT.md`.
 
 ---
 
@@ -66,14 +71,15 @@ Red interna (internal-net, NO expuesta a internet):
 │   │   ├── legal/
 │   │   │   ├── terminos/page.tsx     # Términos (componente LegalPage)
 │   │   │   └── privacidad/page.tsx   # Privacidad (componente LegalPage)
+│   │   ├── herramientas/cv/page.tsx  # Sentra CV AI (generador de CV con IA) — gancho SEO
+│   │   ├── academia/page.tsx         # Academia (rediseño blueprint, consciente de sesión)
 │   │   └── sentinel/             # SENTRA (producto)
 │   │       ├── page.tsx          # Landing de Sentra + SEO + JSON-LD WebApplication
 │   │       ├── scan/page.tsx     # Escáner PÚBLICO gratis (sin login) — gancho SEO
-│   │       ├── precios/page.tsx  # Precios públicos
+│   │       ├── precios/page.tsx  # Precios públicos (suite $10/mes)
 │   │       ├── seguridad/page.tsx    # Postura de seguridad del propio Sentra
-│   │       ├── register/page.tsx     # Registro (noindex)
-│   │       ├── login/page.tsx        # Login (noindex)
-│   │       ├── accept-invite/page.tsx # Aceptar invitación de equipo (noindex)
+│   │       ├── register, login, accept-invite   # (noindex)
+│   │       ├── pago/confirmar/page.tsx # Retorno de PayPhone → confirma y activa (noindex)
 │   │       └── panel/page.tsx        # Panel privado (dashboard) (noindex)
 │   ├── api/                      # Route Handlers (backend del propio Next.js)
 │   │   ├── auth/[...nextauth]/route.ts  # NextAuth (login del panel admin del portafolio)
@@ -90,12 +96,20 @@ Red interna (internal-net, NO expuesta a internet):
 │   ├── NavBar, Footer, ThemeProvider, SmoothScroll (Lenis), MekaSenkuChat, ...
 │   ├── AboutAppleScroll, SkillsApple, ProjectApple, CertificationsApple,
 │   │   WorkExperienceApple, ContactApple, AcademicBento  # secciones del home
-│   ├── ServicesApple, SentinelLanding                    # servicios + landing Sentra
+│   ├── ServicesApple, SentinelLanding, AcademyPage       # servicios + landing + Academia
 │   ├── legal/LegalPage.tsx                               # plantilla términos/privacidad
+│   ├── tools/                    # Sentra CV AI
+│   │   ├── CVGenerator.tsx       # Herramienta principal (form + historial + carpetas)
+│   │   ├── CVWizard.tsx          # Editor split-screen del CV generado (+ PDF ATS)
+│   │   ├── CVAutomationPanel.tsx # API + blueprint n8n → Notion (automatización)
+│   │   └── CVTour.tsx            # Tutorial interactivo
 │   └── sentra/                   # UI de Sentra
-│       ├── SentraLogin, SentraRegister, AcceptInvite, PublicScan
-│       ├── SentraPanel.tsx       # Shell del dashboard (sidebar + secciones)
-│       ├── PricingPage, SecurityPage, UpgradeModal, ProAvatar, PanelCharts, ScoreTrend
+│       ├── SentraLogin, SentraRegister, AcceptInvite, PublicScan, NavSession
+│       ├── SentraPanel.tsx       # Shell del dashboard (sidebar + secciones + PlanCard suscripción)
+│       ├── PricingPage, SecurityPage, ProAvatar, PanelCharts, ScoreTrend
+│       ├── UpgradeModal.tsx      # Checkout (tema CyberPunk): PayPhone/De Una/QR/transferencia
+│       ├── PayphoneConfirm.tsx   # Página de retorno de PayPhone (confirma y activa)
+│       ├── FounderPayments.tsx   # Panel del fundador: aprobar/rechazar pagos manuales
 │       └── panel/                # Secciones del dashboard
 │           ├── OverviewSection, TargetsCard→(via panel), ReportsSection, AccountSection,
 │           ├── MonitorSection, SurfaceSection (+SurfaceGraph), ExposureSection,
@@ -138,28 +152,26 @@ services/api/
 │   │   ├── base.py, session.py   # Base declarativa + get_db (async session)
 │   ├── models/                   # SQLAlchemy (async) — ver §5
 │   │   ├── organization, user, refresh_token, target, scan, api_key, webhook,
-│   │   ├── audit_log, surface_snapshot, exposure_snapshot,
-│   │   ├── scan_observation      # motor de datos (append-only, agregado)
-│   │   └── processed_webhook_event  # idempotencia persistente del webhook
-│   ├── schemas/                  # Pydantic (request/response) — 1 por dominio
+│   │   ├── audit_log, surface_snapshot, exposure_snapshot, scan_observation,
+│   │   ├── processed_webhook_event, payment_request, cv_document, cv_folder
+│   ├── schemas/                  # Pydantic (request/response) — 1 por dominio (incl. billing, cv, public)
 │   ├── api/v1/                   # Routers (endpoints) — ver §6
-│   │   ├── auth, billing, targets, team, webhooks, audit,
-│   │   ├── api_keys, public (API con key), public_free (escáner gratis), internal (cron)
+│   │   ├── auth, billing (+ cancel/reactivate), manual_billing, payphone_billing (/billing/card),
+│   │   ├── cv (Sentra CV AI), targets, team, webhooks, audit,
+│   │   ├── api_keys, public (API con key, incl. /cv/generate), public_free (escáner gratis), internal (cron)
 │   └── services/                 # Lógica de negocio
 │       ├── scanner.py            # Scanner pasivo (headers/TLS/DNS/SPF/DMARC) → score
-│       ├── surface.py            # Descubrimiento de superficie (crt.sh, puertos, tech)
-│       ├── exposure.py           # Motor determinista de rutas de exposición
-│       ├── dns_verification.py   # Verificación de propiedad por DNS TXT
-│       ├── lemonsqueezy_service.py  # Checkout + portal + verificación firma webhook
-│       ├── email_service.py      # Resend (verificación, alertas, invitaciones)
-│       ├── webhook_service.py    # Firma HMAC + entrega de webhooks salientes
-│       ├── audit_service.py      # record_audit (rastro inmutable)
-│       ├── observation_service.py   # record_observation (motor de datos)
-│       └── net_guard.py          # Anti-SSRF (rechaza dominios que resuelven a IP interna)
+│       ├── surface.py, exposure.py, dns_verification.py, net_guard.py (anti-SSRF)
+│       ├── payphone_service.py   # PayPhone Prepare/Confirm (UA de navegador, sin storeId)
+│       ├── subscription.py       # Ciclo de suscripción (next_period_end, is_expired)
+│       ├── cv_service.py, cv_prompts.py  # Pipeline CV anclado por ids (anti-invención)
+│       ├── ocr_service.py, pdf_service.py, file_guard.py, text_guard.py  # ingesta CV
+│       ├── lemonsqueezy_service.py  # (sin uso — descartado)
+│       ├── email_service.py, webhook_service.py, audit_service.py, observation_service.py
 ├── alembic/                      # Migraciones (env.py async custom) + versions/*.py
-├── alembic.ini
-├── requirements.txt
-└── Dockerfile                    # python:3.12-slim, usuario no-root, uvicorn --proxy-headers
+├── entrypoint.sh                 # Corre `alembic upgrade head` (con reintentos) y arranca uvicorn
+├── alembic.ini, requirements.txt
+└── Dockerfile                    # python:3.12-slim + tesseract-ocr (OCR del CV), no-root, uvicorn
 ```
 
 ---
@@ -182,19 +194,31 @@ services/api/
 - Uvicorn (`--proxy-headers --forwarded-allow-ips=*`).
 
 **Servicios externos**
-- **Cobro manual verificado** (De Una/QR Banco Pichincha, transferencia) — el fundador
-  aprueba en el panel (`manual_billing.py`). Lemon Squeezy/Kushki rechazaron la cuenta;
-  el código de Lemon Squeezy (`billing.py`) sigue en el repo pero SIN uso.
+- **PayPhone** (Ecuador) — **cobro con tarjeta AUTOMÁTICO** (Botón de Pago por redirección).
+  `payphone_service.py` + `payphone_billing.py`. La ruta pública es NEUTRA (`/billing/card`,
+  no `/payphone`) para que los adblockers no la bloqueen. Aprende: su API (IIS/.NET) exige
+  **User-Agent de navegador** o da 403 HTML (WAF); los errores del backend deben ser 4xx
+  (no 5xx) o Cloudflare les quita el CORS; el `storeId` se **omite** con una sola tienda.
+  Cuenta de comercio a nombre de **Angela Del Pilar Caiza Caiza** (RUC de la madre de Kevin;
+  tienda "Sentrapro"). Auto-cobro recurrente = pendiente (tokenización de PayPhone, requiere
+  su autorización).
+- **Cobro manual verificado** (De Una/QR Banco Pichincha, transferencia) — el fundador aprueba
+  en el panel (`manual_billing.py`). Sin comisión (PayPhone cobra ~5.8%).
+- **Lemon Squeezy / Kushki** — DESCARTADOS (rechazaron la cuenta). El código de Lemon Squeezy
+  (`billing.py`, `lemonsqueezy_service.py`) sigue en el repo pero SIN uso.
 - **Resend** — correos (`admin@cescjavier.dev`).
-- **Groq** — LLM. Chatbot MekaSenku y reportes de Sentra usan `llama-3.3-70b-versatile`.
+- **Groq** — LLM. Chatbot MekaSenku, reportes de Sentra y **Sentra CV AI** usan
+  `llama-3.3-70b-versatile` (`response_format=json_object`).
 
 ---
 
 ## 5. Modelo de datos
 
 ### Base `sentra` (PostgreSQL, backend FastAPI — UUID como PK en todo)
-- **organizations** — tenant. `plan` (FREE/PRO/TEAM/ENTERPRISE), ids Lemon Squeezy,
-  subscription_status, contador anti-abuso FREE (free_scan_count + ventana 24h).
+- **organizations** — tenant. `plan` (FREE/PRO/TEAM/ENTERPRISE), `subscription_status`
+  (active_*/cancelled/expired), **`plan_expires_at`** (fin del período; cancelar mantiene
+  acceso hasta ahí — ver `services/subscription.py`), ids Lemon Squeezy (sin uso), contador
+  anti-abuso FREE (free_scan_count + ventana 24h).
 - **users** — pertenece a org. `role` (OWNER/ADMIN/ANALYST/MEMBER), `email_verified`,
   tokens hasheados (verificación email + invite), bloqueo por intentos, marketing_consent.
 - **refresh_tokens** — opacos, hasheados (Argon2), `family_id` (rotación + detección de reuso).
@@ -207,29 +231,44 @@ services/api/
 - **scan_observations** — MOTOR DE DATOS: append-only, dominio **hasheado**, score,
   controles fallidos, source (panel/monitor/free). Anónimo, para inteligencia agregada.
 - **processed_webhook_events** — idempotencia persistente del webhook (event_key único).
+- **payment_requests** — cobros manuales Y PayPhone: plan, method, reference (en PayPhone
+  guarda el `clientTransactionId`), status (pending/approved/rejected/expired), reviewer_email
+  (`payphone-auto` cuando lo aprueba la confirmación automática).
+- **cv_documents** — CVs generados por Sentra CV AI: content(JSON), profile(JSON, perfil
+  normalizado con ids), match_score, job_posting, folder_id, user_id.
+- **cv_folders** — carpetas para organizar los CVs del usuario.
+- **job_applications** — tracker de postulaciones (Sentra CV AI): company, role, job_url,
+  status (saved/applied/interview/offer/rejected), cv_document_id (opt, SET NULL), user_id.
 
 ### Base del portafolio (Prisma)
 - **ChatSession**, **Message** (enum Role, SessionStatus) — chatbot MekaSenku.
 - **AdminUser** — login del panel `/meka-admin` (NextAuth). Sin roles todavía.
 
-### Migraciones (Alembic, orden cronológico; head actual = `d1a5c8b34e07`)
+### Migraciones (Alembic, en orden de la cadena `down_revision`; head = `f1a2b3c4d5e6`)
 ```
 75b465a78464 init (organizations, users, refresh_tokens)
+57d92ffe4b8e stripe → lemonsqueezy (rename columnas)
 3e9a1c5b7d24 email verification token
 7c4d2f8a1b56 marketing_consent
-b3d9f1a4c208 user name
-57d92ffe4b8e stripe → lemonsqueezy (rename columnas)
 9f1b3c7e2a80 targets
-c4e0a2b7d319 target monitoring
 a1c8e5d3f207 scans + scan limits
+b3d9f1a4c208 user name
+c4e0a2b7d319 target monitoring
 d5f1a3c8e420 scan ai_report
 e7a2c9f01b56 surface + exposure snapshots
 f3b8d5e2a917 api keys
 a8c1f4e9b203 invites + webhooks
 b4d7e2f9c118 audit logs
 c9e3a1f60d42 scan observations
-d1a5c8b34e07 processed webhook events   ← HEAD
+d1a5c8b34e07 processed webhook events
+e2f4b8a1c930 cv_documents
+f8b2d4a6c159 cv_folders
+a7c3e9f21b84 cv_profile (columna en cv_documents)
+b9e4d1f7a802 payment_requests (billing manual/PayPhone)
+f1a2b3c4d5e6 plan_expires_at (ciclo de suscripción)
+a2b3c4d5e6f7 job_applications (tracker de postulaciones)   ← HEAD
 ```
+Las migraciones **se aplican solas al arrancar** `sentra-api` (ver `entrypoint.sh`).
 
 ---
 
@@ -237,10 +276,18 @@ d1a5c8b34e07 processed webhook events   ← HEAD
 
 - **auth** — register, verify-email, resend-verification, login, refresh, logout, me,
   profile (PATCH), change-password.
-- **billing** — subscription (GET). checkout-session/portal/webhook de Lemon Squeezy
-  siguen definidos pero SIN uso (descartado).
-- **billing/manual** — config (GET), request (POST), mine (GET); pending/approve/reject
-  (fundador). Flujo de cobro VIVO. Métodos y QR salen de `core/config.py` (PAY_*).
+- **billing** — subscription (GET, con downgrade perezoso al vencer), **cancel** (mantiene
+  Pro hasta `plan_expires_at`), **reactivate** (deshace cancelación). checkout/portal/webhook
+  de Lemon Squeezy siguen definidos pero SIN uso.
+- **billing/manual** — config (GET, métodos + QR desde `core/config.py` PAY_*), request (POST),
+  mine (GET); pending/approve/reject (fundador). Cobro manual VIVO.
+- **billing/card** — **PayPhone (tarjeta automático)**: prepare (POST, crea la intención y
+  devuelve la URL de checkout), confirm (POST, verifica contra PayPhone y activa el plan).
+  Ruta neutra a propósito (adblockers). Ver `payphone_billing.py`.
+- **cv** — Sentra CV AI: generate (POST), improve, ocr, extract-pdf, apply-email, quota,
+  folders CRUD, CVs CRUD. Pipeline anclado por ids (`cv_service` + `cv_prompts`) anti-invención.
+- **applications** — tracker de postulaciones (user-scoped): list/create/patch/delete. Enlaza
+  opcionalmente un CV. Ver `applications.py`.
 - **public/cv/generate** (POST) — genera/adapta un CV por **API key** (Pro+), stateless;
   motor de la automatización con n8n → Notion. Ver `public.py`.
 - **targets** — CRUD dominios, instructions, verify (DNS TXT), scan, scans (historial),
@@ -298,20 +345,23 @@ docker image prune -f
 Filosofía: `up --build --force-recreate` (NO `down`) → si el build falla, el
 contenedor viejo sigue sirviendo tráfico. Secrets de Actions: `SSH_HOST`, `SSH_USER`, `SSH_KEY`.
 
-**⚠️ Dos cosas que el workflow NO hace:**
-1. **NO corre migraciones de Alembic.** Tras un deploy con cambios de modelo hay que
-   ejecutar a mano: `docker compose exec sentra-api alembic upgrade head`.
-2. Si GitHub Actions se queda **sin minutos**, el workflow no corre y el deploy se
-   hace manual (mismos comandos, por SSH).
+**Migraciones:** el `entrypoint.sh` de `sentra-api` **corre `alembic upgrade head` solo**
+al arrancar (con reintentos) — ya NO hay que ejecutarlas a mano tras un cambio de modelo.
+
+**⚠️ Notas del deploy:**
+1. Si GitHub Actions se queda **sin minutos**, el deploy se hace manual (mismos comandos, por SSH).
+2. **Conflicto de nombres de contenedor** (`Conflict. The container name "/sentra-redis"…`):
+   pasa si un `up` se interrumpe (los contenedores tienen `container_name` fijo). Se limpia con
+   `docker compose down --remove-orphans && docker compose up -d --build`, o `docker rm -f <nombre>`.
+   NO usar `--force-recreate` (es lo que deja los huérfanos).
 
 ### Manual (equivalente, cuando Actions no corre)
 ```bash
 ssh <user>@<vps>
 cd /opt/apps/portafolio
 git fetch origin && git reset --hard origin/main
-docker compose build sentra-api portfolio-app          # solo los que cambiaron
-docker compose up -d --force-recreate sentra-api portfolio-app
-docker compose exec sentra-api alembic upgrade head    # si hubo migración
+docker compose down --remove-orphans                   # evita conflictos de nombre
+docker compose up -d --build                           # migraciones corren solas (entrypoint)
 docker compose logs -f sentra-api --tail=40
 ```
 - Cambios **solo frontend** → basta `portfolio-app`.
@@ -338,13 +388,15 @@ docker compose logs -f sentra-api --tail=40
 - **`services/api/venv/` commiteado** al repo (miles de archivos) — pendiente limpiar
   (agregar a `.gitignore` + `git rm -r --cached`).
 - **`services/api/get-pip.py`** commiteado (artefacto de instalación) — puede borrarse.
-- **Cobro aún manual** (aprobación del fundador) — falta pasarela con confirmación
-  programática (PayPhone «Botón de Pagos» + Confirm, o PayPal webhook) para automatizarlo.
-- **Deploy no corre migraciones** — riesgo de olvido; candidato a automatizar en el
-  arranque del contenedor (entrypoint `alembic upgrade head`).
+- **Cobro con tarjeta PayPhone: YA automático** (activación instantánea, probado con dinero
+  real). Falta el **auto-cobro recurrente** (tokenización de PayPhone → guardar token + agendar
+  cobros; requiere autorización previa de PayPhone). Hoy la "renovación" es re-pagar.
+- **Downgrade de suscripción es PEREZOSO** (`GET /billing/subscription`), sin cron. Futuro:
+  un barrido programado (o el `internal/run-monitoring`) que baje a FREE lo vencido.
 - **`SENTRA_API_INTERNAL_URL`** valida tokens de Sentra desde el portafolio por red interna.
 - **Un solo VPS / una sola réplica** — sin redundancia; sin monitoreo de errores (Sentry).
-- **`_processed_event_ids` en memoria** — YA resuelto (tabla `processed_webhook_events`).
+- **Migraciones auto-corren** (entrypoint) — OK; pero con ≥1 réplica habría carrera (Alembic
+  no es concurrente-seguro): mover a un job separado si se escala.
 - **Reportes IA vía ruta Next.js** (`app/api/sentra/report`), no desde FastAPI — reusa
   `GROQ_API_KEY` del portafolio; el backend Python no llama al LLM.
 - **DMARC** de `cescjavier.dev` pendiente en Cloudflare (entregabilidad de correo).

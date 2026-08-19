@@ -21,6 +21,7 @@ import { useAutoSave, clearDraft } from '@/lib/sentra/useAutoSave';
 import CVTour, { type CVTourDict } from '@/components/tools/CVTour';
 import CVWizard from '@/components/tools/CVWizard';
 import CVAutomationPanel from '@/components/tools/CVAutomationPanel';
+import ApplicationsTracker from '@/components/tools/ApplicationsTracker';
 
 // Chequeo cliente de "texto legible" (espejo EXACTO del backend text_guard):
 // la señal fuerte es la longitud media de palabra. Un PDF de Canva (glifos sin
@@ -214,6 +215,7 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
   const [moveOpenId, setMoveOpenId] = useState<string | null>(null); // fila con el menú "Mover" abierto
   const [pdfBusy, setPdfBusy] = useState(false);
   const [tourSignal, setTourSignal] = useState(0); // >0 = disparar tutorial a mano
+  const [toolTab, setToolTab] = useState<'generate' | 'applications'>('generate');
   const fileRef = useRef<HTMLInputElement>(null);
   const pdfRef = useRef<HTMLInputElement>(null);
 
@@ -423,6 +425,29 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
           <GateCard lang={lang} dict={dict} />
         ) : (
           <>
+            {/* Pestañas: Generar CV | Postulaciones (tracker de automatización) */}
+            <div className="flex justify-center gap-2 mb-8">
+              {(['generate', 'applications'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setToolTab(tab)}
+                  className={`px-5 py-2 rounded-full text-[13px] font-bold transition-colors ${
+                    toolTab === tab
+                      ? 'bg-green-500 text-black'
+                      : 'border border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:border-green-400'
+                  }`}
+                >
+                  {tab === 'generate'
+                    ? lang === 'en' ? 'Generate CV' : 'Generar CV'
+                    : lang === 'en' ? 'Applications' : 'Postulaciones'}
+                </button>
+              ))}
+            </div>
+
+            {toolTab === 'applications' ? (
+              <ApplicationsTracker lang={lang as 'es' | 'en'} />
+            ) : (
+              <>
             {/* Tour interactivo: automático la 1ª vez + manual desde el botón flotante */}
             <CVTour dict={dict.tour} runSignal={tourSignal} />
 
@@ -731,6 +756,8 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
 
             {/* Automatización: motor por API + blueprint de n8n → Notion */}
             <CVAutomationPanel lang={lang as 'es' | 'en'} plan={user?.plan} />
+              </>
+            )}
           </>
         )}
 

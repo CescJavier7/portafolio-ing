@@ -46,8 +46,9 @@ de seguridad web. Dos apps que se despliegan juntas en un VPS.
   head. `alembic/env.py` es async custom (el default es síncrono, rompe con asyncpg).
 - `DATABASE_URL` de sentra-api vive en `services/api/.env` del VPS con la contraseña
   **URL-encodeada** (`@` → `%40`) — NO se interpola en compose (el `@` crudo rompe asyncpg).
-- **El deploy NO corre migraciones.** Tras cambios de modelo, ejecutar a mano en el VPS:
-  `docker compose exec sentra-api alembic upgrade head`.
+- **Las migraciones corren SOLAS** al arrancar `sentra-api` (`entrypoint.sh` → `alembic
+  upgrade head` con reintentos). Ya no hay que ejecutarlas a mano tras un cambio de modelo.
+  (Head actual: `a2b3c4d5e6f7`, add job_applications.)
 
 **Seguridad (es una herramienta de seguridad — mantener el estándar):**
 - Anti-IDOR: toda query filtra por `organization_id` del token.
@@ -80,15 +81,17 @@ de seguridad web. Dos apps que se despliegan juntas en un VPS.
 - **Auto-cobro recurrente (pendiente)**: PayPhone tiene tokenización para cobrar sin re-pedir
   tarjeta, PERO requiere **autorización previa de PayPhone** + guardar el token + agendar cobros.
   Hoy la "renovación" es re-pagar. Es el siguiente paso para auto-billing real.
-- **PayPhone (cobro con tarjeta AUTOMÁTICO) YA integrado** — Botón de Pago por redirección:
-  `payphone_billing.py` (`/billing/payphone/prepare` + `/confirm`), `payphone_service.py`,
-  página de retorno `app/[lang]/sentinel/pago/confirmar`. Config en `core/config.py`
-  (`PAYPHONE_TOKEN` = SECRETO → `.env` del VPS; `PAYPHONE_STORE_ID` = el "Identificador" de
-  la app; `PAYPHONE_RESPONSE_URL` debe coincidir con la registrada en PayPhone). El `/confirm`
-  NO lleva auth de sesión a propósito (ventana de 5 min de PayPhone; se revierte solo si no se
-  confirma). Activa `org.subscription_status="active_payphone"`. Contrato oficial:
-  docs.payphone.app/boton-de-pago-por-redireccion (Confirm usa `clientTxId`, montos en centavos).
-  ⚠️ Si `PAYPHONE_STORE_ID` (Identificador) diera error en Prepare, probar con el "Id Cliente".
+- **PayPhone (cobro con tarjeta AUTOMÁTICO) — VIVO y probado con dinero real.** Botón de Pago
+  por redirección: `payphone_billing.py` + `payphone_service.py`, retorno en `pago/confirmar`.
+  Gotchas aprendidos (todos ya resueltos en el código, NO revertir):
+  · **Ruta NEUTRA `/billing/card`** (NO `/payphone`): los adblockers bloquean "payphone" en la URL.
+  · **User-Agent de navegador** en `_headers()`: sin él la API (IIS/.NET) da 403 HTML (WAF).
+  · **`storeId` se OMITE** (una sola tienda → PayPhone usa la default; enviarlo inválido = error 100).
+  · Errores del backend en **4xx, no 5xx**: Cloudflare intercepta los 5xx y les quita el CORS.
+  · Solo hace falta `PAYPHONE_TOKEN` en el `.env` del VPS (secreto, ~347 chars). `/confirm` sin
+  auth de sesión a propósito (ventana de 5 min; se revierte solo si no se confirma). Aprueba por
+  `transactionStatus=="Approved"`/`statusCode==3`. Contrato: docs.payphone.app/boton-de-pago-por-redireccion
+  (Confirm usa `clientTxId`, montos en centavos). Cuenta de comercio a nombre de la madre de Kevin.
 
 **Convenciones:**
 - i18n: `dictionaries/{es,en}.json`, editar preservando orden (`OrderedDict`,
@@ -103,9 +106,12 @@ de seguridad web. Dos apps que se despliegan juntas en un VPS.
 ## Deploy (resumen; detalle en CODEBASE_OVERVIEW.md §8)
 
 Push a `main` → GitHub Actions entra por SSH al VPS (`/opt/apps/portafolio`),
-`git reset --hard origin/main` + `docker compose up -d --build --force-recreate`.
-Si Actions no tiene minutos, se hace manual (mismos comandos). Reconstruir solo el
-servicio que cambió: `portfolio-app` (frontend) y/o `sentra-api` (backend, + migración).
+`git reset --hard origin/main` + rebuild. Si Actions no tiene minutos, se hace manual.
+Secuencia recomendada (evita el conflicto de nombres de contenedor):
+`git reset --hard origin/main && docker compose down --remove-orphans && docker compose up -d --build`.
+Las **migraciones corren solas** (entrypoint). **NO usar `--force-recreate`** (deja
+contenedores huérfanos → `Conflict. The container name "…" is already in use`; se limpia
+con `docker compose down --remove-orphans` o `docker rm -f <nombre>`).
 
 ---
 

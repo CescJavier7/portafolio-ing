@@ -19,6 +19,11 @@ Público objetivo: desarrolladores, equipos pequeños, agencias y consultoras qu
 necesitan una postura de seguridad "siempre encendida" sin la complejidad ni el
 precio de las suites enterprise.
 
+**Hoy Sentra es el buque insignia de una SUITE** que se vende como un solo plan Pro
+de **USD 10/mes**: **Sentra** (seguridad) + **Sentra CV AI** (generador/adaptador de CV
+con IA, ATS, y automatización por API con n8n) + **Academia** (cursos de ingeniería y
+ciberseguridad, en desarrollo). Un pago, tres herramientas.
+
 Autor: **Kevin Javier Montatixe Caiza** (CescJavier7) — Ingeniero de Software y
 Ciberseguridad, Ecuador. Sentra vive dentro de su portafolio (cescjavier.dev) como
 proyecto insignia y potencial startup.
@@ -52,9 +57,14 @@ es bajo; el riesgo de **go-to-market (lanzar + conseguir usuarios + cobrar)** es
 que domina ahora.
 
 - Auth + billing + producto completo, **funcionando en producción** en `cescjavier.dev`.
-- Billing = **cobro manual verificado** y REAL: De Una/QR de Banco Pichincha + transferencia,
-  con aprobación del fundador (Lemon Squeezy y Kushki rechazaron la cuenta). Plan único
-  todo-incluido **$10/mes** (Sentra + Sentra CV AI + Academia).
+- Billing = **cobro con tarjeta AUTOMÁTICO (PayPhone), VIVO y probado con dinero real**
+  (checkout → confirmación → activación instantánea del plan). + cobro manual verificado
+  (De Una/QR de Banco Pichincha, transferencia) con aprobación del fundador. Lemon Squeezy y
+  Kushki rechazaron la cuenta. Plan único todo-incluido **$10/mes**. La cuenta de comercio de
+  PayPhone está a nombre de la madre de Kevin (RUC; tienda "Sentrapro").
+- **Suscripción mensual**: cada pago extiende el período 30 días; **cancelar mantiene el
+  acceso Pro hasta el fin del período** (no baja de golpe). Auto-cobro recurrente = pendiente
+  (tokenización de PayPhone, requiere su autorización).
 - **0 usuarios reales de pago.** Una publicación de LinkedIn hecha como primer alcance.
 
 ---
@@ -72,22 +82,28 @@ que domina ahora.
 
 **Infra:** un solo VPS (droplet DigitalOcean), **Docker Compose + Traefik**,
 **Cloudflare** termina TLS. Postgres compartido (`portfolio-db`) con una base
-`sentra` separada. **Redis** (`sentra-redis`) para rate limiting. Deploy manual por
-SSH (`git reset --hard origin/main` + `docker compose up -d --build`) porque las
-GitHub Actions están sin minutos.
+`sentra` separada. **Redis** (`sentra-redis`) para rate limiting. Deploy por SSH
+(`git reset --hard origin/main` + `docker compose down --remove-orphans && up -d --build`);
+las migraciones de Alembic **corren solas** al arrancar (`entrypoint.sh`).
 
 **Servicios externos:**
-- **Lemon Squeezy** — cobros (Merchant of Record: vende como individuo sin RUC).
+- **PayPhone** (Ecuador) — cobro con **tarjeta automático** (Botón de Pago por redirección).
+  Ruta neutra `/billing/card` (adblockers); su API exige User-Agent de navegador (WAF) y el
+  `storeId` se omite (una sola tienda). Cuenta a nombre de la madre de Kevin.
+- **Banco Pichincha / De Una** — cobro manual (QR + transferencia), aprobado por el fundador.
+- **Lemon Squeezy / Kushki** — DESCARTADOS (rechazaron la cuenta); su código queda sin uso.
 - **Resend** — correos (verificación, alertas, invitaciones). Remitente `admin@cescjavier.dev`.
-- **Groq** (`llama-3.3-70b-versatile`) — genera los reportes con IA, vía una ruta del
-  propio Next.js (no expone la key al cliente).
+- **Groq** (`llama-3.3-70b-versatile`) — reportes IA de Sentra y generación de CV (Sentra CV AI).
 
 ---
 
 ## 5. Modelo de datos (núcleo)
 
-- **Organization** — tenant. Tiene `plan` (FREE/PRO/TEAM/ENTERPRISE) e IDs de Lemon
-  Squeezy. El plan vive AQUÍ, no en el usuario.
+- **Organization** — tenant. `plan` (FREE/PRO/TEAM/ENTERPRISE), `subscription_status`,
+  **`plan_expires_at`** (fin del período; cancelar mantiene acceso hasta ahí). El plan vive
+  AQUÍ, no en el usuario.
+- **PaymentRequest** — cobros manuales y PayPhone (plan, método, referencia, estado).
+- **CVDocument / CVFolder** — CVs generados por Sentra CV AI + sus carpetas.
 - **User** — pertenece a una Organization. Campo `role`: **OWNER > ADMIN > ANALYST >
   MEMBER** (RBAC). Argon2id para contraseñas.
 - **RefreshToken** — opaco, hasheado, con rotación + detección de reuso (familia).
@@ -109,8 +125,11 @@ GitHub Actions están sin minutos.
 1. **Auth** — registro, verificación de email, login, refresh rotativo, logout,
    cambio de contraseña (revoca otras sesiones), bloqueo tras 5 intentos, mensajes
    anti-enumeración.
-2. **Billing** — checkout hosteado de Lemon Squeezy, webhook con firma HMAC +
-   idempotencia, portal de cliente, gates por plan.
+2. **Billing** — **tarjeta automático (PayPhone)**: Prepare → checkout hosteado → retorno a
+   `/pago/confirmar` → Confirm verifica y activa el plan al instante. + **manual** (De Una/QR/
+   transferencia) con aprobación del fundador. **Suscripción**: el pago extiende el período
+   30 días; **cancelar mantiene Pro hasta fin de período**; reactivar deshace la cancelación.
+   Modal de checkout con tema CyberPunk. Sin reembolsos (Términos). Gates por plan.
 3. **Targets** — alta de dominios, verificación DNS TXT, límite por plan.
 4. **Scanner pasivo** — headers de seguridad, TLS/certificado, SPF/DMARC → Security
    Score ponderado (0–100), nota A–F, cada hallazgo con referencia OWASP/CWE/NIST/RFC.
@@ -138,6 +157,13 @@ GitHub Actions están sin minutos.
     dinámico, robots, y artículos que enlazan al escáner y a servicios.
 18. **Motor de datos** — `ScanObservation` acumula cada escaneo para inteligencia
     agregada futura (benchmarks, tendencias).
+19. **Sentra CV AI** — generador/adaptador de CV con IA: pega tu perfil + una oferta y
+    devuelve un CV a medida (match score, faltantes, sugerencias). Pipeline **anclado por
+    ids** anti-invención (extrae → analiza → adapta → reconstruye verificado). Editor
+    split-screen, export **PDF ATS**, historial + carpetas, ingesta por OCR/PDF. Además,
+    **automatización por API** (`/public/cv/generate` con API key) + blueprint de **n8n → Notion**.
+20. **Academia** — landing con identidad propia (estética blueprint de ingeniería),
+    consciente de sesión, incluida en el plan. Cursos en desarrollo.
 
 ---
 

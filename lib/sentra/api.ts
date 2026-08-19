@@ -873,6 +873,44 @@ export async function sentraDeleteCV(id: string): Promise<void> {
   await request(`/api/v1/cv/${id}`, { method: 'DELETE' }, true);
 }
 
+// ── Postulaciones (tracker) ──────────────────────────────────────────
+export type SentraAppStatus = 'saved' | 'applied' | 'interview' | 'offer' | 'rejected';
+export interface SentraApplication {
+  id: string;
+  company: string;
+  role: string;
+  job_url: string | null;
+  status: SentraAppStatus;
+  notes: string;
+  cv_document_id: string | null;
+  applied_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+export interface SentraApplicationInput {
+  company: string;
+  role: string;
+  job_url?: string | null;
+  status?: SentraAppStatus;
+  notes?: string;
+  cv_document_id?: string | null;
+}
+export async function sentraListApplications(): Promise<SentraApplication[]> {
+  return request('/api/v1/applications', { method: 'GET' }, true);
+}
+export async function sentraCreateApplication(data: SentraApplicationInput): Promise<SentraApplication> {
+  return request('/api/v1/applications', { method: 'POST', body: JSON.stringify(data) }, true);
+}
+export async function sentraUpdateApplication(
+  id: string,
+  data: Partial<SentraApplicationInput>
+): Promise<SentraApplication> {
+  return request(`/api/v1/applications/${id}`, { method: 'PATCH', body: JSON.stringify(data) }, true);
+}
+export async function sentraDeleteApplication(id: string): Promise<void> {
+  await request(`/api/v1/applications/${id}`, { method: 'DELETE' }, true);
+}
+
 // Regeneración interactiva con IA: reescribe el CV para subir el match.
 // CONSUME 1 crédito y devuelve una versión NUEVA (el original queda en historial).
 export async function sentraImproveCV(id: string, content: CVContent): Promise<SentraCVDocument> {
