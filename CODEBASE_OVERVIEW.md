@@ -284,8 +284,9 @@ Las migraciones **se aplican solas al arrancar** `sentra-api` (ver `entrypoint.s
 - **billing/card** — **PayPhone (tarjeta automático)**: prepare (POST, crea la intención y
   devuelve la URL de checkout), confirm (POST, verifica contra PayPhone y activa el plan).
   Ruta neutra a propósito (adblockers). Ver `payphone_billing.py`.
-- **cv** — Sentra CV AI: generate (POST), improve, ocr, extract-pdf, apply-email, quota,
-  folders CRUD, CVs CRUD. Pipeline anclado por ids (`cv_service` + `cv_prompts`) anti-invención.
+- **cv** — Sentra CV AI: generate (POST), improve, ocr, extract-pdf, apply-email, **job-meta**
+  (extrae empresa+puesto para la postulación en lote), quota, folders CRUD, CVs CRUD. Pipeline
+  anclado por ids (`cv_service` + `cv_prompts`) anti-invención.
 - **applications** — tracker de postulaciones (user-scoped): list/create/patch/delete. Enlaza
   opcionalmente un CV. Ver `applications.py`.
 - **public/cv/generate** (POST) — genera/adapta un CV por **API key** (Pro+), stateless;

@@ -17,6 +17,16 @@ class CVGenerateRequest(BaseModel):
     job_posting: str = Field(min_length=30, max_length=15000)
 
 
+class JobMetaRequest(BaseModel):
+    # Solo para extraer empresa + puesto (postulación en lote).
+    job_posting: str = Field(min_length=10, max_length=15000)
+
+
+class JobMetaOut(BaseModel):
+    company: str
+    role: str
+
+
 class CVUpdateRequest(BaseModel):
     # El usuario puede corregir el CV generado (edición manual post-IA).
     title: str | None = Field(default=None, max_length=200)

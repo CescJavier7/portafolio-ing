@@ -754,8 +754,13 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
               })()}
             </div>
 
-            {/* Automatización: motor por API + blueprint de n8n → Notion */}
-            <CVAutomationPanel lang={lang as 'es' | 'en'} plan={user?.plan} />
+            {/* Automatización: postulación en lote (Pro) + API/n8n para devs */}
+            <CVAutomationPanel
+              lang={lang as 'es' | 'en'}
+              plan={user?.plan}
+              defaultProfile={profileText}
+              onViewApplications={() => setToolTab('applications')}
+            />
               </>
             )}
           </>

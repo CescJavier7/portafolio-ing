@@ -772,6 +772,11 @@ export async function sentraGenerateCV(data: {
   return request('/api/v1/cv', { method: 'POST', body: JSON.stringify(data) }, true);
 }
 
+// Extrae empresa + puesto de una oferta (barato) — para la postulación en lote.
+export async function sentraJobMeta(job_posting: string): Promise<{ company: string; role: string }> {
+  return request('/api/v1/cv/job-meta', { method: 'POST', body: JSON.stringify({ job_posting }) }, true);
+}
+
 // Subida multipart (OCR/PDF): NO pasa por request() (que fuerza Content-Type
 // JSON; el navegador debe poner el boundary del form). Mismo blindaje de
 // errores que request(): red/timeout/CORS → SentraApiError con motivo real.

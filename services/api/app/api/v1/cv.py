@@ -39,6 +39,8 @@ from app.schemas.cv import (
     CVListItem,
     CVMoveRequest,
     CVUpdateRequest,
+    JobMetaOut,
+    JobMetaRequest,
     OCRResult,
 )
 from app.services import cv_service
@@ -178,6 +180,32 @@ async def generate_cv(
     await db.commit()
     await db.refresh(doc)
     return doc
+
+
+@router.post("/job-meta", response_model=JobMetaOut)
+@limiter.limit("40/minute")
+async def job_meta(
+    request: Request,
+    payload: JobMetaRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Extrae empresa + puesto de una oferta (barato, 1 llamada). Lo usa la
+    "Postulación en lote" para autollenar cada postulación con el CV generado.
+    """
+    if not settings.GROQ_API_KEY:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Servicio no disponible.")
+    try:
+        assert_readable(payload.job_posting)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+    try:
+        meta = await run_in_threadpool(cv_service.extract_job_meta, payload.job_posting)
+    except Exception as exc:  # noqa: BLE001
+        print(f"[CV] job-meta falló (user {current_user.id}): {exc}")
+        meta = {"company": "", "role": ""}
+    return JobMetaOut(company=meta.get("company", ""), role=meta.get("role", ""))
 
 
 async def _read_and_validate(file: UploadFile, allowed: set[str]) -> bytearray:
