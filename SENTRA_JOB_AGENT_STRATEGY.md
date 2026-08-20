@@ -177,10 +177,13 @@ es la evolución cuando el Job Agent sea el core; se puede introducir gradualmen
 **Ya tenemos (base sólida):** motor anti-invención (ids), CVContent verificado, ingesta OCR/PDF,
 editor + PDF ATS, tracker de postulaciones, generación por lote, API pública (API key), n8n.
 
-- **FASE 1 — Job Intelligence (AHORA).** Perfil de búsqueda persistente (objetivo + deal-breakers)
-  · **Application Score** rules-first + IA con veredicto · **"¿por qué NO aplicar?"** ·
-  auto-descartar por deal-breakers · Duplicate Killer · scam/fraud detection · CV adaptado ·
-  tracker. *No necesita scraping, extensión ni fuentes externas → 100% construible ya.*
+- **FASE 1 — Job Intelligence (✅ IMPLEMENTADA).** Perfil de búsqueda persistente (objetivo +
+  deal-breakers) · **Application Score** rules-first + IA con veredicto · **"¿por qué NO aplicar?"** ·
+  auto-descartar por deal-breakers · **Application Firewall** (scam/fraud detection determinista,
+  `application_firewall.py`: pago por adelantado, cripto, datos sensibles, sueldo absurdo, contacto
+  solo WhatsApp, correo gratuito único, acortadores, empresa anónima → corta la evaluación IA si es
+  estafa clara) · **Duplicate Killer** (similitud Jaccard sobre empresa+puesto vs. tu historial) ·
+  CV adaptado · tracker. *No necesita scraping, extensión ni fuentes externas → 100% construible ya.*
 - **FASE 2 — Extensión de Chrome.** En cualquier oferta (Workday/Greenhouse/Lever/LinkedIn/
   Computrabajo/páginas corp.): badge con **Score + [Adaptar CV] [Autocompletar] [Aplicar]**.
   Human-in-the-loop. Resiliente (no depende de un solo selector).

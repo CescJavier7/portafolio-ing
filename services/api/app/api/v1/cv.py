@@ -327,13 +327,14 @@ async def apply_email(
     from app.schemas.cv import CVContent
     content = CVContent(**(cv.content or {}))
 
+    # Si la IA falla (timeout, JSON inválido, error de red), NO devolvemos 502:
+    # construimos un correo formal determinista. Mejor un borrador correcto y
+    # editable que un error en la cara del usuario. Siempre lleva destinatario.
     try:
         email = await run_in_threadpool(cv_service.generate_apply_email, content, cv.job_posting)
-    except (json.JSONDecodeError, ValidationError):
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="No se pudo redactar el correo. Inténtalo de nuevo.")
-    except Exception as exc:
-        print(f"[CV] Fallo generando email para cv {cv_id}: {exc}")
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="El servicio de IA no respondió.")
+    except Exception as exc:  # noqa: BLE001 — degradación intencional a fallback
+        print(f"[CV] Fallo generando email IA para cv {cv_id}, uso fallback: {exc}")
+        email = cv_service.build_fallback_apply_email(content, cv.job_posting)
 
     return ApplyEmailOut(
         subject=email["subject"],

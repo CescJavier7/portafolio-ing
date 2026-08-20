@@ -27,7 +27,7 @@ function esc(s: string): string {
     .replace(/'/g, '&#39;');
 }
 
-export function openCVPdf(cv: CVContent, labels: CVPdfLabels): void {
+export function openCVPdf(cv: CVContent, labels: CVPdfLabels, opts?: { hideWatermark?: boolean }): void {
   const expHtml = cv.experience
     .map(
       (e) => `
@@ -144,7 +144,7 @@ export function openCVPdf(cv: CVContent, labels: CVPdfLabels): void {
   ${certHtml ? `<h2>${esc(labels.certifications)}</h2>${certHtml}` : ''}
   ${skillsHtml ? `<h2>${esc(labels.skills)}</h2>${skillsHtml}` : ''}
   ${langsHtml ? `<h2>${esc(labels.languages)}</h2>${langsHtml}` : ''}
-  <div class="foot">${esc(labels.generatedBy)} — cescjavier.dev</div>
+  ${opts?.hideWatermark ? '' : `<div class="foot">${esc(labels.generatedBy)} — cescjavier.dev</div>`}
 </body></html>`;
 
   // Imprimir desde un IFRAME OCULTO en vez de abrir una pestaña nueva. Ventajas:

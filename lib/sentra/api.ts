@@ -943,6 +943,23 @@ export interface SentraSearchProfile {
 export type SentraSearchProfileInput = Omit<SentraSearchProfile, 'id' | 'created_at' | 'updated_at'>;
 
 export type SentraVerdict = 'apply' | 'maybe' | 'avoid';
+export type SentraRiskLevel = 'safe' | 'caution' | 'danger';
+export interface SentraFirewallFlag {
+  code: string;
+  severity: 'high' | 'medium' | 'low';
+  matched: string;
+}
+export interface SentraFirewall {
+  risk_level: SentraRiskLevel;
+  risk_score: number;
+  flags: SentraFirewallFlag[];
+}
+export interface SentraDuplicateMatch {
+  company: string;
+  role: string;
+  status: string;
+  similarity: number;
+}
 export interface SentraEvaluation {
   score: number;
   verdict: SentraVerdict;
@@ -959,6 +976,8 @@ export interface SentraEvaluation {
   reasons_apply: string[];
   company: string;
   role: string;
+  firewall: SentraFirewall;
+  duplicate: SentraDuplicateMatch | null;
 }
 
 export async function sentraGetSearchProfile(): Promise<SentraSearchProfile> {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Target, Loader2, Check, X, Sparkles, ThumbsUp, ThumbsDown, ShieldCheck } from 'lucide-react';
+import { Target, Loader2, Check, X, Sparkles, ThumbsUp, ThumbsDown, ShieldCheck, ShieldAlert, AlertTriangle, CopyCheck } from 'lucide-react';
 import {
   sentraGetSearchProfile,
   sentraSaveSearchProfile,
@@ -51,6 +51,25 @@ const T = {
       ubicacion_modalidad: 'Ubicación/modalidad', seniority: 'Seniority', idioma: 'Idioma', keywords_ats: 'Keywords ATS',
     } as Record<string, string>,
     add: 'Añadir (Enter)',
+    // Application Firewall
+    fwDanger: 'Alto riesgo de estafa',
+    fwCaution: 'Señales sospechosas',
+    fwDangerSub: 'Esta oferta tiene marcas típicas de fraude laboral. No envíes dinero ni datos personales.',
+    fwCautionSub: 'Revisa estas señales antes de continuar.',
+    fwFlags: {
+      advance_fee: 'Te piden pagar por adelantado (inscripción, kit, material). Un empleo legítimo NUNCA cobra por contratarte.',
+      crypto_payment: 'Mencionan pagos o inversiones en cripto. Señal habitual de fraude.',
+      sensitive_data: 'Piden datos sensibles (tarjeta, contraseñas, cédula) antes de contratarte.',
+      unreal_salary: 'Sueldo desproporcionado para el trabajo ofrecido. Si es demasiado bueno para ser verdad…',
+      instant_hire: 'Contratación inmediata, sin entrevista ni requisitos. Táctica para no darte tiempo a dudar.',
+      messaging_only: 'El único contacto es WhatsApp/Telegram. Las empresas serias usan canales oficiales.',
+      free_email_only: 'El contacto es un correo gratuito (Gmail/Hotmail), no un dominio corporativo.',
+      url_shortener: 'Usan enlaces acortados que ocultan el destino real (posible phishing).',
+      anonymous_company: 'No nombran a la empresa. Desconfía de una "importante empresa" sin identidad.',
+    } as Record<string, string>,
+    dupTitle: 'Ya te postulaste a algo casi idéntico',
+    dupSub: 'similar a una postulación que ya tienes',
+    dupStatus: { saved: 'Guardado', applied: 'Postulado', interview: 'Entrevista', offer: 'Oferta', rejected: 'Rechazado' } as Record<string, string>,
   },
   en: {
     title: 'Your job target',
@@ -80,6 +99,25 @@ const T = {
       ubicacion_modalidad: 'Location/modality', seniority: 'Seniority', idioma: 'Language', keywords_ats: 'ATS keywords',
     } as Record<string, string>,
     add: 'Add (Enter)',
+    // Application Firewall
+    fwDanger: 'High scam risk',
+    fwCaution: 'Suspicious signals',
+    fwDangerSub: 'This posting shows typical job-fraud markers. Never send money or personal data.',
+    fwCautionSub: 'Review these signals before continuing.',
+    fwFlags: {
+      advance_fee: 'They ask you to pay upfront (registration, kit, materials). A real job NEVER charges to hire you.',
+      crypto_payment: 'They mention crypto payments or investments. A common fraud signal.',
+      sensitive_data: 'They request sensitive data (card, passwords, ID) before hiring you.',
+      unreal_salary: 'Pay is disproportionate to the work offered. If it sounds too good to be true…',
+      instant_hire: 'Instant hire, no interview or requirements. A tactic to rush your decision.',
+      messaging_only: 'The only contact is WhatsApp/Telegram. Serious companies use official channels.',
+      free_email_only: 'Contact is a free email (Gmail/Hotmail), not a corporate domain.',
+      url_shortener: 'They use shortened links that hide the real destination (possible phishing).',
+      anonymous_company: 'They don’t name the company. Beware of a "leading company" with no identity.',
+    } as Record<string, string>,
+    dupTitle: 'You already applied to something nearly identical',
+    dupSub: 'similar to an application you already have',
+    dupStatus: { saved: 'Saved', applied: 'Applied', interview: 'Interview', offer: 'Offer', rejected: 'Rejected' } as Record<string, string>,
   },
 };
 
@@ -190,6 +228,11 @@ export default function JobAgentTab({ lang }: { lang: 'es' | 'en' }) {
   if (loading) {
     return <p className="text-center text-sm text-zinc-400 dark:text-zinc-500 animate-pulse py-16">…</p>;
   }
+
+  // Application Firewall: si es estafa clara (danger) el backend cortó en seco →
+  // no hay desglose ni análisis real, mostramos SOLO el aviso de estafa.
+  const fwLevel = ev?.firewall?.risk_level;
+  const scam = fwLevel === 'danger';
 
   return (
     <div className="space-y-8">
@@ -327,7 +370,46 @@ export default function JobAgentTab({ lang }: { lang: 'es' | 'en' }) {
 
         {/* Veredicto */}
         {ev && (
-          <div className={`mt-6 rounded-2xl border p-5 md:p-6 bg-zinc-50 dark:bg-white/[0.03] ${VERDICT_STYLE[ev.verdict].ring}`}>
+          <div className={`mt-6 rounded-2xl border p-5 md:p-6 bg-zinc-50 dark:bg-white/[0.03] ${scam ? 'border-red-500/50 shadow-[0_0_40px_-12px_rgba(239,68,68,0.6)]' : VERDICT_STYLE[ev.verdict].ring}`}>
+            {/* ── Application Firewall: aviso de estafa (lo más prominente) ── */}
+            {fwLevel && fwLevel !== 'safe' && (
+              <div className={`rounded-xl border p-4 mb-4 ${scam ? 'border-red-500/40 bg-red-500/10' : 'border-amber-500/30 bg-amber-500/10'}`}>
+                <p className={`text-[13px] font-black uppercase tracking-wider mb-1 flex items-center gap-1.5 ${scam ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                  {scam ? <ShieldAlert className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+                  {scam ? t.fwDanger : t.fwCaution}
+                </p>
+                <p className="text-[12px] text-zinc-600 dark:text-zinc-300 mb-3">{scam ? t.fwDangerSub : t.fwCautionSub}</p>
+                <ul className="space-y-1.5">
+                  {ev.firewall.flags.map((f) => (
+                    <li key={f.code} className="text-[13px] text-zinc-700 dark:text-zinc-200 flex items-start gap-2">
+                      <span
+                        className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${
+                          f.severity === 'high' ? 'bg-red-500' : f.severity === 'medium' ? 'bg-amber-500' : 'bg-zinc-400'
+                        }`}
+                      />
+                      {t.fwFlags[f.code] ?? f.code}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* ── Duplicate Killer: ya aplicaste a algo casi idéntico ── */}
+            {ev.duplicate && (
+              <div className="rounded-xl border border-violet-500/30 bg-violet-500/10 p-4 mb-4">
+                <p className="text-[13px] font-black uppercase tracking-wider text-violet-600 dark:text-violet-400 mb-1 flex items-center gap-1.5">
+                  <CopyCheck className="w-4 h-4" /> {t.dupTitle}
+                </p>
+                <p className="text-[13px] text-zinc-700 dark:text-zinc-200">
+                  {ev.duplicate.similarity}% {t.dupSub}:{' '}
+                  <strong>{[ev.duplicate.role, ev.duplicate.company].filter(Boolean).join(' · ')}</strong>
+                  {ev.duplicate.status && (
+                    <span className="ml-1 text-zinc-500">({t.dupStatus[ev.duplicate.status] ?? ev.duplicate.status})</span>
+                  )}
+                </p>
+              </div>
+            )}
+
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <div className="min-w-0">
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-black uppercase tracking-wide ${VERDICT_STYLE[ev.verdict].badge}`}>
@@ -341,11 +423,15 @@ export default function JobAgentTab({ lang }: { lang: 'es' | 'en' }) {
                 )}
               </div>
               <div className="text-right">
-                <div className={`text-4xl font-black tracking-tighter ${VERDICT_STYLE[ev.verdict].icon}`}>{ev.score}</div>
+                <div className={`text-4xl font-black tracking-tighter ${scam ? 'text-red-500' : VERDICT_STYLE[ev.verdict].icon}`}>{ev.score}</div>
                 <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-400">Application Score</div>
               </div>
             </div>
 
+            {/* Con estafa clara el backend no analiza (score 0): ocultamos el
+                desglose y las razones, que no aportan sobre una oferta fraudulenta. */}
+            {!scam && (
+            <>
             {/* Desglose */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-5">
               {Object.entries(ev.breakdown).map(([k, v]) => (
@@ -384,6 +470,8 @@ export default function JobAgentTab({ lang }: { lang: 'es' | 'en' }) {
                   ))}
                 </ul>
               </div>
+            )}
+            </>
             )}
           </div>
         )}

@@ -28,6 +28,7 @@ import {
   type SentraCVFolder,
 } from '@/lib/sentra/api';
 import { openCVPdf } from '@/lib/sentra/cvPdf';
+import { useSentraSession } from '@/lib/sentra/useSession';
 import { useCVWizard, cvWizard, cleanCVContent, CV_STEPS, type CVStep } from '@/lib/sentra/cvStore';
 import { matchColor, matchTint } from '@/lib/sentra/matchScore';
 import { validateCV, type CVFieldErrors } from '@/lib/sentra/cvSchema';
@@ -53,6 +54,9 @@ interface CVWizardProps {
 export default function CVWizard({ cv, dict, lang, onNew, onVersion }: CVWizardProps) {
   const { content, cvId, step } = useCVWizard();
   const wd = dict.wizard;
+  // Marca de agua del PDF SOLO para Freemium: los planes de pago exportan limpio.
+  const { user } = useSentraSession();
+  const isPaid = user?.plan === 'PRO' || user?.plan === 'TEAM' || user?.plan === 'ENTERPRISE';
 
   // Validación de completitud (Zod): bloquea descarga/envío y marca campos en
   // rojo hasta que el CV esté 100% completo (nombre, titular, resumen, y cada
@@ -155,7 +159,7 @@ export default function CVWizard({ cv, dict, lang, onNew, onVersion }: CVWizardP
   function downloadPdf() {
     const clean = cleanCVContent(content);
     if (cvId) sentraUpdateCV(cvId, { content: clean }).catch(() => {});
-    openCVPdf(clean, dict.pdf);
+    openCVPdf(clean, dict.pdf, { hideWatermark: isPaid });
   }
 
   const isLast = step === CV_STEPS.length - 1;
@@ -277,6 +281,8 @@ export default function CVWizard({ cv, dict, lang, onNew, onVersion }: CVWizardP
               onCreateFolder={createAndAssignFolder}
               errors={validation.errors}
               canSend={validation.ok}
+              lang={lang}
+              isPaid={isPaid}
             />
           </div>
 
@@ -309,7 +315,7 @@ export default function CVWizard({ cv, dict, lang, onNew, onVersion }: CVWizardP
             </p>
             <SaveIndicator state={saveState} wd={wd} />
           </div>
-          <CVPreviewA4 content={content} labels={dict.pdf} empty={wd.previewEmpty} />
+          <CVPreviewA4 content={content} labels={dict.pdf} empty={wd.previewEmpty} hideWatermark={isPaid} />
         </div>
       </div>
 
@@ -405,6 +411,8 @@ function StepBody({
   onCreateFolder,
   errors,
   canSend,
+  lang,
+  isPaid,
 }: {
   step: CVStep;
   content: CVContent;
@@ -417,6 +425,8 @@ function StepBody({
   onCreateFolder: (name: string) => void;
   errors: CVFieldErrors;
   canSend: boolean;
+  lang: string;
+  isPaid: boolean;
 }) {
   const c = content;
 
@@ -672,7 +682,7 @@ function StepBody({
           )}
         </div>
       )}
-      <ApplyEmailButton cvId={cvId} cv={cv} content={content} dict={dict} disabled={!canSend} />
+      <ApplyEmailButton cvId={cvId} cv={cv} content={content} dict={dict} lang={lang} isPaid={isPaid} disabled={!canSend} />
       {!canSend && (
         <p className="text-[12px] text-red-500 text-center">{dict.wizard.incompleteTitle}</p>
       )}
@@ -689,12 +699,16 @@ function ApplyEmailButton({
   cv,
   content,
   dict,
+  lang,
+  isPaid,
   disabled,
 }: {
   cvId: string | null;
   cv: SentraCVDocument;
   content: CVContent;
   dict: CVDict;
+  lang: string;
+  isPaid: boolean;
   disabled: boolean;
 }) {
   const wd = dict.wizard;
@@ -714,16 +728,31 @@ function ApplyEmailButton({
     };
   }, [cvId, cv.id]);
 
-  // Fallback si la IA no respondió: nunca dejamos al usuario sin poder enviar.
-  const subject = (email?.subject || `Postulación — ${content.headline || content.full_name}`).trim();
-  const body = email?.body || content.summary || '';
-  const to = email?.recipient || '';
+  // Fallback si la IA no respondió: correo formal (con saludo) armado desde el
+  // CV — nunca dejamos al usuario sin poder enviar ni con un correo sin saludo.
+  const en = lang === 'en';
+  const fallbackBody = [
+    en ? 'Dear Hiring Team,' : 'Estimados,',
+    '',
+    (en ? 'I am writing to apply for the ' : 'Me dirijo a ustedes para postular al puesto de ') +
+      (content.headline || (en ? 'position' : 'la vacante')) + (en ? ' position.' : '.'),
+    '',
+    content.summary || '',
+    '',
+    en ? 'I look forward to your reply. Best regards,' : 'Quedo atento a su respuesta. Un cordial saludo,',
+    content.full_name || '',
+  ].join('\n').trim();
+
+  const subject = (email?.subject || `${en ? 'Application' : 'Postulación'} — ${content.headline || content.full_name}`).trim();
+  const body = email?.body || fallbackBody;
+  // Destinatario: el que extrajo la IA; si no, lo buscamos en la oferta (regex).
+  const to = email?.recipient || (cv.job_posting.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)?.[0] ?? '');
 
   // Descarga el PDF (ventana de impresión → PDF real) SIN await previo, para que
   // la apertura del correo ocurra dentro del gesto del usuario (sin bloqueo).
   function send(via: 'gmail' | 'mail') {
     setOpen(false);
-    openCVPdf(cleanCVContent(content), dict.pdf);
+    openCVPdf(cleanCVContent(content), dict.pdf, { hideWatermark: isPaid });
     if (via === 'gmail') {
       const url = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
         to,
@@ -869,14 +898,25 @@ function FolderPicker({
 
 // Vista previa A4 — espeja el layout del PDF (lib/sentra/cvPdf.ts). Siempre en
 // "modo papel" (fondo blanco, texto oscuro) aunque la UI esté en dark.
+// Dimensiones A4 @96dpi y márgenes de impresión (16mm × 15mm) del PDF real
+// (ver lib/sentra/cvPdf.ts → @media print). El visor renderiza a ESTE ancho fijo
+// con los MISMOS px que el PDF y luego se escala para caber en el panel: así el
+// usuario ve exactamente las proporciones, tamaños y saltos de línea del PDF.
+const A4_W = 794;
+const A4_H = 1123;
+const A4_PAD_X = 57; // 15mm
+const A4_PAD_Y = 60; // 16mm
+
 function CVPreviewA4({
   content,
   labels,
   empty,
+  hideWatermark,
 }: {
   content: CVContent;
   labels: CVDict['pdf'];
   empty: string;
+  hideWatermark?: boolean;
 }) {
   const c = content;
   const skills = (c.skills ?? [])
@@ -900,152 +940,232 @@ function CVPreviewA4({
     web ? { text: web, href: webHref, blank: true } : null,
   ].filter(Boolean) as { text: string; href?: string; blank?: boolean }[];
 
-  // Estilo Harvard: sobrio, sin color decorativo. Encabezado de sección =
-  // mayúsculas gris con una línea fina inferior. Nada de fondos ni chips.
+  // ── Escalado responsivo: medimos el ancho disponible y escalamos la hoja de
+  //    794px para que quepa. La altura reservada = altura natural × escala.
+  const stageRef = useRef<HTMLDivElement>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  const [pageH, setPageH] = useState(A4_H);
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const ro = new ResizeObserver(() => {
+      const w = stage.clientWidth;
+      if (w > 0) setScale(w / A4_W);
+    });
+    ro.observe(stage);
+    return () => ro.disconnect();
+  }, []);
+
+  // Remedimos la altura natural (a 794px, sin escalar) cada vez que cambia el
+  // contenido: así reservamos el alto correcto y dibujamos los saltos de hoja.
+  useEffect(() => {
+    const page = pageRef.current;
+    if (page) setPageH(Math.max(page.scrollHeight, A4_H));
+  }, [content]);
+
+  // Guías de "salto de hoja" A4: líneas punteadas donde cortará cada página.
+  const pageBreaks = Math.max(0, Math.ceil(pageH / A4_H) - 1);
+
+  // Estilo Harvard (idéntico al PDF): encabezado de sección en mayúsculas gris
+  // con línea fina inferior. Estilos EN PX para calcar cvPdf.ts al milímetro.
   const Section = ({ children }: { children: React.ReactNode }) => (
-    <h4 className="text-[10px] font-bold uppercase tracking-[0.12em] text-gray-700 border-b border-gray-300 pb-1 mt-5 mb-2">
+    <h2
+      style={{
+        fontSize: 12,
+        textTransform: 'uppercase',
+        letterSpacing: '0.1em',
+        color: '#374151',
+        borderBottom: '1px solid #d1d5db',
+        paddingBottom: 5,
+        margin: '24px 0 10px',
+        fontWeight: 600,
+      }}
+    >
       {children}
-    </h4>
+    </h2>
   );
 
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-zinc-700 shadow-lg overflow-hidden bg-white">
-      {/* overflow-y-auto acotado a la ventana + cv-scroll (barra visible). El
-          contenido nunca rompe el layout del split-screen. */}
-      <div className="cv-scroll overflow-y-auto overflow-x-hidden max-h-[calc(100vh-9rem)] min-h-[420px]">
-        <div
-          className="p-8 sm:p-10 text-gray-900 max-w-full break-words"
-          style={{ fontFamily: '-apple-system, "Segoe UI", Roboto, sans-serif' }}
-        >
-          {isEmpty ? (
-            <p className="text-[12px] text-gray-400 py-10 text-center">{empty}</p>
-          ) : (
-            <>
-              <h3 className="text-[23px] font-bold tracking-tight leading-tight text-gray-900 break-words">
-                {c.full_name || '—'}
-              </h3>
-              {c.headline && (
-                <p className="text-[12.5px] text-gray-600 mt-0.5 break-words">{c.headline}</p>
-              )}
+    <div className="rounded-xl border border-gray-200 dark:border-zinc-700 shadow-lg overflow-hidden bg-zinc-200/70 dark:bg-zinc-800/60">
+      {/* overflow acotado a la ventana + cv-scroll (barra visible). El contenido
+          nunca rompe el layout del split-screen. Padding para "aire" alrededor
+          de la hoja, como en un visor de PDF. */}
+      <div className="cv-scroll overflow-y-auto overflow-x-hidden max-h-[calc(100vh-9rem)] min-h-[420px] p-3 sm:p-4">
+        {/* stage: ocupa el ancho disponible y reserva la altura de la hoja escalada. */}
+        <div ref={stageRef} className="w-full mx-auto" style={{ height: pageH * scale }}>
+          <div
+            ref={pageRef}
+            className="bg-white text-gray-900 shadow-xl relative origin-top-left"
+            style={{
+              width: A4_W,
+              minHeight: A4_H,
+              padding: `${A4_PAD_Y}px ${A4_PAD_X}px`,
+              transform: `scale(${scale})`,
+              fontFamily: '-apple-system, "Segoe UI", Roboto, sans-serif',
+              lineHeight: 1.5,
+              color: '#111827',
+              overflowWrap: 'break-word',
+            }}
+          >
+            {isEmpty ? (
+              <p style={{ fontSize: 13, color: '#9ca3af', textAlign: 'center', padding: '80px 0' }}>{empty}</p>
+            ) : (
+              <>
+                <h1 style={{ fontSize: 28, margin: '0 0 2px', letterSpacing: '-0.02em', color: '#111827', fontWeight: 700 }}>
+                  {c.full_name || '—'}
+                </h1>
+                {c.headline && (
+                  <p style={{ fontSize: 14, color: '#4b5563', fontWeight: 500, margin: '0 0 4px' }}>{c.headline}</p>
+                )}
 
-              {contactParts.length > 0 && (
-                <p className="text-[10.5px] text-gray-500 mt-1.5 leading-relaxed break-words">
-                  {contactParts.map((p, i) => (
-                    <span key={i}>
-                      {i > 0 && <span className="text-gray-300 mx-1.5">|</span>}
-                      {p.href ? (
-                        <a
-                          href={p.href}
-                          {...(p.blank ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                          className="text-gray-500 no-underline hover:underline"
-                        >
-                          {p.text}
-                        </a>
-                      ) : (
-                        p.text
-                      )}
-                    </span>
-                  ))}
-                </p>
-              )}
-
-              {c.summary.trim() && (
-                <>
-                  <Section>{labels.summary}</Section>
-                  <p className="text-[11px] leading-relaxed text-gray-800 whitespace-pre-wrap break-words">
-                    {c.summary}
+                {contactParts.length > 0 && (
+                  <p style={{ fontSize: 12, color: '#6b7280', margin: '0 0 18px' }}>
+                    {contactParts.map((p, i) => (
+                      <span key={i}>
+                        {i > 0 && <span style={{ color: '#d1d5db', margin: '0 6px' }}>|</span>}
+                        {p.href ? (
+                          <a
+                            href={p.href}
+                            {...(p.blank ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                            style={{ color: '#6b7280', textDecoration: 'none' }}
+                          >
+                            {p.text}
+                          </a>
+                        ) : (
+                          p.text
+                        )}
+                      </span>
+                    ))}
                   </p>
-                </>
-              )}
+                )}
 
-              {experience.length > 0 && (
-                <>
-                  <Section>{labels.experience}</Section>
-                  {experience.map((e, i) => (
-                    <div key={i} className="mb-2.5">
-                      <div className="flex justify-between items-baseline gap-3">
-                        <p className="text-[11.5px] font-semibold text-gray-900 min-w-0 break-words">
-                          {e.role}
-                          {e.company && <span className="font-normal text-gray-600"> · {e.company}</span>}
-                        </p>
-                        {e.period && (
-                          <span className="text-[10px] text-gray-500 shrink-0 whitespace-nowrap">{e.period}</span>
+                {c.summary.trim() && (
+                  <>
+                    <Section>{labels.summary}</Section>
+                    <p style={{ fontSize: 13.5, color: '#1f2937', whiteSpace: 'pre-wrap', margin: 0 }}>{c.summary}</p>
+                  </>
+                )}
+
+                {experience.length > 0 && (
+                  <>
+                    <Section>{labels.experience}</Section>
+                    {experience.map((e, i) => (
+                      <div key={i} style={{ marginBottom: 13 }}>
+                        <div style={{ fontSize: 14, overflow: 'hidden' }}>
+                          <strong style={{ color: '#111827' }}>{e.role}</strong>
+                          {e.company && <span> · {e.company}</span>}
+                          {e.period && (
+                            <span style={{ float: 'right', color: '#6b7280', fontSize: 12, fontWeight: 500 }}>{e.period}</span>
+                          )}
+                        </div>
+                        {e.highlights.filter((h) => h.trim()).length > 0 && (
+                          <ul style={{ margin: '5px 0 0', paddingLeft: 18 }}>
+                            {e.highlights
+                              .filter((h) => h.trim())
+                              .map((h, j) => (
+                                <li key={j} style={{ fontSize: 13, color: '#1f2937', marginBottom: 3 }}>
+                                  {h}
+                                </li>
+                              ))}
+                          </ul>
                         )}
                       </div>
-                      {e.highlights.filter((h) => h.trim()).length > 0 && (
-                        <ul className="list-disc pl-4 mt-1 space-y-0.5">
-                          {e.highlights
-                            .filter((h) => h.trim())
-                            .map((h, j) => (
-                              <li key={j} className="text-[10.5px] text-gray-800 leading-snug break-words">
-                                {h}
-                              </li>
-                            ))}
-                        </ul>
-                      )}
-                    </div>
-                  ))}
-                </>
-              )}
-
-              {education.length > 0 && (
-                <>
-                  <Section>{labels.education}</Section>
-                  {education.map((e, i) => (
-                    <div key={i} className="mb-1 flex justify-between items-baseline gap-3">
-                      <p className="text-[11px] text-gray-900 min-w-0 break-words">
-                        <span className="font-semibold">{e.degree}</span>
-                        {e.institution && <span className="text-gray-600"> · {e.institution}</span>}
-                      </p>
-                      {e.period && <span className="text-[10px] text-gray-500 shrink-0 whitespace-nowrap">{e.period}</span>}
-                    </div>
-                  ))}
-                </>
-              )}
-
-              {certifications.length > 0 && (
-                <>
-                  <Section>{labels.certifications}</Section>
-                  <ul className="list-disc pl-4 space-y-0.5">
-                    {certifications.map((cert, i) => (
-                      <li key={i} className="text-[10.5px] text-gray-800 leading-snug break-words">
-                        {cert.name}
-                        {cert.issuer && <span className="text-gray-600"> — {cert.issuer}</span>}
-                        {cert.year && <span className="text-gray-500"> ({cert.year})</span>}
-                      </li>
                     ))}
-                  </ul>
-                </>
-              )}
+                  </>
+                )}
 
-              {skills.length > 0 && (
-                <>
-                  <Section>{labels.skills}</Section>
-                  <div className="space-y-0.5">
+                {education.length > 0 && (
+                  <>
+                    <Section>{labels.education}</Section>
+                    <ul style={{ margin: '5px 0 0', paddingLeft: 18 }}>
+                      {education.map((e, i) => (
+                        <li key={i} style={{ fontSize: 13, color: '#1f2937', marginBottom: 3 }}>
+                          {e.degree}
+                          {e.institution && <span> — {e.institution}</span>}
+                          {e.period && <span> ({e.period})</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+
+                {certifications.length > 0 && (
+                  <>
+                    <Section>{labels.certifications}</Section>
+                    <ul style={{ margin: '5px 0 0', paddingLeft: 18 }}>
+                      {certifications.map((cert, i) => (
+                        <li key={i} style={{ fontSize: 13, color: '#1f2937', marginBottom: 3 }}>
+                          {cert.name}
+                          {cert.issuer && <span> — {cert.issuer}</span>}
+                          {cert.year && <span> ({cert.year})</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+
+                {skills.length > 0 && (
+                  <>
+                    <Section>{labels.skills}</Section>
                     {skills.map((g, i) => (
-                      <p key={i} className="text-[10.5px] text-gray-800 leading-relaxed break-words">
-                        {g.category && <span className="font-semibold text-gray-900">{g.category}: </span>}
+                      <p key={i} style={{ fontSize: 13, color: '#1f2937', margin: '0 0 2px' }}>
+                        {g.category && <strong>{g.category}: </strong>}
                         {g.items.join('  ·  ')}
                       </p>
                     ))}
+                  </>
+                )}
+
+                {languages.length > 0 && (
+                  <>
+                    <Section>{labels.languages}</Section>
+                    <p style={{ fontSize: 13, color: '#1f2937', margin: 0 }}>
+                      {languages.map((l) => (l.level ? `${l.language} (${l.level})` : l.language)).join('  ·  ')}
+                    </p>
+                  </>
+                )}
+
+                {!hideWatermark && (
+                  <div style={{ marginTop: 32, paddingTop: 12, borderTop: '1px solid #e5e7eb', fontSize: 10, color: '#9ca3af' }}>
+                    {labels.generatedBy} — cescjavier.dev
                   </div>
-                </>
-              )}
+                )}
+              </>
+            )}
 
-              {languages.length > 0 && (
-                <>
-                  <Section>{labels.languages}</Section>
-                  <p className="text-[10.5px] text-gray-800 leading-relaxed break-words">
-                    {languages.map((l) => (l.level ? `${l.language} (${l.level})` : l.language)).join('  ·  ')}
-                  </p>
-                </>
-              )}
-
-              <div className="mt-6 pt-2.5 border-t border-gray-200 text-[9px] text-gray-400">
-                {labels.generatedBy} — cescjavier.dev
+            {/* Guías de salto de hoja A4 (no imprimibles): muestran dónde corta
+                cada página. Escalan junto con la hoja. */}
+            {Array.from({ length: pageBreaks }).map((_, i) => (
+              <div
+                key={i}
+                aria-hidden
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  top: (i + 1) * A4_H,
+                  borderTop: '2px dashed #cbd5e1',
+                  pointerEvents: 'none',
+                }}
+              >
+                <span
+                  style={{
+                    position: 'absolute',
+                    right: 8,
+                    top: -22,
+                    fontSize: 11,
+                    color: '#94a3b8',
+                    background: '#fff',
+                    padding: '0 6px',
+                  }}
+                >
+                  {i + 2}
+                </span>
               </div>
-            </>
-          )}
+            ))}
+          </div>
         </div>
       </div>
     </div>

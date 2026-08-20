@@ -47,6 +47,25 @@ class ScoreBreakdown(BaseModel):
     keywords_ats: int
 
 
+class FirewallFlag(BaseModel):
+    code: str                        # advance_fee | crypto_payment | ... (i18n en frontend)
+    severity: str                    # high | medium | low
+    matched: str = ""                # fragmento que disparó la señal (evidencia)
+
+
+class FirewallResult(BaseModel):
+    risk_level: str                  # safe | caution | danger
+    risk_score: int                  # 0-100 (mayor = más riesgo)
+    flags: list[FirewallFlag]
+
+
+class DuplicateMatch(BaseModel):
+    company: str
+    role: str
+    status: str
+    similarity: int                  # 0-100
+
+
 class EvaluateOut(BaseModel):
     score: int                       # 0-100
     verdict: str                     # apply | maybe | avoid
@@ -56,3 +75,5 @@ class EvaluateOut(BaseModel):
     reasons_apply: list[str]         # lo que sí cumples
     company: str
     role: str
+    firewall: FirewallResult         # Application Firewall (detección de estafas)
+    duplicate: DuplicateMatch | None = None  # Duplicate Killer (ya aplicaste algo similar)

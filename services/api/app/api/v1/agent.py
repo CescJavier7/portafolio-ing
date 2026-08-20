@@ -15,10 +15,11 @@ from app.api.v1.deps import get_current_user
 from app.core.config import get_settings
 from app.core.rate_limit import limiter
 from app.db.session import get_db
+from app.models.job_application import JobApplication
 from app.models.search_profile import SearchProfile
 from app.models.user import User
-from app.schemas.agent import EvaluateOut, EvaluateRequest, SearchProfileIn, SearchProfileOut
-from app.services import application_scoring, cv_service
+from app.schemas.agent import EvaluateOut, EvaluateRequest, ScoreBreakdown, SearchProfileIn, SearchProfileOut
+from app.services import application_firewall, application_scoring, cv_service
 from app.services.text_guard import assert_readable
 
 settings = get_settings()
@@ -80,8 +81,10 @@ async def evaluate(
 ):
     """
     Puntúa una oferta contra el perfil de búsqueda y da un veredicto
-    (apply/maybe/avoid) + las razones para NO aplicar. IA solo para analizar la
-    oferta; la decisión es determinista.
+    (apply/maybe/avoid) + las razones para NO aplicar. Antes pasa por el
+    Application Firewall (detección de estafas, determinista): si la oferta es una
+    estafa clara (DANGER) se corta en seco y NO se gasta la llamada al LLM.
+    IA solo para analizar la oferta; la decisión es determinista.
     """
     if not settings.GROQ_API_KEY:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Servicio no disponible.")
@@ -89,6 +92,24 @@ async def evaluate(
         assert_readable(payload.job_posting)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+
+    # ── Capa 1: Application Firewall (sin IA, sin coste) ──
+    firewall = application_firewall.scan_posting(payload.job_posting)
+
+    # Estafa clara → corte en seco: no evaluamos (ni pagamos IA por) un fraude.
+    if firewall["risk_level"] == "danger":
+        return EvaluateOut(
+            score=0,
+            verdict="avoid",
+            breakdown={k: 0 for k in ScoreBreakdown.model_fields},
+            deal_breakers=["Posible estafa detectada — revisa las señales antes de continuar."],
+            reasons_avoid=[f["code"] for f in firewall["flags"]],
+            reasons_apply=[],
+            company="",
+            role="",
+            firewall=firewall,
+            duplicate=None,
+        )
 
     sp = await _get_or_create(current_user, db)
     try:
@@ -98,4 +119,13 @@ async def evaluate(
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="No se pudo analizar la oferta. Inténtalo de nuevo.")
 
     result = application_scoring.score_application(_profile_dict(sp), analysis)
-    return EvaluateOut(**result)
+
+    # ── Capa 2: Duplicate Killer — ¿ya aplicaste a algo casi idéntico? ──
+    rows = await db.execute(
+        select(JobApplication.company, JobApplication.role, JobApplication.status)
+        .where(JobApplication.user_id == current_user.id)
+    )
+    existing = [{"company": c, "role": r, "status": s} for c, r, s in rows.all()]
+    duplicate = application_firewall.find_duplicate(result["company"], result["role"], existing)
+
+    return EvaluateOut(**result, firewall=firewall, duplicate=duplicate)
