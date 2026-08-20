@@ -11,14 +11,22 @@ from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.v1.deps import get_current_user
+from app.api.v1.deps import get_current_user, get_current_user_flex
 from app.core.config import get_settings
 from app.core.rate_limit import limiter
 from app.db.session import get_db
 from app.models.job_application import JobApplication
 from app.models.search_profile import SearchProfile
 from app.models.user import User
-from app.schemas.agent import EvaluateOut, EvaluateRequest, ScoreBreakdown, SearchProfileIn, SearchProfileOut
+from app.schemas.agent import (
+    EvaluateOut,
+    EvaluateRequest,
+    FirewallRequest,
+    FirewallResult,
+    ScoreBreakdown,
+    SearchProfileIn,
+    SearchProfileOut,
+)
 from app.services import application_firewall, application_scoring, cv_service
 from app.services.text_guard import assert_readable
 
@@ -38,6 +46,19 @@ _SCALAR_FIELDS = (
 def _profile_dict(sp: SearchProfile) -> dict:
     """Vista dict del perfil (para el motor de scoring)."""
     return {f: getattr(sp, f) for f in (_SCALAR_FIELDS + _LIST_FIELDS)}
+
+
+def _infer_country(hint: str, sp: SearchProfile | None) -> str:
+    """País para el umbral de sueldo: el hint explícito manda; si no, se deduce de
+    las ubicaciones del perfil ('Quito, Ecuador' → EC)."""
+    if hint and hint.strip():
+        return hint.strip()
+    if sp:
+        for loc in (sp.locations or []):
+            code = application_firewall.country_in_text(loc)
+            if code:
+                return code
+    return ""
 
 
 async def _get_or_create(current_user: User, db: AsyncSession) -> SearchProfile:
@@ -76,7 +97,7 @@ async def put_profile(
 async def evaluate(
     request: Request,
     payload: EvaluateRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_flex),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -93,8 +114,11 @@ async def evaluate(
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
 
+    sp = await _get_or_create(current_user, db)
+    country = _infer_country(payload.country, sp)
+
     # ── Capa 1: Application Firewall (sin IA, sin coste) ──
-    firewall = application_firewall.scan_posting(payload.job_posting)
+    firewall = application_firewall.scan_posting(payload.job_posting, country=country)
 
     # Estafa clara → corte en seco: no evaluamos (ni pagamos IA por) un fraude.
     if firewall["risk_level"] == "danger":
@@ -111,7 +135,6 @@ async def evaluate(
             duplicate=None,
         )
 
-    sp = await _get_or_create(current_user, db)
     try:
         analysis = await run_in_threadpool(cv_service.analyze_offer, payload.job_posting)
     except Exception as exc:  # noqa: BLE001
@@ -129,3 +152,22 @@ async def evaluate(
     duplicate = application_firewall.find_duplicate(result["company"], result["role"], existing)
 
     return EvaluateOut(**result, firewall=firewall, duplicate=duplicate)
+
+
+@router.post("/firewall", response_model=FirewallResult)
+@limiter.limit("60/minute")
+async def firewall_scan(
+    request: Request,
+    payload: FirewallRequest,
+    current_user: User = Depends(get_current_user_flex),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Application Firewall STANDALONE: escanea una oferta buscando señales de estafa
+    SIN IA (determinista, sin gastar cuota de CV ni créditos de Groq). Ideal para
+    la extensión de navegador: filtro instantáneo antes de invertir tiempo o una
+    evaluación completa. El umbral de sueldo se ajusta por país (hint o perfil).
+    """
+    sp = await _get_or_create(current_user, db)
+    country = _infer_country(payload.country, sp)
+    return FirewallResult(**application_firewall.scan_posting(payload.job_posting, country=country))

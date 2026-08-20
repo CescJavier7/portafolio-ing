@@ -89,6 +89,63 @@ async def get_api_key_org(
     return org
 
 
+async def get_current_user_flex(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    """
+    Auth FLEXIBLE: acepta un JWT de sesión (panel) O una API key (máquinas /
+    extensión de navegador). Con API key resuelve al usuario OWNER de la org — la
+    API key es la credencial de la cuenta, así que actúa como su dueño. Se usa en
+    endpoints que sirven a AMBOS mundos (p. ej. el Application Firewall).
+
+    Distingue por formato sin ambigüedad: un JWT decodifica; una API key no (y se
+    busca por hash). Nada de contraseñas guardadas ni tokens de 15 min en la
+    extensión: la API key es revocable desde el panel.
+    """
+    unauthorized = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="No autorizado.",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    if credentials is None:
+        raise unauthorized
+    token = credentials.credentials
+
+    # 1) ¿JWT de sesión válido?
+    payload = decode_access_token(token)
+    if payload is not None:
+        try:
+            user_id = uuid.UUID(payload["sub"])
+        except (KeyError, ValueError):
+            raise unauthorized
+        user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+        if user is None:
+            raise unauthorized
+        return user
+
+    # 2) ¿API key? → OWNER de la organización dueña de la llave.
+    key = (
+        await db.execute(select(ApiKey).where(ApiKey.key_hash == hash_api_key(token)))
+    ).scalar_one_or_none()
+    if key is None or key.revoked:
+        raise unauthorized
+
+    now = datetime.now(timezone.utc)
+    if key.last_used_at is None or (now - key.last_used_at) > timedelta(minutes=5):
+        key.last_used_at = now
+        await db.commit()
+
+    owner = (
+        await db.execute(
+            select(User).where(User.organization_id == key.organization_id, User.role == "OWNER")
+        )
+    ).scalars().first()
+    if owner is None:
+        raise unauthorized
+    return owner
+
+
 def require_role(*allowed_roles: str):
     """
     Gate de RBAC para endpoints del panel (JWT, no API key). Se usa como

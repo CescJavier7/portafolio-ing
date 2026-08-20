@@ -184,9 +184,14 @@ editor + PDF ATS, tracker de postulaciones, generación por lote, API pública (
   solo WhatsApp, correo gratuito único, acortadores, empresa anónima → corta la evaluación IA si es
   estafa clara) · **Duplicate Killer** (similitud Jaccard sobre empresa+puesto vs. tu historial) ·
   CV adaptado · tracker. *No necesita scraping, extensión ni fuentes externas → 100% construible ya.*
-- **FASE 2 — Extensión de Chrome.** En cualquier oferta (Workday/Greenhouse/Lever/LinkedIn/
-  Computrabajo/páginas corp.): badge con **Score + [Adaptar CV] [Autocompletar] [Aplicar]**.
-  Human-in-the-loop. Resiliente (no depende de un solo selector).
+- **FASE 2 — Extensión de navegador (✅ MVP en `extension/`).** MV3. En cualquier oferta
+  (Workday/Greenhouse/Lever/LinkedIn/Computrabajo/páginas corp.): **🛡 Escanear** (Application
+  Firewall gratis, sin IA) · **🎯 Evaluar** (Application Score + veredicto + Duplicate Killer) ·
+  **📄 Adaptar CV** (copia la oferta y abre el generador) · **⌨ Autocompletar** (best-effort en
+  formularios estándar). Human-in-the-loop. Auth por **API key** (`get_current_user_flex` →
+  resuelve al OWNER de la org; sin sesiones de 15 min ni cookies cross-site). Extrae la oferta de
+  la pestaña activa con `activeTab`+`scripting`; las llamadas salen del popup (host_permissions →
+  sin CORS). *Pendiente pulir: selectores de autocompletado por sitio, badge in-page inyectado.*
 - **FASE 3 — Autopilot (híbrido).** Buscar → filtrar → adaptar → autocompletar/borrador → pedir
   intervención cuando toque → registrar. Envío por API oficial o extensión con usuario presente.
 - **FASE 4 — Learning Loop.** Aplicaciones → entrevistas → rechazos → aprendizaje → mejor

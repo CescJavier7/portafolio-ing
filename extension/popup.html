@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sentra — Escudo de Empleo</title>
+    <style>
+      :root {
+        --bg: #0b0f0e;
+        --panel: #121917;
+        --border: #1f2a27;
+        --text: #e7f0ed;
+        --muted: #8aa39b;
+        --brand: #22c55e;
+        --brand-dim: #16341f;
+        --danger: #ef4444;
+        --warn: #f59e0b;
+        --violet: #a78bfa;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; }
+      body {
+        width: 380px;
+        max-height: 560px;
+        overflow-y: auto;
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+        font-size: 13px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        background: var(--bg);
+        z-index: 2;
+      }
+      .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; letter-spacing: -0.02em; }
+      .brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--brand); box-shadow: 0 0 10px var(--brand); }
+      .brand small { color: var(--muted); font-weight: 600; font-size: 11px; }
+      .gear { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 16px; padding: 4px; border-radius: 6px; }
+      .gear:hover { color: var(--text); background: var(--panel); }
+      main { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+      .row { display: flex; gap: 8px; }
+      button.action {
+        flex: 1;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        color: var(--text);
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 12.5px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: transform 0.05s ease, border-color 0.15s ease;
+      }
+      button.action:hover { border-color: var(--brand); }
+      button.action:active { transform: scale(0.98); }
+      button.action:disabled { opacity: 0.5; cursor: default; }
+      button.primary { background: var(--brand); color: #04120a; border-color: var(--brand); }
+      .hint { color: var(--muted); font-size: 11.5px; line-height: 1.5; }
+      .card { border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: var(--panel); }
+      .banner { border-radius: 10px; padding: 10px 12px; border: 1px solid var(--border); }
+      .banner.danger { border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.08); }
+      .banner.caution { border-color: rgba(245, 158, 11, 0.35); background: rgba(245, 158, 11, 0.08); }
+      .banner.safe { border-color: rgba(34, 197, 94, 0.35); background: rgba(34, 197, 94, 0.06); }
+      .banner .title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px; }
+      .banner.danger .title { color: #fca5a5; }
+      .banner.caution .title { color: #fcd34d; }
+      .banner.safe .title { color: #86efac; }
+      ul.flags { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+      ul.flags li { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; color: var(--text); }
+      .sev { width: 7px; height: 7px; border-radius: 50%; margin-top: 5px; flex: none; }
+      .sev.high { background: var(--danger); }
+      .sev.medium { background: var(--warn); }
+      .sev.low { background: var(--muted); }
+      .verdict { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .badge { font-weight: 800; font-size: 12px; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; }
+      .badge.apply { background: var(--brand); color: #04120a; }
+      .badge.maybe { background: var(--warn); color: #1a1200; }
+      .badge.avoid { background: var(--danger); color: #fff; }
+      .score { font-size: 30px; font-weight: 900; letter-spacing: -0.03em; line-height: 1; }
+      .score.apply { color: var(--brand); }
+      .score.maybe { color: var(--warn); }
+      .score.avoid { color: var(--danger); }
+      .dup { border-color: rgba(167, 139, 250, 0.35); background: rgba(167, 139, 250, 0.08); }
+      .dup .title { color: var(--violet); }
+      .list { margin: 6px 0 0; padding-left: 16px; }
+      .list li { font-size: 12px; margin-bottom: 3px; }
+      .muted { color: var(--muted); }
+      .err { color: #fca5a5; font-size: 12px; }
+      .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid var(--muted); border-top-color: var(--brand); border-radius: 50%; animation: s 0.7s linear infinite; }
+      @keyframes s { to { transform: rotate(360deg); } }
+      .footlinks { display: flex; gap: 8px; }
+      .footlinks button { flex: 1; font-size: 11.5px; padding: 8px; }
+      .country-pill { color: var(--muted); font-size: 11px; }
+      a.link { color: var(--brand); text-decoration: none; }
+      a.link:hover { text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <span class="dot"></span> Sentra <small>Escudo de Empleo</small>
+      </div>
+      <button id="openOptions" class="gear" title="Opciones">⚙</button>
+    </header>
+    <main id="app">
+      <p class="hint">Cargando…</p>
+    </main>
+    <script src="common.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

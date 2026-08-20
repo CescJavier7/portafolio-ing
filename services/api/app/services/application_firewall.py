@@ -46,6 +46,69 @@ _MONEY_PERIOD_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Umbrales de "sueldo sospechoso" (USD-equivalente por período) POR PAÍS. Un monto
+# por encima de esto en una oferta "desde casa / sin experiencia" es gancho de
+# estafa. Enfocado en LatAm (mercado de Sentra). Solo se evalúan montos por
+# día/semana/hora (los mensuales legítimos NO disparan, no llevan esos períodos).
+_SALARY_THRESHOLDS: dict[str, dict[str, float]] = {
+    "EC": {"hour": 40, "day": 250, "week": 1200},   # Ecuador (SBU ~460/mes)
+    "PE": {"hour": 35, "day": 220, "week": 1100},   # Perú
+    "CO": {"hour": 35, "day": 220, "week": 1100},   # Colombia
+    "BO": {"hour": 30, "day": 180, "week": 900},    # Bolivia
+    "VE": {"hour": 30, "day": 180, "week": 900},    # Venezuela
+    "MX": {"hour": 45, "day": 300, "week": 1500},   # México
+    "AR": {"hour": 40, "day": 250, "week": 1200},   # Argentina
+    "CL": {"hour": 50, "day": 350, "week": 1700},   # Chile
+    "ES": {"hour": 60, "day": 450, "week": 2200},   # España
+    "US": {"hour": 90, "day": 800, "week": 4000},   # EE. UU.
+}
+_SALARY_DEFAULT = {"hour": 60, "day": 400, "week": 2000}  # global, conservador
+
+# Nombres/alias → código de país (para resolver el hint que llega del cliente).
+_COUNTRY_ALIASES = {
+    "ec": "EC", "ecuador": "EC",
+    "pe": "PE", "peru": "PE",
+    "co": "CO", "colombia": "CO",
+    "bo": "BO", "bolivia": "BO",
+    "ve": "VE", "venezuela": "VE",
+    "mx": "MX", "mexico": "MX",
+    "ar": "AR", "argentina": "AR",
+    "cl": "CL", "chile": "CL",
+    "es": "ES", "espana": "ES", "spain": "ES",
+    "us": "US", "usa": "US", "eeuu": "US", "estados unidos": "US", "united states": "US",
+}
+
+# Períodos que captura el regex → clave del umbral.
+_PERIOD_KEY = {
+    "hora": "hour", "hour": "hour",
+    "dia": "day", "day": "day",
+    "semana": "week", "week": "week",
+}
+
+
+def _resolve_country(country: str | None) -> str | None:
+    """Normaliza el hint de país (código o nombre) a un código conocido, o None."""
+    key = _norm_text(country).strip()
+    return _COUNTRY_ALIASES.get(key)
+
+
+# Solo NOMBRES (largos) para inferir país por substring de un texto libre; NUNCA
+# los códigos de 2 letras (darían falsos positivos: "es" aparece en "test", etc.).
+_COUNTRY_NAMES = {
+    "ecuador": "EC", "peru": "PE", "colombia": "CO", "bolivia": "BO",
+    "venezuela": "VE", "mexico": "MX", "argentina": "AR", "chile": "CL",
+    "espana": "ES", "spain": "ES", "estados unidos": "US", "united states": "US",
+}
+
+
+def country_in_text(text: str) -> str | None:
+    """Detecta el primer país nombrado en un texto libre (p. ej. 'Quito, Ecuador')."""
+    n = _norm_text(text)
+    for name, code in _COUNTRY_NAMES.items():
+        if name in n:
+            return code
+    return None
+
 
 def _strip_accents(s: str) -> str:
     return "".join(c for c in unicodedata.normalize("NFKD", s) if not unicodedata.combining(c))
@@ -95,15 +158,21 @@ _SCAM_RULES: list[tuple[str, str, list[str]]] = [
 ]
 
 
-def scan_posting(job_posting: str) -> dict:
+def scan_posting(job_posting: str, country: str | None = None) -> dict:
     """
     Escanea el texto crudo de la oferta. Devuelve:
-      { risk_level: safe|caution|danger, risk_score: 0-100, flags: [ ... ] }
+      { risk_level: safe|caution|danger, risk_score: 0-100, flags: [ ... ],
+        country: <código resuelto o ""> }
     Cada flag: { code, severity, matched } — la etiqueta legible la pone el
     frontend por `code` (i18n es/en).
+
+    `country` (código o nombre) ajusta el umbral de "sueldo absurdo": lo que es
+    escandaloso en Ecuador es normal en EE. UU. Si no se reconoce → umbral global.
     """
     raw = str(job_posting or "")
     norm = _norm_text(raw)
+    resolved_country = _resolve_country(country)
+    salary_thresholds = _SALARY_THRESHOLDS.get(resolved_country or "", _SALARY_DEFAULT)
     flags: list[dict] = []
 
     def add(code: str, severity: str, matched: str = "") -> None:
@@ -117,15 +186,11 @@ def scan_posting(job_posting: str) -> dict:
                 add(code, severity, p)
                 break
 
-    # ── Sueldo absurdo: monto alto por día/semana/hora ──
+    # ── Sueldo absurdo: monto alto por día/semana/hora (umbral por país) ──
     for amount_raw, period in _MONEY_PERIOD_RE.findall(raw):
         amount = _parse_amount(amount_raw)
-        period_n = _norm_text(period)
-        threshold = {
-            "hora": 80, "hour": 80,
-            "dia": 400, "day": 400,
-            "semana": 2500, "week": 2500,
-        }.get(period_n)
+        key = _PERIOD_KEY.get(_norm_text(period))
+        threshold = salary_thresholds.get(key) if key else None
         if threshold and amount >= threshold:
             add("unreal_salary", "high", f"{amount_raw}/{period}")
             break
@@ -156,7 +221,7 @@ def scan_posting(job_posting: str) -> dict:
     else:
         level = "safe"
 
-    return {"risk_level": level, "risk_score": score, "flags": flags}
+    return {"risk_level": level, "risk_score": score, "flags": flags, "country": resolved_country or ""}
 
 
 def _parse_amount(raw: str) -> float:

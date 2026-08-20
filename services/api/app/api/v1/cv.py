@@ -64,27 +64,54 @@ async def _get_owned_cv(cv_id: str, current_user: User, db: AsyncSession) -> CVD
     return cv
 
 
-async def _enforce_cv_quota(current_user: User, db: AsyncSession) -> None:
-    """
-    Cuota SEMANAL freemium (0 = ilimitado). Cuenta los CVs creados por el
-    usuario en los últimos 7 días (ventana rodante). Lo usan TANTO generar
-    como 'mejorar con IA' — cada mejora crea una versión nueva y por eso
-    consume 1 crédito. Lanza 402 si se agotó.
-    """
-    org = await db.get(Organization, current_user.organization_id)
-    limit = plan_for(org.plan if org else None).cv_per_week
-    if limit == 0:
-        return
-    window_start = datetime.now(timezone.utc) - timedelta(days=7)
-    count_result = await db.execute(
+async def _count_cvs_since(current_user: User, db: AsyncSession, days: int) -> int:
+    window_start = datetime.now(timezone.utc) - timedelta(days=days)
+    result = await db.execute(
         select(func.count())
         .select_from(CVDocument)
         .where(CVDocument.user_id == current_user.id, CVDocument.created_at >= window_start)
     )
-    if count_result.scalar_one() >= limit:
+    return int(result.scalar_one())
+
+
+async def _cv_quota_state(current_user: User, db: AsyncSession) -> dict:
+    """
+    Estado de cuota del usuario. Aplica DOS ventanas rodantes: semanal (FREE) y
+    mensual (planes de pago, para no quemar créditos de Groq). Devuelve la ventana
+    MÁS restrictiva (la de menos créditos restantes). `remaining=None` → ilimitado.
+    Generar Y 'mejorar con IA' cuentan (cada uno crea un CVDocument).
+    """
+    org = await db.get(Organization, current_user.organization_id)
+    plan = plan_for(org.plan if org else None)
+    windows = []
+    if plan.cv_per_week > 0:
+        windows.append(("week", plan.cv_per_week, 7))
+    if plan.cv_per_month > 0:
+        windows.append(("month", plan.cv_per_month, 30))
+    if not windows:
+        return {"limit": 0, "used": 0, "remaining": None, "period": "unlimited"}
+
+    binding: dict | None = None
+    for period, limit, days in windows:
+        used = await _count_cvs_since(current_user, db, days)
+        remaining = max(0, limit - used)
+        cand = {"limit": limit, "used": used, "remaining": remaining, "period": period}
+        if binding is None or remaining < binding["remaining"]:
+            binding = cand
+    return binding  # type: ignore[return-value]
+
+
+_PERIOD_ES = {"week": "esta semana", "month": "este mes"}
+
+
+async def _enforce_cv_quota(current_user: User, db: AsyncSession) -> None:
+    """Lanza 402 si el usuario agotó su cuota (la ventana más restrictiva)."""
+    state = await _cv_quota_state(current_user, db)
+    if state["remaining"] is not None and state["remaining"] <= 0:
+        cuando = _PERIOD_ES.get(state["period"], "en este período")
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
-            detail=f"Alcanzaste tu límite de {limit} CVs esta semana. Mejora tu plan para generar sin límite.",
+            detail=f"Alcanzaste tu límite de {state['limit']} CVs {cuando}. Se renueva de forma rodante.",
         )
 
 
@@ -346,22 +373,12 @@ async def apply_email(
 @router.get("/quota")
 async def cv_quota(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     """
-    Cuántas generaciones de IA le quedan al usuario esta semana. Lo usa el
-    wizard para BLOQUEAR las 'varitas mágicas' al agotarse (pero dejar el editor
-    manual funcionando). remaining=None → plan ilimitado.
+    Cuántas generaciones de IA le quedan al usuario en la ventana más restrictiva
+    (semanal en FREE, mensual en planes de pago). Lo usa el wizard para BLOQUEAR
+    las 'varitas mágicas' al agotarse (pero dejar el editor manual funcionando).
+    remaining=None → plan sin tope. `period` indica de qué ventana es el límite.
     """
-    org = await db.get(Organization, current_user.organization_id)
-    limit = plan_for(org.plan if org else None).cv_per_week
-    if limit == 0:
-        return {"limit": 0, "used": 0, "remaining": None}
-    window_start = datetime.now(timezone.utc) - timedelta(days=7)
-    used_result = await db.execute(
-        select(func.count())
-        .select_from(CVDocument)
-        .where(CVDocument.user_id == current_user.id, CVDocument.created_at >= window_start)
-    )
-    used = used_result.scalar_one()
-    return {"limit": limit, "used": used, "remaining": max(0, limit - used)}
+    return await _cv_quota_state(current_user, db)
 
 
 # ── Carpetas / categorías ──────────────────────────────────────────────

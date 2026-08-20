@@ -36,6 +36,13 @@ class SearchProfileOut(SearchProfileIn):
 
 class EvaluateRequest(BaseModel):
     job_posting: str = Field(min_length=30, max_length=15000)
+    country: str = Field(default="", max_length=40)  # hint para el umbral de sueldo
+
+
+class FirewallRequest(BaseModel):
+    """Escaneo anti-estafa standalone (sin IA, sin gastar cuota)."""
+    job_posting: str = Field(min_length=10, max_length=15000)
+    country: str = Field(default="", max_length=40)
 
 
 class ScoreBreakdown(BaseModel):
@@ -57,6 +64,7 @@ class FirewallResult(BaseModel):
     risk_level: str                  # safe | caution | danger
     risk_score: int                  # 0-100 (mayor = más riesgo)
     flags: list[FirewallFlag]
+    country: str = ""                # código de país usado para el umbral de sueldo
 
 
 class DuplicateMatch(BaseModel):

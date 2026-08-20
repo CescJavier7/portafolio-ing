@@ -953,6 +953,7 @@ export interface SentraFirewall {
   risk_level: SentraRiskLevel;
   risk_score: number;
   flags: SentraFirewallFlag[];
+  country?: string;
 }
 export interface SentraDuplicateMatch {
   company: string;
@@ -1000,6 +1001,7 @@ export interface SentraCVQuota {
   limit: number;
   used: number;
   remaining: number | null; // null = ilimitado (planes de pago)
+  period?: 'week' | 'month' | 'unlimited'; // ventana del límite vigente
 }
 
 // Cuántas generaciones/mejoras con IA le quedan al usuario esta semana. El
