@@ -765,6 +765,7 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
               plan={user?.plan}
               defaultProfile={profileText}
               onViewApplications={() => setToolTab('applications')}
+              onConfigureTarget={() => setToolTab('agent')}
             />
               </>
             )}

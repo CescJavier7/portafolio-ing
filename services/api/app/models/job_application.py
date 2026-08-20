@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import String, DateTime, Text, ForeignKey
+from sqlalchemy import String, DateTime, Text, ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -42,6 +42,8 @@ class JobApplication(Base):
 
     # saved | applied | interview | offer | rejected
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="saved", index=True)
+    # Application Score (0-100) con el que se decidió aplicar (del Job Agent). Opcional.
+    score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     notes: Mapped[str] = mapped_column(Text, nullable=False, default="")
 
     # Fecha en que se marcó como "postulado" (opcional).

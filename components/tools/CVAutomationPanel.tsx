@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import {
-  Rocket, Zap, Copy, Check, KeyRound, ArrowUpRight, ChevronDown, Plus, Trash2, Loader2, Briefcase, Terminal,
+  Rocket, Zap, Copy, Check, KeyRound, ArrowUpRight, ChevronDown, Plus, Trash2, Loader2, Briefcase, Terminal, Target, Filter,
 } from 'lucide-react';
 import {
   sentraGenerateCV,
-  sentraJobMeta,
+  sentraEvaluateOffer,
   sentraCreateApplication,
   SentraApiError,
 } from '@/lib/sentra/api';
@@ -67,18 +67,21 @@ const T = {
     postingsLabel: 'Ofertas a las que postular',
     postingPh: 'Pega aquí la descripción de una vacante…',
     addPosting: 'Agregar otra oferta',
-    run: 'Generar todo y registrar',
-    running: 'Generando…',
-    progress: (i: number, n: number) => `Generando ${i} de ${n}…`,
-    doneMsg: (ok: number, fail: number) =>
-      fail > 0
-        ? `${ok} postulación(es) lista(s), ${fail} fallaron. Míralas en Postulaciones.`
-        : `¡Listo! ${ok} CV(s) generado(s) y registrado(s) en tus Postulaciones.`,
+    run: 'Evaluar, filtrar y postular',
+    running: 'Trabajando…',
+    progress: (i: number, n: number) => `Procesando ${i} de ${n}…`,
+    doneMsg: (gen: number, disc: number, fail: number, avg: number) =>
+      `Sentra evaluó ${gen + disc + fail} ofertas · descartó ${disc} por score bajo · preparó ${gen}` +
+      (gen ? ` (score promedio ${avg})` : '') +
+      (fail ? ` · ${fail} fallaron` : '') + '. Están en tus Postulaciones.',
     viewApps: 'Ver mis postulaciones',
     needProfile: 'Pega tu perfil y al menos una oferta.',
     genericErr: 'No se pudo completar. Inténtalo de nuevo.',
     fallbackCompany: 'Empresa',
     fallbackRole: 'Puesto',
+    gateLabel: 'Descartar ofertas con score menor a',
+    gateHint: 'El score usa tu Objetivo. Configúralo para mejores decisiones.',
+    configTarget: 'Configurar mi Objetivo',
     upsellTitle: 'La postulación en lote es Pro',
     upsellBody: 'Genera CVs a medida para varias vacantes de una y síguelas todas en tu cuenta. Desbloquéalo con el plan Pro ($10/mes, todo incluido).',
     upsellCta: 'Desbloquear con Pro',
@@ -106,18 +109,21 @@ const T = {
     postingsLabel: 'Jobs to apply to',
     postingPh: 'Paste a job posting here…',
     addPosting: 'Add another posting',
-    run: 'Generate all & track',
-    running: 'Generating…',
-    progress: (i: number, n: number) => `Generating ${i} of ${n}…`,
-    doneMsg: (ok: number, fail: number) =>
-      fail > 0
-        ? `${ok} application(s) ready, ${fail} failed. See them in Applications.`
-        : `Done! ${ok} CV(s) generated and tracked in your Applications.`,
+    run: 'Evaluate, filter & apply',
+    running: 'Working…',
+    progress: (i: number, n: number) => `Processing ${i} of ${n}…`,
+    doneMsg: (gen: number, disc: number, fail: number, avg: number) =>
+      `Sentra evaluated ${gen + disc + fail} jobs · discarded ${disc} for low score · prepared ${gen}` +
+      (gen ? ` (avg score ${avg})` : '') +
+      (fail ? ` · ${fail} failed` : '') + '. They are in your Applications.',
     viewApps: 'View my applications',
     needProfile: 'Paste your profile and at least one posting.',
     genericErr: 'Could not complete. Please try again.',
     fallbackCompany: 'Company',
     fallbackRole: 'Role',
+    gateLabel: 'Discard jobs scoring below',
+    gateHint: 'The score uses your Target. Configure it for better decisions.',
+    configTarget: 'Set up my Target',
     upsellTitle: 'Batch apply is Pro',
     upsellBody: 'Tailor CVs for several jobs at once and track them all in your account. Unlock it with Pro ($10/mo, all included).',
     upsellCta: 'Unlock with Pro',
@@ -160,17 +166,20 @@ export default function CVAutomationPanel({
   plan,
   defaultProfile = '',
   onViewApplications,
+  onConfigureTarget,
 }: {
   lang: 'es' | 'en';
   plan?: string;
   defaultProfile?: string;
   onViewApplications?: () => void;
+  onConfigureTarget?: () => void;
 }) {
   const t = T[lang === 'en' ? 'en' : 'es'];
   const isPro = plan === 'PRO' || plan === 'TEAM' || plan === 'ENTERPRISE';
 
   const [profile, setProfile] = useState(defaultProfile);
   const [postings, setPostings] = useState<string[]>(['']);
+  const [threshold, setThreshold] = useState(65);
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [resultMsg, setResultMsg] = useState<string | null>(null);
@@ -191,34 +200,37 @@ export default function CVAutomationPanel({
     setError(null);
     setResultMsg(null);
     setRunning(true);
-    let ok = 0;
-    let fail = 0;
+    let generated = 0;
+    let discarded = 0;
+    let failed = 0;
+    let scoreSum = 0;
     for (let i = 0; i < valid.length; i++) {
       setProgress({ done: i, total: valid.length });
       try {
-        const cv = await sentraGenerateCV({ profile_text: profile.trim(), job_posting: valid[i] });
-        let company = '';
-        let role = '';
-        try {
-          const m = await sentraJobMeta(valid[i]);
-          company = m.company;
-          role = m.role;
-        } catch {
-          /* si falla la extracción, usamos fallback */
+        // 1) EVALUAR (barato, rules-first): decide si vale la pena antes de gastar la generación.
+        const ev = await sentraEvaluateOffer(valid[i]);
+        if (ev.score < threshold) {
+          discarded++;
+          continue; // basura → ni se genera el CV
         }
+        // 2) Solo las buenas: generar CV + registrar postulación con su score.
+        const cv = await sentraGenerateCV({ profile_text: profile.trim(), job_posting: valid[i] });
         await sentraCreateApplication({
-          company: company || t.fallbackCompany,
-          role: role || t.fallbackRole,
+          company: ev.company || t.fallbackCompany,
+          role: ev.role || t.fallbackRole,
           cv_document_id: cv.id,
+          score: ev.score,
         });
-        ok++;
+        generated++;
+        scoreSum += ev.score;
       } catch (err) {
-        fail++;
+        failed++;
         if (err instanceof SentraApiError && err.status === 402) break; // sin cuota → detener
       }
     }
     setProgress({ done: valid.length, total: valid.length });
-    setResultMsg(t.doneMsg(ok, fail));
+    const avg = generated ? Math.round(scoreSum / generated) : 0;
+    setResultMsg(t.doneMsg(generated, discarded, failed, avg));
     setRunning(false);
   }
 
@@ -287,6 +299,30 @@ export default function CVAutomationPanel({
                   <Plus className="w-4 h-4" /> {t.addPosting}
                 </button>
               )}
+            </div>
+
+            {/* Umbral de auto-descarte (el "menos aplicaciones basura") */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-zinc-800 px-4 py-3">
+              <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-zinc-700 dark:text-zinc-200">
+                <Filter className="w-4 h-4 text-green-500" /> {t.gateLabel}
+              </span>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={threshold}
+                onChange={(e) => setThreshold(Math.max(0, Math.min(100, Number(e.target.value) || 0)))}
+                disabled={running}
+                className="w-16 rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-sm font-bold text-center text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500/40"
+              />
+              <span className="text-[12px] text-zinc-400 dark:text-zinc-500 basis-full sm:basis-auto flex items-center gap-2">
+                {t.gateHint}
+                {onConfigureTarget && (
+                  <button onClick={onConfigureTarget} className="inline-flex items-center gap-1 font-semibold text-green-600 dark:text-green-400 hover:underline">
+                    <Target className="w-3.5 h-3.5" /> {t.configTarget}
+                  </button>
+                )}
+              </span>
             </div>
 
             {error && <p className="text-[13px] text-red-500">{error}</p>}

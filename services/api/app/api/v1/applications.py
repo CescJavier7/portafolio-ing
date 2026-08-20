@@ -81,6 +81,7 @@ async def create_application(
         status=payload.status,
         notes=payload.notes.strip(),
         applied_at=applied_at,
+        score=payload.score,
     )
     db.add(app)
     await db.commit()

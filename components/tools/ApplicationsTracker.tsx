@@ -192,6 +192,21 @@ export default function ApplicationsTracker({ lang }: { lang: 'es' | 'en' }) {
                 <p className="text-[13px] text-zinc-500 dark:text-zinc-400 truncate">{a.role}</p>
               </div>
 
+              {a.score != null && (
+                <span
+                  title="Application Score"
+                  className={`shrink-0 text-[12px] font-black px-2 py-0.5 rounded-md ${
+                    a.score >= 80
+                      ? 'bg-green-500/15 text-green-600 dark:text-green-400'
+                      : a.score >= 65
+                      ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                      : 'bg-red-500/15 text-red-600 dark:text-red-400'
+                  }`}
+                >
+                  {a.score}
+                </span>
+              )}
+
               {a.job_url && (
                 <a
                   href={a.job_url}

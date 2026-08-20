@@ -889,6 +889,7 @@ export interface SentraApplication {
   notes: string;
   cv_document_id: string | null;
   applied_at: string | null;
+  score: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -899,6 +900,7 @@ export interface SentraApplicationInput {
   status?: SentraAppStatus;
   notes?: string;
   cv_document_id?: string | null;
+  score?: number | null;
 }
 export async function sentraListApplications(): Promise<SentraApplication[]> {
   return request('/api/v1/applications', { method: 'GET' }, true);

@@ -238,7 +238,8 @@ services/api/
   normalizado con ids), match_score, job_posting, folder_id, user_id.
 - **cv_folders** — carpetas para organizar los CVs del usuario.
 - **job_applications** — tracker de postulaciones (Sentra CV AI): company, role, job_url,
-  status (saved/applied/interview/offer/rejected), cv_document_id (opt, SET NULL), user_id.
+  status (saved/applied/interview/offer/rejected), **score** (Application Score con el que se
+  decidió aplicar), cv_document_id (opt, SET NULL), user_id.
 - **search_profiles** — Job Agent (Fase 1): perfil de BÚSQUEDA por usuario (qué quiere / qué
   NO): target_role, seniority, technologies, modalities, locations, min_salary,
   max_required_experience, deal_breakers, blocked_companies… Base del Application Score.
@@ -270,7 +271,8 @@ a7c3e9f21b84 cv_profile (columna en cv_documents)
 b9e4d1f7a802 payment_requests (billing manual/PayPhone)
 f1a2b3c4d5e6 plan_expires_at (ciclo de suscripción)
 a2b3c4d5e6f7 job_applications (tracker de postulaciones)
-b3c4d5e6f7a8 search_profiles (Job Agent — perfil de búsqueda)   ← HEAD
+b3c4d5e6f7a8 search_profiles (Job Agent — perfil de búsqueda)
+c4d5e6f7a8b9 job_applications.score (Application Score persistido)   ← HEAD
 ```
 Las migraciones **se aplican solas al arrancar** `sentra-api` (ver `entrypoint.sh`).
 

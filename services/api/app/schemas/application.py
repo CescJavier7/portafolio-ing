@@ -15,6 +15,7 @@ class ApplicationCreate(BaseModel):
     notes: str = Field(default="", max_length=2000)
     cv_document_id: uuid.UUID | None = None
     applied_at: datetime | None = None
+    score: int | None = Field(default=None, ge=0, le=100)
 
 
 class ApplicationUpdate(BaseModel):
@@ -39,5 +40,6 @@ class ApplicationOut(BaseModel):
     notes: str
     cv_document_id: uuid.UUID | None
     applied_at: datetime | None
+    score: int | None
     created_at: datetime
     updated_at: datetime
