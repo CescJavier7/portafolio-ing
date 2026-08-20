@@ -8,6 +8,9 @@ const DEFAULTS = {
   country: 'EC',
   appBase: 'https://cescjavier.dev',
   lang: 'es',
+  // Badge inyectado in-page (FASE 2.1)
+  enableBadge: true, // mostrar el badge flotante en sitios de empleo
+  autoScan: true, // escaneo anti-estafa automático (gratis) al abrir la oferta
   // Datos para autocompletar formularios (opcionales)
   fullName: '',
   email: '',

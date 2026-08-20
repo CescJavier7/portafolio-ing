@@ -1,5 +1,6 @@
 // extension/options.js
 const FIELDS = ['apiKey', 'country', 'lang', 'apiBase', 'fullName', 'email', 'phone'];
+const CHECKS = ['enableBadge', 'autoScan'];
 const statusEl = document.getElementById('status');
 
 function setStatus(msg, cls) {
@@ -13,6 +14,10 @@ async function restore() {
     const node = document.getElementById(f);
     if (node) node.value = cfg[f] ?? '';
   }
+  for (const c of CHECKS) {
+    const node = document.getElementById(c);
+    if (node) node.checked = cfg[c] !== false; // default true
+  }
 }
 
 async function save() {
@@ -20,6 +25,10 @@ async function save() {
   for (const f of FIELDS) {
     const node = document.getElementById(f);
     if (node) patch[f] = node.value.trim();
+  }
+  for (const c of CHECKS) {
+    const node = document.getElementById(c);
+    if (node) patch[c] = node.checked;
   }
   await saveConfig(patch);
   setStatus('✓ Guardado', 'ok');

@@ -39,46 +39,22 @@ function el(tag, opts = {}, children = []) {
 function clear() { app.replaceChildren(); }
 
 // ── Extracción / autocompletado en la pestaña activa ──
-function pageExtractor() {
-  const sel = ((window.getSelection && window.getSelection().toString()) || '').trim();
-  let text = sel;
-  if (text.length < 80) {
-    const pick = document.querySelector('main, article, [role="main"]') || document.body;
-    text = ((pick && pick.innerText) || document.body.innerText || '').trim();
-  }
-  text = text.replace(/\n{3,}/g, '\n\n').slice(0, 12000);
-  const m = (document.body.innerText || '').match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-  return { text, email: m ? m[0] : '', title: document.title, url: location.href };
-}
-
-function pageAutofill(data) {
-  let filled = 0;
-  const setVal = (node, val) => {
-    if (!node || !val) return;
-    node.focus();
-    node.value = val;
-    node.dispatchEvent(new Event('input', { bubbles: true }));
-    node.dispatchEvent(new Event('change', { bubbles: true }));
-    filled++;
-  };
-  setVal(document.querySelector('input[type=email], input[name*=email i], input[id*=email i]'), data.email);
-  setVal(document.querySelector('input[type=tel], input[name*=phone i], input[name*=tel i], input[id*=phone i]'), data.phone);
-  setVal(
-    document.querySelector('input[name*=name i]:not([name*=user i]):not([name*=company i]), input[id*=fullname i]'),
-    data.fullName,
-  );
-  return filled;
-}
-
+// Reutiliza adapters.js (misma fuente que el badge): se inyecta el archivo y
+// luego se invocan sus funciones globales (SENTRA_extractOffer / SENTRA_fillForm).
 async function activeTabId() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   return tab ? tab.id : null;
 }
 
+async function injectAdapters(tabId) {
+  await chrome.scripting.executeScript({ target: { tabId }, files: ['adapters.js'] });
+}
+
 async function extractActiveTab() {
   const tabId = await activeTabId();
   if (tabId == null) throw new Error('No hay pestaña activa.');
-  const [res] = await chrome.scripting.executeScript({ target: { tabId }, func: pageExtractor });
+  await injectAdapters(tabId);
+  const [res] = await chrome.scripting.executeScript({ target: { tabId }, func: () => SENTRA_extractOffer() });
   const data = res && res.result;
   if (!data || !data.text || data.text.length < 30) {
     throw new Error('No encontré una oferta en esta página. Selecciona el texto de la vacante e inténtalo de nuevo.');
@@ -220,9 +196,10 @@ async function autofill() {
     return;
   }
   const tabId = await activeTabId();
+  await injectAdapters(tabId);
   const [res] = await chrome.scripting.executeScript({
     target: { tabId },
-    func: pageAutofill,
+    func: (d) => SENTRA_fillForm(d),
     args: [{ fullName: cfg.fullName, email: cfg.email, phone: cfg.phone }],
   });
   const n = (res && res.result) || 0;

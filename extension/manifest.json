@@ -1,13 +1,38 @@
 {
   "manifest_version": 3,
   "name": "Sentra — Escudo de Empleo",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Detecta estafas laborales y evalúa si vale la pena aplicar, en cualquier oferta. Por Sentra (cescjavier.dev).",
   "permissions": ["activeTab", "scripting", "storage"],
   "host_permissions": ["https://api.cescjavier.dev/*"],
+  "background": { "service_worker": "background.js" },
   "action": {
     "default_title": "Sentra — Escudo de Empleo",
     "default_popup": "popup.html"
   },
-  "options_page": "options.html"
+  "options_page": "options.html",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.linkedin.com/*",
+        "https://*.indeed.com/*",
+        "https://*.glassdoor.com/*",
+        "https://*.myworkdayjobs.com/*",
+        "https://*.greenhouse.io/*",
+        "https://boards.greenhouse.io/*",
+        "https://*.lever.co/*",
+        "https://jobs.lever.co/*",
+        "https://*.computrabajo.com/*",
+        "https://*.computrabajo.com.mx/*",
+        "https://*.computrabajo.com.co/*",
+        "https://*.computrabajo.com.pe/*",
+        "https://*.computrabajo.com.ar/*",
+        "https://*.getonbrd.com/*",
+        "https://*.multitrabajos.com/*",
+        "https://*.occ.com.mx/*"
+      ],
+      "js": ["adapters.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ]
 }

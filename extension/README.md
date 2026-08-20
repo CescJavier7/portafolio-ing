@@ -6,6 +6,9 @@ Workday, Greenhouse, Lever, páginas corporativas…), sin copiar y pegar en el 
 
 ## Qué hace
 
+Dos formas de usarla: el **badge flotante** (aparece solo sobre la oferta) y el
+**popup** (clic en el ícono, funciona en cualquier página).
+
 - **🛡 Escanear (gratis, sin IA):** detecta señales de estafa laboral en la oferta
   de la pestaña activa (pago por adelantado, cripto, datos sensibles, sueldo absurdo
   ajustado a tu país, contacto solo WhatsApp, correo gratuito, acortadores, empresa
@@ -14,7 +17,29 @@ Workday, Greenhouse, Lever, páginas corporativas…), sin copiar y pegar en el 
   Score + veredicto + "¿por qué NO aplicar?") y avisa si ya te postulaste a algo
   casi idéntico (Duplicate Killer). Consume 1 crédito de tu cuota mensual.
 - **📄 Adaptar CV:** copia la oferta y abre el generador de CV para adaptarlo.
-- **⌨ Autocompletar:** rellena nombre/correo/teléfono en formularios estándar.
+- **⌨ Autocompletar:** rellena nombre/correo/teléfono en formularios, con
+  **selectores por sitio** (Workday/Greenhouse/Lever/LinkedIn) y fallback genérico.
+
+### Badge flotante in-page (FASE 2.1)
+
+En sitios de empleo (LinkedIn, Computrabajo, Workday, Greenhouse, Lever, Indeed,
+getonbrd, occ, multitrabajos…) aparece un badge abajo a la derecha **solo cuando
+la página parece una oferta**. Con "escaneo automático" activo, corre el firewall
+(gratis) al abrir la vacante y colorea el badge por riesgo (verde/ámbar/rojo). Un
+clic despliega el detalle y los botones Evaluar / Adaptar CV / Autocompletar.
+Funciona en SPAs (reevalúa al navegar dentro de LinkedIn). La UI vive en un
+**Shadow DOM** → no choca con los estilos del sitio ni al revés.
+
+Se apaga o ajusta desde **Opciones → Badge in-page** (mostrar badge / escaneo
+automático). "Evaluar (IA)" siempre es manual: nunca gasta crédito sin tu clic.
+
+### Arquitectura (MV3)
+
+`content.js` (badge, Shadow DOM) + `adapters.js` (extracción y autofill por sitio,
+compartidos con el popup) → mensajes a `background.js` (service worker) que hace el
+fetch a la API (contexto de extensión con `host_permissions` → sin CORS; los content
+scripts sí sufren el CORS de la página, por eso el proxy). El popup usa `activeTab`
++ `scripting` e inyecta `adapters.js` para reutilizar la misma extracción/autofill.
 
 ## Instalar (modo desarrollador)
 

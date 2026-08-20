@@ -22,6 +22,8 @@
       legend { padding: 0 6px; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
       label { display: block; font-weight: 600; margin: 12px 0 5px; }
       label:first-of-type { margin-top: 0; }
+      label.check { display: flex; align-items: center; gap: 9px; font-weight: 600; cursor: pointer; }
+      label.check input { width: auto; }
       .desc { color: var(--muted); font-size: 12px; margin: -2px 0 6px; }
       input, select {
         width: 100%; background: #0e1513; color: var(--text);
@@ -85,6 +87,14 @@
         <label for="apiBase" style="margin-top:12px">URL de la API (avanzado)</label>
         <div class="desc">Déjalo por defecto salvo que pruebes en local.</div>
         <input id="apiBase" type="text" placeholder="https://api.cescjavier.dev" />
+      </fieldset>
+
+      <fieldset>
+        <legend>Badge in-page</legend>
+        <label class="check"><input id="enableBadge" type="checkbox" /> Mostrar el badge flotante en sitios de empleo</label>
+        <div class="desc">LinkedIn, Computrabajo, Workday, Greenhouse, Lever, Indeed y más.</div>
+        <label class="check" style="margin-top:10px"><input id="autoScan" type="checkbox" /> Escaneo anti-estafa automático (gratis) al abrir una oferta</label>
+        <div class="desc">Solo el escaneo del firewall es automático; “Evaluar (IA)” siempre es manual.</div>
       </fieldset>
 
       <fieldset>

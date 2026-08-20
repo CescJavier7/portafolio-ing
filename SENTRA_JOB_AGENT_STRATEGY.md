@@ -191,7 +191,10 @@ editor + PDF ATS, tracker de postulaciones, generación por lote, API pública (
   formularios estándar). Human-in-the-loop. Auth por **API key** (`get_current_user_flex` →
   resuelve al OWNER de la org; sin sesiones de 15 min ni cookies cross-site). Extrae la oferta de
   la pestaña activa con `activeTab`+`scripting`; las llamadas salen del popup (host_permissions →
-  sin CORS). *Pendiente pulir: selectores de autocompletado por sitio, badge in-page inyectado.*
+  sin CORS). **FASE 2.1 (✅):** badge flotante inyectado in-page (Shadow DOM) que auto-escanea el
+  firewall (gratis) sobre la propia oferta en sitios curados, con manejo de SPA; autocompletado con
+  **selectores por sitio** compartidos entre badge y popup (`adapters.js`); service worker de proxy
+  de red (los content scripts sufren el CORS de la página). *Pendiente: páginas corp. genéricas.*
 - **FASE 3 — Autopilot (híbrido).** Buscar → filtrar → adaptar → autocompletar/borrador → pedir
   intervención cuando toque → registrar. Envío por API oficial o extensión con usuario presente.
 - **FASE 4 — Learning Loop.** Aplicaciones → entrevistas → rechazos → aprendizaje → mejor
