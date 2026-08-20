@@ -22,6 +22,7 @@ import CVTour, { type CVTourDict } from '@/components/tools/CVTour';
 import CVWizard from '@/components/tools/CVWizard';
 import CVAutomationPanel from '@/components/tools/CVAutomationPanel';
 import ApplicationsTracker from '@/components/tools/ApplicationsTracker';
+import JobAgentTab from '@/components/tools/JobAgentTab';
 
 // Chequeo cliente de "texto legible" (espejo EXACTO del backend text_guard):
 // la señal fuerte es la longitud media de palabra. Un PDF de Canva (glifos sin
@@ -215,7 +216,7 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
   const [moveOpenId, setMoveOpenId] = useState<string | null>(null); // fila con el menú "Mover" abierto
   const [pdfBusy, setPdfBusy] = useState(false);
   const [tourSignal, setTourSignal] = useState(0); // >0 = disparar tutorial a mano
-  const [toolTab, setToolTab] = useState<'generate' | 'applications'>('generate');
+  const [toolTab, setToolTab] = useState<'generate' | 'agent' | 'applications'>('generate');
   const fileRef = useRef<HTMLInputElement>(null);
   const pdfRef = useRef<HTMLInputElement>(null);
 
@@ -426,8 +427,8 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
         ) : (
           <>
             {/* Pestañas: Generar CV | Postulaciones (tracker de automatización) */}
-            <div className="flex justify-center gap-2 mb-8">
-              {(['generate', 'applications'] as const).map((tab) => (
+            <div className="flex flex-wrap justify-center gap-2 mb-8">
+              {(['generate', 'agent', 'applications'] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setToolTab(tab)}
@@ -439,6 +440,8 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
                 >
                   {tab === 'generate'
                     ? lang === 'en' ? 'Generate CV' : 'Generar CV'
+                    : tab === 'agent'
+                    ? lang === 'en' ? 'Target' : 'Objetivo'
                     : lang === 'en' ? 'Applications' : 'Postulaciones'}
                 </button>
               ))}
@@ -446,6 +449,8 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
 
             {toolTab === 'applications' ? (
               <ApplicationsTracker lang={lang as 'es' | 'en'} />
+            ) : toolTab === 'agent' ? (
+              <JobAgentTab lang={lang as 'es' | 'en'} />
             ) : (
               <>
             {/* Tour interactivo: automático la 1ª vez + manual desde el botón flotante */}

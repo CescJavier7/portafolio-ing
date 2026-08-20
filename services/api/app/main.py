@@ -16,6 +16,7 @@ from app.api.v1.webhooks import router as webhooks_router
 from app.api.v1.audit import router as audit_router
 from app.api.v1.cv import router as cv_router
 from app.api.v1.applications import router as applications_router
+from app.api.v1.agent import router as agent_router
 from app.api.v1.manual_billing import router as manual_billing_router
 from app.api.v1.payphone_billing import router as payphone_billing_router
 from app.core.config import get_settings
@@ -55,6 +56,7 @@ app.include_router(webhooks_router, prefix="/api/v1")
 app.include_router(audit_router, prefix="/api/v1")
 app.include_router(cv_router, prefix="/api/v1")
 app.include_router(applications_router, prefix="/api/v1")
+app.include_router(agent_router, prefix="/api/v1")
 app.include_router(manual_billing_router, prefix="/api/v1")
 app.include_router(payphone_billing_router, prefix="/api/v1")
 

@@ -239,6 +239,9 @@ services/api/
 - **cv_folders** — carpetas para organizar los CVs del usuario.
 - **job_applications** — tracker de postulaciones (Sentra CV AI): company, role, job_url,
   status (saved/applied/interview/offer/rejected), cv_document_id (opt, SET NULL), user_id.
+- **search_profiles** — Job Agent (Fase 1): perfil de BÚSQUEDA por usuario (qué quiere / qué
+  NO): target_role, seniority, technologies, modalities, locations, min_salary,
+  max_required_experience, deal_breakers, blocked_companies… Base del Application Score.
 
 ### Base del portafolio (Prisma)
 - **ChatSession**, **Message** (enum Role, SessionStatus) — chatbot MekaSenku.
@@ -266,7 +269,8 @@ f8b2d4a6c159 cv_folders
 a7c3e9f21b84 cv_profile (columna en cv_documents)
 b9e4d1f7a802 payment_requests (billing manual/PayPhone)
 f1a2b3c4d5e6 plan_expires_at (ciclo de suscripción)
-a2b3c4d5e6f7 job_applications (tracker de postulaciones)   ← HEAD
+a2b3c4d5e6f7 job_applications (tracker de postulaciones)
+b3c4d5e6f7a8 search_profiles (Job Agent — perfil de búsqueda)   ← HEAD
 ```
 Las migraciones **se aplican solas al arrancar** `sentra-api` (ver `entrypoint.sh`).
 
@@ -289,6 +293,9 @@ Las migraciones **se aplican solas al arrancar** `sentra-api` (ver `entrypoint.s
   anclado por ids (`cv_service` + `cv_prompts`) anti-invención.
 - **applications** — tracker de postulaciones (user-scoped): list/create/patch/delete. Enlaza
   opcionalmente un CV. Ver `applications.py`.
+- **agent** — Job Agent (Fase 1): `GET/PUT /agent/profile` (perfil de búsqueda), `POST
+  /agent/evaluate` (Application Score + veredicto apply/maybe/avoid + "¿por qué NO aplicar?").
+  Scoring **rules-first** (`services/application_scoring.py`); IA solo para analizar la oferta.
 - **public/cv/generate** (POST) — genera/adapta un CV por **API key** (Pro+), stateless;
   motor de la automatización con n8n → Notion. Ver `public.py`.
 - **targets** — CRUD dominios, instructions, verify (DNS TXT), scan, scans (historial),

@@ -916,6 +916,59 @@ export async function sentraDeleteApplication(id: string): Promise<void> {
   await request(`/api/v1/applications/${id}`, { method: 'DELETE' }, true);
 }
 
+// ── Job Agent: perfil de búsqueda + Application Score ─────────────────
+export interface SentraSearchProfile {
+  id: string;
+  target_role: string;
+  seniority: string; // '' | junior | mid | senior
+  user_years_experience: number;
+  min_salary: number | null;
+  salary_currency: string;
+  max_required_experience: number | null;
+  open_to_relocate: boolean;
+  visa_needed: boolean;
+  locations: string[];
+  modalities: string[];
+  technologies: string[];
+  industries: string[];
+  desired_companies: string[];
+  blocked_companies: string[];
+  languages: string[];
+  deal_breakers: string[];
+  created_at: string;
+  updated_at: string;
+}
+export type SentraSearchProfileInput = Omit<SentraSearchProfile, 'id' | 'created_at' | 'updated_at'>;
+
+export type SentraVerdict = 'apply' | 'maybe' | 'avoid';
+export interface SentraEvaluation {
+  score: number;
+  verdict: SentraVerdict;
+  breakdown: {
+    requisitos_obligatorios: number;
+    requisitos_deseables: number;
+    ubicacion_modalidad: number;
+    seniority: number;
+    idioma: number;
+    keywords_ats: number;
+  };
+  deal_breakers: string[];
+  reasons_avoid: string[];
+  reasons_apply: string[];
+  company: string;
+  role: string;
+}
+
+export async function sentraGetSearchProfile(): Promise<SentraSearchProfile> {
+  return request('/api/v1/agent/profile', { method: 'GET' }, true);
+}
+export async function sentraSaveSearchProfile(data: SentraSearchProfileInput): Promise<SentraSearchProfile> {
+  return request('/api/v1/agent/profile', { method: 'PUT', body: JSON.stringify(data) }, true);
+}
+export async function sentraEvaluateOffer(job_posting: string): Promise<SentraEvaluation> {
+  return request('/api/v1/agent/evaluate', { method: 'POST', body: JSON.stringify({ job_posting }) }, true);
+}
+
 // Regeneración interactiva con IA: reescribe el CV para subir el match.
 // CONSUME 1 crédito y devuelve una versión NUEVA (el original queda en historial).
 export async function sentraImproveCV(id: string, content: CVContent): Promise<SentraCVDocument> {

@@ -8,6 +8,11 @@ de seguridad web. Dos apps que se despliegan juntas en un VPS.
 - **Mapa técnico completo** (árbol, infra, endpoints, modelo de datos, deploy):
   `CODEBASE_OVERVIEW.md`. Léelo primero para ubicarte.
 - **Contexto de producto/negocio de Sentra:** `SENTRA_CONTEXT.md`.
+- **Sentra CV AI a fondo** (prompts reales, pipeline anti-invención, esquema de salida,
+  automatización lote + tracker): `SENTRA_CV_AI_CONTEXT.md`.
+- **NORTE del producto** (evolución a "Job Agent": decide/aplica/aprende; calidad>volumen,
+  verificable, LatAm; guardrails de cumplimiento y coste): `SENTRA_JOB_AGENT_STRATEGY.md`.
+  Toda decisión de CV AI debe alinearse con esto.
 
 ---
 
@@ -48,7 +53,7 @@ de seguridad web. Dos apps que se despliegan juntas en un VPS.
   **URL-encodeada** (`@` → `%40`) — NO se interpola en compose (el `@` crudo rompe asyncpg).
 - **Las migraciones corren SOLAS** al arrancar `sentra-api` (`entrypoint.sh` → `alembic
   upgrade head` con reintentos). Ya no hay que ejecutarlas a mano tras un cambio de modelo.
-  (Head actual: `a2b3c4d5e6f7`, add job_applications.)
+  (Head actual: `b3c4d5e6f7a8`, add search_profiles.)
 
 **Seguridad (es una herramienta de seguridad — mantener el estándar):**
 - Anti-IDOR: toda query filtra por `organization_id` del token.
