@@ -450,11 +450,14 @@ métricas, largo del resumen, verbos débiles, nº de skills, correo de contacto
 "1 página"** (`estimateCVFit`: aproxima la altura A4 con los tamaños de fuente del PDF y avisa si
 el CV probablemente ocupa 2+ páginas — best-practice ATS). Sin IA, sin PII.
 
-**Tests y robustez:** suite `pytest` en `services/api/tests/` que blinda los motores DETERMINISTAS
-(firewall, scoring, personalización, insights) — funciones puras, sin BD/red/IA (`requirements-dev.txt`,
-`pytest.ini`; correr `venv/bin/python3.12 -m pytest`). **Hardening:** validación central de UUID
-(`_get_owned_cv` / `_uuid_or_404` → 404, nunca 500 de asyncpg) y rate-limits en todos los endpoints
-del agente. Toda query filtra por `user_id` (anti-IDOR).
+**Tests y robustez:** los motores DETERMINISTAS están blindados con tests (funciones puras, sin
+BD/red/IA). **Backend `pytest`** en `services/api/tests/` (firewall, scoring, personalización,
+insights) — `requirements-dev.txt` (dev-only, NO va en la imagen), `pytest.ini`; correr
+`venv/bin/python3.12 -m pytest` (31 tests). **Frontend `vitest`** (`vitest.config.mts`,
+`lib/sentra/cvQuality.test.ts`: cobertura ATS, chequeos de calidad, estimador de 1 página) —
+correr `npm test` (9 tests). **Hardening:** validación central de UUID (`_get_owned_cv` /
+`_uuid_or_404` → 404, nunca 500 de asyncpg) y rate-limits en todos los endpoints del agente. Toda
+query filtra por `user_id` (anti-IDOR).
 
 ---
 
