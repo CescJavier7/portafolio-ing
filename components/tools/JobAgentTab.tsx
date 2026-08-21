@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Target, Loader2, Check, X, Sparkles, ThumbsUp, ThumbsDown, ShieldCheck, ShieldAlert, AlertTriangle, CopyCheck } from 'lucide-react';
+import { Target, Loader2, Check, X, Sparkles, ThumbsUp, ThumbsDown, ShieldCheck, ShieldAlert, AlertTriangle, CopyCheck, Zap, FileText } from 'lucide-react';
 import {
   sentraGetSearchProfile,
   sentraSaveSearchProfile,
   sentraEvaluateOffer,
+  sentraGenerateCVFromProfile,
+  sentraCreateApplication,
   SentraApiError,
   type SentraSearchProfileInput,
   type SentraEvaluation,
@@ -70,6 +72,16 @@ const T = {
     dupTitle: 'Ya te postulaste a algo casi idéntico',
     dupSub: 'similar a una postulación que ya tienes',
     dupStatus: { saved: 'Guardado', applied: 'Postulado', interview: 'Entrevista', offer: 'Oferta', rejected: 'Rechazado' } as Record<string, string>,
+    // FASE 3 — Preparar aplicación
+    prepareBtn: 'Preparar mi aplicación',
+    preparing: 'Preparando tu aplicación…',
+    prepareHint: 'Genero un CV a medida con tu perfil guardado y lo registro en “Mis postulaciones”. Tú lo revisas y lo envías.',
+    prepareOk: 'Aplicación preparada',
+    prepareOkSub: 'CV a medida generado y guardado en “Mis postulaciones”. Ábrelo para revisarlo y enviarlo.',
+    prepareMatch: 'Match del CV',
+    openCV: 'Abrir CV en el generador',
+    prepareNoProfile: 'Primero genera un CV en el generador (pegando tu experiencia) para que el agente aprenda tu perfil. Luego podré reutilizarlo aquí.',
+    prepareErr: 'No se pudo preparar la aplicación. Inténtalo de nuevo.',
   },
   en: {
     title: 'Your job target',
@@ -118,6 +130,16 @@ const T = {
     dupTitle: 'You already applied to something nearly identical',
     dupSub: 'similar to an application you already have',
     dupStatus: { saved: 'Saved', applied: 'Applied', interview: 'Interview', offer: 'Offer', rejected: 'Rejected' } as Record<string, string>,
+    // FASE 3 — Prepare application
+    prepareBtn: 'Prepare my application',
+    preparing: 'Preparing your application…',
+    prepareHint: 'I build a tailored CV from your saved profile and log it in “My applications”. You review and send it.',
+    prepareOk: 'Application prepared',
+    prepareOkSub: 'Tailored CV generated and saved to “My applications”. Open it to review and send.',
+    prepareMatch: 'CV match',
+    openCV: 'Open CV in the builder',
+    prepareNoProfile: 'First generate a CV in the builder (paste your experience) so the agent learns your profile. Then I can reuse it here.',
+    prepareErr: 'Could not prepare the application. Please try again.',
   },
 };
 
@@ -180,6 +202,12 @@ export default function JobAgentTab({ lang }: { lang: 'es' | 'en' }) {
   const [evaluating, setEvaluating] = useState(false);
   const [ev, setEv] = useState<SentraEvaluation | null>(null);
   const [evErr, setEvErr] = useState<string | null>(null);
+  const [evaluatedOffer, setEvaluatedOffer] = useState('');
+
+  // FASE 3 — Preparar aplicación
+  const [preparing, setPreparing] = useState(false);
+  const [prepared, setPrepared] = useState<{ cvId: string; match: number } | null>(null);
+  const [prepareErr, setPrepareErr] = useState<string | null>(null);
 
   useEffect(() => {
     sentraGetSearchProfile()
@@ -216,12 +244,45 @@ export default function JobAgentTab({ lang }: { lang: 'es' | 'en' }) {
     setEvaluating(true);
     setEvErr(null);
     setEv(null);
+    setPrepared(null);
+    setPrepareErr(null);
     try {
-      setEv(await sentraEvaluateOffer(offer.trim()));
+      const text = offer.trim();
+      setEv(await sentraEvaluateOffer(text));
+      setEvaluatedOffer(text); // se congela la oferta evaluada para "preparar"
     } catch (e) {
       setEvErr(e instanceof SentraApiError ? e.detail : t.evErr);
     } finally {
       setEvaluating(false);
+    }
+  }
+
+  // FASE 3: convierte la decisión en una aplicación LISTA — CV a medida desde el
+  // perfil guardado + registro en el tracker. El humano revisa y envía.
+  async function prepare() {
+    if (!ev || !evaluatedOffer) return;
+    setPreparing(true);
+    setPrepareErr(null);
+    setPrepared(null);
+    try {
+      const cv = await sentraGenerateCVFromProfile({ job_posting: evaluatedOffer, title: ev.role || undefined });
+      try {
+        await sentraCreateApplication({
+          company: ev.company || '—',
+          role: ev.role || cv.title,
+          cv_document_id: cv.id,
+          score: ev.score,
+          status: 'saved',
+        });
+      } catch {
+        /* el registro es best-effort: si falla, igual tenemos el CV */
+      }
+      setPrepared({ cvId: cv.id, match: cv.match_score });
+    } catch (e) {
+      if (e instanceof SentraApiError && e.status === 409) setPrepareErr(t.prepareNoProfile);
+      else setPrepareErr(e instanceof SentraApiError ? e.detail : t.prepareErr);
+    } finally {
+      setPreparing(false);
     }
   }
 
@@ -469,6 +530,40 @@ export default function JobAgentTab({ lang }: { lang: 'es' | 'en' }) {
                     </li>
                   ))}
                 </ul>
+              </div>
+            )}
+
+            {/* ── FASE 3: Preparar aplicación (solo si vale la pena aplicar) ── */}
+            {ev.verdict !== 'avoid' && (
+              <div className="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                {prepared ? (
+                  <div className="rounded-xl border border-green-500/30 bg-green-500/5 p-4">
+                    <p className="text-[13px] font-black text-green-600 dark:text-green-400 flex items-center gap-1.5 mb-1">
+                      <Check className="w-4 h-4" /> {t.prepareOk}
+                      <span className="ml-auto text-[12px] font-bold text-zinc-500">{t.prepareMatch}: {prepared.match}</span>
+                    </p>
+                    <p className="text-[12.5px] text-zinc-600 dark:text-zinc-300 mb-3">{t.prepareOkSub}</p>
+                    <a
+                      href={`/${lang}/herramientas/cv?cv=${prepared.cvId}`}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-green-500 text-black text-[13px] font-bold hover:brightness-105 active:scale-[0.98] transition"
+                    >
+                      <FileText className="w-4 h-4" /> {t.openCV}
+                    </a>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={prepare}
+                      disabled={preparing}
+                      className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 text-black text-sm font-black hover:brightness-105 active:scale-[0.99] transition disabled:opacity-60"
+                    >
+                      {preparing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                      {preparing ? t.preparing : t.prepareBtn}
+                    </button>
+                    <p className="text-[12px] text-zinc-500 dark:text-zinc-400 mt-2 text-center">{t.prepareHint}</p>
+                    {prepareErr && <p className="text-[12.5px] text-red-500 mt-2 text-center">{prepareErr}</p>}
+                  </>
+                )}
               </div>
             )}
             </>

@@ -195,8 +195,13 @@ editor + PDF ATS, tracker de postulaciones, generación por lote, API pública (
   firewall (gratis) sobre la propia oferta en sitios curados, con manejo de SPA; autocompletado con
   **selectores por sitio** compartidos entre badge y popup (`adapters.js`); service worker de proxy
   de red (los content scripts sufren el CORS de la página). *Pendiente: páginas corp. genéricas.*
-- **FASE 3 — Autopilot (híbrido).** Buscar → filtrar → adaptar → autocompletar/borrador → pedir
-  intervención cuando toque → registrar. Envío por API oficial o extensión con usuario presente.
+- **FASE 3 — Autopilot (híbrido). Primer eslabón (✅):** "Preparar aplicación" — desde el veredicto
+  favorable del Job Agent, un clic **genera un CV a medida REUTILIZANDO el perfil ya guardado**
+  (`POST /cv/from-profile`: salta `extract_profile`, 1 llamada IA menos y más barato; misma
+  reconstrucción verificada por ids → sin invención) y **registra la postulación** en el tracker
+  (con `cv_document_id` + score). El humano abre el CV (deep-link `?cv=<id>`), lo revisa y lo envía
+  con el flujo ya existente (cover email + PDF ATS). *Falta: buscar/filtrar ofertas y autocompletar
+  el envío; por ahora el descubrimiento de la oferta lo hace la persona (pega o usa la extensión).*
 - **FASE 4 — Learning Loop.** Aplicaciones → entrevistas → rechazos → aprendizaje → mejor
   selección/scoring. Diagnóstico de la búsqueda.
 - **FASE 5 — Stop when hired.** Estados de búsqueda + pausa automática + preparación de entrevista.

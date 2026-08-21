@@ -777,6 +777,16 @@ export async function sentraJobMeta(job_posting: string): Promise<{ company: str
   return request('/api/v1/cv/job-meta', { method: 'POST', body: JSON.stringify({ job_posting }) }, true);
 }
 
+// FASE 3 (autopilot): genera un CV a medida REUTILIZANDO el perfil ya guardado
+// del usuario (sin re-pegar el historial). 409 si aún no tiene perfil guardado.
+export async function sentraGenerateCVFromProfile(data: {
+  job_posting: string;
+  title?: string;
+  source_cv_id?: string;
+}): Promise<SentraCVDocument> {
+  return request('/api/v1/cv/from-profile', { method: 'POST', body: JSON.stringify(data) }, true);
+}
+
 // Subida multipart (OCR/PDF): NO pasa por request() (que fuerza Content-Type
 // JSON; el navegador debe poner el boundary del form). Mismo blindaje de
 // errores que request(): red/timeout/CORS → SentraApiError con motivo real.

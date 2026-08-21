@@ -34,6 +34,7 @@ from app.schemas.cv import (
     CVDocumentOut,
     CVFolderCreate,
     CVFolderOut,
+    CVFromProfileRequest,
     CVGenerateRequest,
     CVImproveRequest,
     CVListItem,
@@ -202,6 +203,88 @@ async def generate_cv(
         content=cv_content.model_dump(),
         match_score=cv_content.match_score,
         profile=profile,  # perfil normalizado con ids = fuente de verdad
+    )
+    db.add(doc)
+    await db.commit()
+    await db.refresh(doc)
+    return doc
+
+
+@router.post("/from-profile", response_model=CVDocumentOut, status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
+async def generate_cv_from_profile(
+    request: Request,
+    payload: CVFromProfileRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    FASE 3 (autopilot) — genera un CV a medida REUTILIZANDO el perfil normalizado
+    que ya vive en un CV previo del usuario. NO re-pide el historial: 'el agente
+    ya te conoce'. Salta la Fase 1 (extract_profile) → 1 sola llamada de IA
+    (analyze) + adapt, más barato y más rápido. Misma reconstrucción verificada
+    por ids (los datos personales/empresas/fechas salen del perfil, no del LLM).
+    """
+    if not settings.GROQ_API_KEY:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="El generador de CV no está disponible por el momento.")
+    try:
+        assert_readable(payload.job_posting)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+
+    # Fuente del perfil: el CV indicado (anti-IDOR) o el más reciente que tenga
+    # perfil normalizado guardado.
+    if payload.source_cv_id:
+        source = await _get_owned_cv(payload.source_cv_id, current_user, db)
+        profile = source.profile
+    else:
+        result = await db.execute(
+            select(CVDocument)
+            .where(CVDocument.user_id == current_user.id, CVDocument.profile.isnot(None))
+            .order_by(CVDocument.created_at.desc())
+            .limit(1)
+        )
+        source = result.scalar_one_or_none()
+        profile = source.profile if source else None
+
+    if not profile:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Aún no tienes un perfil guardado. Genera tu primer CV normalmente y luego podrás reutilizarlo.",
+        )
+
+    # Gating de cuota (genera un CV nuevo → cuenta).
+    await _enforce_cv_quota(current_user, db)
+
+    try:
+        analysis = await asyncio.wait_for(run_in_threadpool(cv_service.analyze_offer, payload.job_posting), timeout=45)
+        llm_output = await asyncio.wait_for(run_in_threadpool(cv_service.adapt_cv, profile, analysis), timeout=45)
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail="La generación tardó demasiado. Inténtalo de nuevo.")
+    except (json.JSONDecodeError, ValidationError):
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="No se pudo generar un CV válido. Inténtalo de nuevo.")
+    except Exception as exc:  # noqa: BLE001
+        print(f"[CV] Fallo generando desde perfil (user {current_user.id}): {exc}")
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="El servicio de IA no respondió. Inténtalo más tarde.")
+
+    rich, incidencias = rebuild_cv(profile, llm_output)
+    if incidencias:
+        print(f"[CV] Incidencias de reconstrucción from-profile (user {current_user.id}): {incidencias}")
+
+    try:
+        cv_content = CVContent(**cv_service.map_rich_to_content(rich, profile))
+    except ValidationError:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="No se pudo generar un CV válido. Inténtalo de nuevo.")
+    cv_content.match_score = max(0, min(100, cv_content.match_score))
+
+    doc = CVDocument(
+        user_id=current_user.id,
+        title=cv_service.derive_title(cv_content, payload.title),
+        job_posting=payload.job_posting,
+        content=cv_content.model_dump(),
+        match_score=cv_content.match_score,
+        profile=profile,  # se conserva el mismo perfil fuente de verdad
+        folder_id=getattr(source, "folder_id", None),  # hereda la carpeta del CV fuente
     )
     db.add(doc)
     await db.commit()

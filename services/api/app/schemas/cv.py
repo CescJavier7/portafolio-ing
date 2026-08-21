@@ -17,6 +17,15 @@ class CVGenerateRequest(BaseModel):
     job_posting: str = Field(min_length=30, max_length=15000)
 
 
+class CVFromProfileRequest(BaseModel):
+    """FASE 3: generar un CV a medida REUTILIZANDO el perfil ya guardado del
+    usuario (no re-pega su historial). El agente 'ya te conoce'."""
+    title: str | None = Field(default=None, max_length=200)
+    job_posting: str = Field(min_length=30, max_length=15000)
+    # De qué CV tomar el perfil normalizado; si no se indica, el más reciente.
+    source_cv_id: str | None = None
+
+
 class JobMetaRequest(BaseModel):
     # Solo para extraer empresa + puesto (postulación en lote).
     job_posting: str = Field(min_length=10, max_length=15000)

@@ -330,6 +330,15 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
     }
   }
 
+  // Deep-link: ?cv=<id> abre directo ese CV (lo usa "Preparar aplicación" del
+  // Job Agent para saltar al CV recién generado sin buscarlo en el historial).
+  useEffect(() => {
+    if (!user) return;
+    const id = new URLSearchParams(window.location.search).get('cv');
+    if (id) loadCV(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
   async function removeCV(id: string) {
     setHistory((prev) => prev.filter((h) => h.id !== id));
     if (result?.id === id) setResult(null);
