@@ -971,6 +971,12 @@ export interface SentraDuplicateMatch {
   status: string;
   similarity: number;
 }
+export interface SentraPersonalization {
+  active: boolean;
+  delta: number;
+  reasons: string[];
+  n_outcomes: number;
+}
 export interface SentraEvaluation {
   score: number;
   verdict: SentraVerdict;
@@ -989,6 +995,7 @@ export interface SentraEvaluation {
   role: string;
   firewall: SentraFirewall;
   duplicate: SentraDuplicateMatch | null;
+  personalization?: SentraPersonalization | null;
 }
 
 export async function sentraGetSearchProfile(): Promise<SentraSearchProfile> {

@@ -16,6 +16,7 @@ import {
   Check,
   RefreshCw,
   Puzzle,
+  Sparkles,
 } from 'lucide-react';
 import {
   sentraEvaluateOffer,
@@ -416,6 +417,15 @@ function BucketSection({
                     )}
                     {bucket === 'scam' && ev.firewall && (
                       <span className="ml-2 text-red-500">· {ev.firewall.flags.length} señal(es)</span>
+                    )}
+                    {ev.personalization?.active && ev.personalization.delta !== 0 && (
+                      <span
+                        className="inline-flex items-center gap-1 ml-2 text-violet-500"
+                        title={ev.personalization.reasons.join(' · ')}
+                      >
+                        <Sparkles className="w-3 h-3" /> {ev.personalization.delta > 0 ? '+' : ''}
+                        {ev.personalization.delta}
+                      </span>
                     )}
                   </p>
                 </div>

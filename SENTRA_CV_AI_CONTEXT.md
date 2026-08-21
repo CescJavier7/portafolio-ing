@@ -389,13 +389,25 @@ Sentra** (encola la oferta en `captured_offers`). La Bandeja del sitio la **carg
 `SameSite=Strict`). Las llamadas salen del popup / service worker (`host_permissions` → sin CORS;
 los content scripts sí sufren el CORS de la página → por eso el proxy en el service worker).
 
-### 7.8 Learning Loop — diagnóstico de la búsqueda (`search_insights.py`)
-Determinista. Agrega las postulaciones del usuario y devuelve el **embudo** (guardadas →
-postuladas → entrevista → oferta → rechazadas), **tasas de conversión** (respuesta/entrevista/
-oferta), **correlación score↔entrevistas** y **observaciones accionables** ("tu tasa de respuesta
-es X%", "las ofertas con score alto te dan más entrevistas", "llevas N días sin postular").
-`GET /agent/insights` (**solo sesión** — mínimo privilegio; devuelve **solo agregados** → sin fuga
-de PII). UI arriba del tracker (`SearchInsights.tsx`). Es la base del "aprende".
+### 7.8 Learning Loop — diagnóstico + personalización del score (el "aprende")
+Dos mitades, ambas **deterministas**:
+
+**Diagnóstico** (`search_insights.py`, `GET /agent/insights`): agrega las postulaciones del
+usuario y devuelve el **embudo** (guardadas → postuladas → entrevista → oferta → rechazadas),
+**tasas de conversión**, **correlación score↔entrevistas** y **observaciones accionables** ("tu
+tasa de respuesta es X%", "las ofertas con score alto te dan más entrevistas"). **Solo sesión**
+(mínimo privilegio) y **solo agregados** (sin fuga de PII). UI: `SearchInsights.tsx` arriba del
+tracker.
+
+**Personalización del score** (`score_personalization.py`, dentro de `/agent/evaluate`): aprende
+de resultados REALES qué palabras del puesto se repiten en tus postulaciones que llegaron a
+**entrevista/oferta** frente a las **rechazadas**, y ajusta el Application Score en consecuencia
+("+2 · tus entrevistas suelen ser de «backend»"). **Regularizado y acotado** para que NO sea un
+gimmick: solo se activa con ≥4 resultados resueltos, ajuste **±6 máx.**, nunca voltea una decisión
+por sí solo ni anula un deal-breaker/firewall (autoritativos aguas arriba). **Transparente**:
+devuelve el delta y las razones (chip violeta en `JobAgentTab`/`AgentInbox`). Reusa la misma
+lectura del historial que el Duplicate Killer (una sola query). Cierra el bucle: diagnóstico →
+mejora automática por usuario.
 
 ---
 
@@ -468,7 +480,8 @@ Killer + umbral de sueldo por país), `search_insights.py`. **Auth:** `get_curre
 **Hecho (esta evolución):** perfil de búsqueda · Application Score + "¿por qué NO aplicar?" ·
 Application Firewall (anti-estafa, umbral de sueldo por país) · Duplicate Killer · preparar
 aplicación (CV desde perfil guardado + registro) · Bandeja de triaje por lote · extensión de
-navegador (badge + autocompletar por sitio + "Añadir a Sentra") · Learning Loop (diagnóstico).
+navegador (badge + autocompletar por sitio + "Añadir a Sentra") · Learning Loop **completo**
+(diagnóstico `GET /agent/insights` + **personalización del score** por historial, §7.8).
 
 **Pendiente (orden sugerido):**
 1. **Autocompletar el ENVÍO** — más allá de nombre/correo/teléfono: enviar el correo de
@@ -477,7 +490,8 @@ navegador (badge + autocompletar por sitio + "Añadir a Sentra") · Learning Loo
    postulaciones por correo (hoy el lote es en vivo, front-orchestrated).
 3. **Descubrimiento proactivo** — que el agente BUSQUE ofertas (no solo capturar las que ves),
    por **APIs legítimas de bolsas de empleo** (no scraping), con guardrails de coste/cumplimiento.
-4. **Aprendizaje que reajusta el scoring** — usar el embudo (§7.8) para afinar los pesos del
-   Application Score por usuario (de "diagnóstico" a "mejora automática").
+4. **Personalización más rica** — hoy aprende de palabras del puesto (§7.8); el siguiente paso es
+   persistir las features de la oferta al postular (área, modalidad, seniority, techs) para
+   aprender señales más finas que el texto del rol.
 5. **Endpoint público de postulaciones** (API key) para que n8n registre postulaciones — hoy la
    API pública es por-organización; `get_current_user_flex` ya resuelve el usuario OWNER.

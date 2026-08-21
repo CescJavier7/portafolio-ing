@@ -82,6 +82,8 @@ const T = {
     openCV: 'Abrir CV en el generador',
     prepareNoProfile: 'Primero genera un CV en el generador (pegando tu experiencia) para que el agente aprenda tu perfil. Luego podré reutilizarlo aquí.',
     prepareErr: 'No se pudo preparar la aplicación. Inténtalo de nuevo.',
+    personalized: 'Ajustado con tu historial',
+    personalizedInfo: (n: number) => `Aprendido de ${n} resultado(s) tuyos (entrevistas/rechazos).`,
   },
   en: {
     title: 'Your job target',
@@ -140,6 +142,8 @@ const T = {
     openCV: 'Open CV in the builder',
     prepareNoProfile: 'First generate a CV in the builder (paste your experience) so the agent learns your profile. Then I can reuse it here.',
     prepareErr: 'Could not prepare the application. Please try again.',
+    personalized: 'Tuned with your history',
+    personalizedInfo: (n: number) => `Learned from ${n} of your outcomes (interviews/rejections).`,
   },
 };
 
@@ -493,6 +497,21 @@ export default function JobAgentTab({ lang }: { lang: 'es' | 'en' }) {
                 desglose y las razones, que no aportan sobre una oferta fraudulenta. */}
             {!scam && (
             <>
+            {/* Personalización aprendida del historial (Learning Loop) */}
+            {ev.personalization?.active && ev.personalization.delta !== 0 && (
+              <div className="mb-4 rounded-xl border border-violet-500/25 bg-violet-500/5 p-3">
+                <p className="flex items-center gap-1.5 text-[12px] font-black text-violet-600 dark:text-violet-400">
+                  <Sparkles className="w-3.5 h-3.5" /> {t.personalized}: {ev.personalization.delta > 0 ? '+' : ''}{ev.personalization.delta}
+                </p>
+                <ul className="mt-1 space-y-0.5">
+                  {ev.personalization.reasons.map((r, i) => (
+                    <li key={i} className="text-[12px] text-zinc-600 dark:text-zinc-300">{r}</li>
+                  ))}
+                </ul>
+                <p className="text-[11px] text-zinc-400 mt-1">{t.personalizedInfo(ev.personalization.n_outcomes)}</p>
+              </div>
+            )}
+
             {/* Desglose */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-5">
               {Object.entries(ev.breakdown).map(([k, v]) => (

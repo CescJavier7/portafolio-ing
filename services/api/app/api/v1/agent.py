@@ -27,11 +27,18 @@ from app.schemas.agent import (
     FirewallRequest,
     FirewallResult,
     InsightsOut,
+    Personalization,
     ScoreBreakdown,
     SearchProfileIn,
     SearchProfileOut,
 )
-from app.services import application_firewall, application_scoring, cv_service, search_insights
+from app.services import (
+    application_firewall,
+    application_scoring,
+    cv_service,
+    score_personalization,
+    search_insights,
+)
 from app.services.text_guard import assert_readable
 
 settings = get_settings()
@@ -147,7 +154,7 @@ async def evaluate(
 
     result = application_scoring.score_application(_profile_dict(sp), analysis)
 
-    # ── Capa 2: Duplicate Killer — ¿ya aplicaste a algo casi idéntico? ──
+    # ── Capa 2: Duplicate Killer + personalización (una sola lectura del historial) ──
     rows = await db.execute(
         select(JobApplication.company, JobApplication.role, JobApplication.status)
         .where(JobApplication.user_id == current_user.id)
@@ -155,7 +162,11 @@ async def evaluate(
     existing = [{"company": c, "role": r, "status": s} for c, r, s in rows.all()]
     duplicate = application_firewall.find_duplicate(result["company"], result["role"], existing)
 
-    return EvaluateOut(**result, firewall=firewall, duplicate=duplicate)
+    # ── Capa 3: Learning Loop — ajusta el score con tu historial (acotado) ──
+    prefs = score_personalization.learn_preferences(existing)
+    personalization = score_personalization.personalize(result, prefs, analysis)  # muta result['score']/verdict
+
+    return EvaluateOut(**result, firewall=firewall, duplicate=duplicate, personalization=Personalization(**personalization))
 
 
 @router.post("/firewall", response_model=FirewallResult)

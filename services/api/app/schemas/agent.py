@@ -122,6 +122,14 @@ class DuplicateMatch(BaseModel):
     similarity: int                  # 0-100
 
 
+class Personalization(BaseModel):
+    """Ajuste del score aprendido del historial del usuario (Learning Loop)."""
+    active: bool                     # ¿había señal suficiente para personalizar?
+    delta: int                       # ajuste aplicado al score (± acotado)
+    reasons: list[str]               # explicación transparente del ajuste
+    n_outcomes: int                  # cuántos resultados (entrevista/oferta/rechazo) lo respaldan
+
+
 class EvaluateOut(BaseModel):
     score: int                       # 0-100
     verdict: str                     # apply | maybe | avoid
@@ -133,3 +141,4 @@ class EvaluateOut(BaseModel):
     role: str
     firewall: FirewallResult         # Application Firewall (detección de estafas)
     duplicate: DuplicateMatch | None = None  # Duplicate Killer (ya aplicaste algo similar)
+    personalization: Personalization | None = None  # ajuste aprendido del historial
