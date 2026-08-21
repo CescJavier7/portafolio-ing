@@ -87,3 +87,50 @@ export function cvQualityChecks(c: CVContent): QualityCheck[] {
     { code: 'contact', level: hasEmail ? 'good' : 'warn', value: hasEmail ? 1 : 0 },
   ];
 }
+
+export interface CVFit {
+  heightPx: number;
+  pages: number;
+  level: 'good' | 'warn';
+}
+
+// Estima cuántas PÁGINAS A4 ocupará el CV al imprimir, aproximando alturas con los
+// mismos tamaños de fuente del PDF (lib/sentra/cvPdf.ts). Best-practice ATS: 1
+// página para perfiles junior/mid. Es una estimación (directional), no exacta.
+const CHARS_PER_LINE = 95; // ancho útil del cuerpo a ~13px
+const USABLE_PX = 980; // px útiles por página A4 tras los márgenes de impresión
+const LINE_PX = 20;
+
+export function estimateCVFit(c: CVContent): CVFit {
+  let h = 42 + 22 + 20 + 22; // nombre + headline + contacto (+ márgenes)
+
+  const has = {
+    summary: !!(c.summary ?? '').trim(),
+    experience: (c.experience ?? []).some((e) => e.role || e.company || e.highlights.some((x) => x.trim())),
+    education: (c.education ?? []).some((e) => e.degree.trim() || e.institution.trim()),
+    certifications: (c.certifications ?? []).some((x) => x.name.trim()),
+    skills: (c.skills ?? []).some((g) => g.category.trim() || g.items.some((i) => i.trim())),
+    languages: (c.languages ?? []).some((l) => l.language.trim()),
+  };
+  h += Object.values(has).filter(Boolean).length * 46; // encabezados de sección
+
+  const wrapped = (text: string) => Math.max(1, Math.ceil((text || '').length / CHARS_PER_LINE)) * LINE_PX;
+
+  if (has.summary) h += wrapped(c.summary);
+  for (const e of c.experience ?? []) {
+    if (!(e.role || e.company || e.highlights.some((x) => x.trim()))) continue;
+    h += 21 + 8; // cabecera del puesto + margen
+    for (const hl of e.highlights.filter((x) => x.trim())) h += wrapped(hl);
+  }
+  for (const e of (c.education ?? []).filter((e) => e.degree.trim() || e.institution.trim())) {
+    h += wrapped(`${e.degree} ${e.institution}`);
+  }
+  for (const ct of (c.certifications ?? []).filter((x) => x.name.trim())) h += wrapped(ct.name);
+  for (const g of (c.skills ?? []).filter((g) => g.category.trim() || g.items.some((i) => i.trim()))) {
+    h += wrapped(`${g.category}: ${g.items.join('  ·  ')}`);
+  }
+  if (has.languages) h += LINE_PX;
+
+  const pages = Math.max(1, Math.ceil(h / USABLE_PX));
+  return { heightPx: Math.round(h), pages, level: pages <= 1 ? 'good' : 'warn' };
+}

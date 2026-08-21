@@ -428,11 +428,6 @@ mejora automática por usuario.
   **`POST /{id}/cover-letter`** (carta de presentación formal, anclada al CV),
   **`POST /{id}/interview-prep`** (preguntas de entrevista + tips anclados al CV),
   `POST /job-meta`, `GET /quota`, folders CRUD, CVs CRUD.
-
-**Análisis del CV en el editor (cliente, determinista — `lib/sentra/cvQuality.ts`):** panel de
-**cobertura ATS** (match score + requisitos por cubrir con RE-CHEQUEO en vivo: si el usuario ya
-añadió el requisito al editar, se marca como cubierto) y **chequeos de calidad** (logros con
-métricas, largo del resumen, verbos débiles, nº de skills, correo de contacto). Sin IA, sin PII.
 - `agent`: `GET/PUT /profile`, `POST /evaluate` (score+firewall+duplicado, auth flexible),
   `POST /firewall` (standalone, auth flexible), `POST/GET/DELETE /inbox` (bandeja, auth flexible),
   `GET /insights` (diagnóstico, solo sesión).
@@ -445,8 +440,21 @@ PRO 50, TEAM 150, ENTERPRISE ∞) — clave para no vaciar la factura de IA. Se 
 restrictiva (`_cv_quota_state` en `cv.py`). Config única en `core/plans.py`. 402 al agotarse.
 
 **Servicios (Job Agent):** `application_scoring.py`, `application_firewall.py` (+ Duplicate
-Killer + umbral de sueldo por país), `search_insights.py`. **Auth:** `get_current_user_flex`
-(sesión **o** API key → OWNER). El resto de servicios (CV) se listan arriba en este §8.
+Killer + umbral de sueldo por país), `search_insights.py`, `score_personalization.py`. **Auth:**
+`get_current_user_flex` (sesión **o** API key → OWNER). El resto de servicios (CV) se listan arriba.
+
+**Análisis del CV en el editor (cliente, determinista — `lib/sentra/cvQuality.ts`):** panel de
+**cobertura ATS** (match score + requisitos por cubrir con RE-CHEQUEO en vivo: si el usuario ya
+añadió el requisito al editar, se marca como cubierto), **chequeos de calidad** (logros con
+métricas, largo del resumen, verbos débiles, nº de skills, correo de contacto) y **estimador de
+"1 página"** (`estimateCVFit`: aproxima la altura A4 con los tamaños de fuente del PDF y avisa si
+el CV probablemente ocupa 2+ páginas — best-practice ATS). Sin IA, sin PII.
+
+**Tests y robustez:** suite `pytest` en `services/api/tests/` que blinda los motores DETERMINISTAS
+(firewall, scoring, personalización, insights) — funciones puras, sin BD/red/IA (`requirements-dev.txt`,
+`pytest.ini`; correr `venv/bin/python3.12 -m pytest`). **Hardening:** validación central de UUID
+(`_get_owned_cv` / `_uuid_or_404` → 404, nunca 500 de asyncpg) y rate-limits en todos los endpoints
+del agente. Toda query filtra por `user_id` (anti-IDOR).
 
 ---
 

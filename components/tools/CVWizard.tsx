@@ -29,7 +29,7 @@ import {
   type SentraCVFolder,
 } from '@/lib/sentra/api';
 import { openCVPdf, openCoverLetterPdf } from '@/lib/sentra/cvPdf';
-import { atsCoverage, cvQualityChecks, type QualityCheck } from '@/lib/sentra/cvQuality';
+import { atsCoverage, cvQualityChecks, estimateCVFit, type QualityCheck } from '@/lib/sentra/cvQuality';
 import { useSentraSession } from '@/lib/sentra/useSession';
 import { useCVWizard, cvWizard, cleanCVContent, CV_STEPS, type CVStep } from '@/lib/sentra/cvStore';
 import { matchColor, matchTint } from '@/lib/sentra/matchScore';
@@ -864,6 +864,10 @@ function ATSCoveragePanel({ content, lang, missingTitle }: { content: CVContent;
 function CVQualityPanel({ content, lang }: { content: CVContent; lang: string }) {
   const en = lang === 'en';
   const checks = cvQualityChecks(content);
+  const fit = estimateCVFit(content);
+  const fitLabel = fit.pages <= 1
+    ? en ? 'Fits on one page' : 'Cabe en una página'
+    : en ? `Likely ${fit.pages} pages — consider trimming` : `Probablemente ${fit.pages} páginas — considera recortar`;
   const label = (c: QualityCheck): string => {
     const v = c.value;
     if (en)
@@ -890,6 +894,14 @@ function CVQualityPanel({ content, lang }: { content: CVContent; lang: string })
         <TrendingUp className="w-4 h-4 text-green-500" /> {en ? 'CV quality' : 'Calidad del CV'}
       </p>
       <ul className="space-y-1.5">
+        <li className="text-[13px] flex items-start gap-2">
+          {fit.level === 'good' ? (
+            <Check className="w-3.5 h-3.5 text-green-500 mt-0.5 shrink-0" />
+          ) : (
+            <AlertCircle className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
+          )}
+          <span className={fit.level === 'good' ? 'text-zinc-600 dark:text-zinc-300' : 'text-zinc-700 dark:text-zinc-200'}>{fitLabel}</span>
+        </li>
         {checks.map((c) => (
           <li key={c.code} className="text-[13px] flex items-start gap-2">
             {c.level === 'good' ? (
