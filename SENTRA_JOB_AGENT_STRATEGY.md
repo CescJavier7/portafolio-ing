@@ -200,8 +200,12 @@ editor + PDF ATS, tracker de postulaciones, generación por lote, API pública (
   (`POST /cv/from-profile`: salta `extract_profile`, 1 llamada IA menos y más barato; misma
   reconstrucción verificada por ids → sin invención) y **registra la postulación** en el tracker
   (con `cv_document_id` + score). El humano abre el CV (deep-link `?cv=<id>`), lo revisa y lo envía
-  con el flujo ya existente (cover email + PDF ATS). *Falta: buscar/filtrar ofertas y autocompletar
-  el envío; por ahora el descubrimiento de la oferta lo hace la persona (pega o usa la extensión).*
+  con el flujo ya existente (cover email + PDF ATS). **Bandeja del agente (✅):** pegas varias
+  ofertas → evalúa todas (secuencial, reusa `/agent/evaluate`) → agrupa en **Vale la pena /
+  Descartar / Estafa** (firewall+duplicado+veredicto) → prepara solo las buenas (por oferta o en
+  lote). Pestaña "Bandeja" en el generador (`AgentInbox.tsx`), orquesta en cliente, sin backend
+  nuevo. *Falta para autopilot pleno: descubrimiento automático de ofertas (hoy las pega la
+  persona o llegan por la extensión) y autocompletar el ENVÍO.*
 - **FASE 4 — Learning Loop.** Aplicaciones → entrevistas → rechazos → aprendizaje → mejor
   selección/scoring. Diagnóstico de la búsqueda.
 - **FASE 5 — Stop when hired.** Estados de búsqueda + pausa automática + preparación de entrevista.
