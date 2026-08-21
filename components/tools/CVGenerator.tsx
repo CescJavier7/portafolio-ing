@@ -398,7 +398,7 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
 
   return (
     <section className="min-h-screen pt-32 pb-24 bg-zinc-50 dark:bg-[#020617] transition-colors duration-500 selection:bg-green-500/30">
-      <div className="max-w-5xl mx-auto px-4 md:px-6">
+      <div className="max-w-7xl mx-auto px-4 md:px-6">
         {/* HERO — siempre visible (SEO) */}
         <motion.div
           initial={{ opacity: 0, y: 18 }}

@@ -161,7 +161,9 @@ const VERDICT_STYLE: Record<SentraVerdict, { badge: string; ring: string; icon: 
 
 const inputCls =
   'w-full rounded-xl bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-4 py-2.5 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-green-500/40 transition';
-const labelCls = 'block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5';
+// items-end + min-h reservan 2 líneas: así los inputs de una fila alinean aunque
+// una etiqueta ("No aplicar si piden más de…") ocupe dos líneas y otra una.
+const labelCls = 'flex items-end min-h-[1.9rem] text-xs font-bold uppercase tracking-wider leading-tight text-zinc-500 dark:text-zinc-400 mb-1.5';
 
 function TagInput({ values, onChange, placeholder, danger }: { values: string[]; onChange: (v: string[]) => void; placeholder: string; danger?: boolean }) {
   const [draft, setDraft] = useState('');
@@ -313,44 +315,42 @@ export default function JobAgentTab({ lang }: { lang: 'es' | 'en' }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-          <div>
+        {/* Grid ÚNICO de 4 columnas en desktop (simétrico, llena el ancho). Los
+            spans distribuyen cada campo; nada de grids anidados que desalineen. */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-5 gap-y-5">
+          <div className="sm:col-span-2 lg:col-span-2">
             <label className={labelCls}>{t.role}</label>
             <input value={p.target_role} onChange={(e) => set('target_role', e.target.value)} placeholder={t.rolePh} className={inputCls} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelCls}>{t.seniority}</label>
-              <select value={p.seniority} onChange={(e) => set('seniority', e.target.value)} className={inputCls}>
-                {Object.entries(t.seniorityOpts).map(([v, label]) => (
-                  <option key={v} value={v}>{label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className={labelCls}>{t.years}</label>
-              <input type="number" min={0} value={p.user_years_experience} onChange={(e) => set('user_years_experience', Number(e.target.value) || 0)} className={inputCls} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelCls}>{t.minSalary}</label>
-              <input type="number" min={0} value={p.min_salary ?? ''} onChange={(e) => set('min_salary', e.target.value ? Number(e.target.value) : null)} placeholder="—" className={inputCls} />
-            </div>
-            <div>
-              <label className={labelCls}>{t.maxExp}</label>
-              <input type="number" min={0} value={p.max_required_experience ?? ''} onChange={(e) => set('max_required_experience', e.target.value ? Number(e.target.value) : null)} placeholder="—" className={inputCls} />
-            </div>
+          <div>
+            <label className={labelCls}>{t.seniority}</label>
+            <select value={p.seniority} onChange={(e) => set('seniority', e.target.value)} className={inputCls}>
+              {Object.entries(t.seniorityOpts).map(([v, label]) => (
+                <option key={v} value={v}>{label}</option>
+              ))}
+            </select>
           </div>
           <div>
+            <label className={labelCls}>{t.years}</label>
+            <input type="number" min={0} value={p.user_years_experience} onChange={(e) => set('user_years_experience', Number(e.target.value) || 0)} className={inputCls} />
+          </div>
+
+          <div>
+            <label className={labelCls}>{t.minSalary}</label>
+            <input type="number" min={0} value={p.min_salary ?? ''} onChange={(e) => set('min_salary', e.target.value ? Number(e.target.value) : null)} placeholder="—" className={inputCls} />
+          </div>
+          <div>
+            <label className={labelCls}>{t.maxExp}</label>
+            <input type="number" min={0} value={p.max_required_experience ?? ''} onChange={(e) => set('max_required_experience', e.target.value ? Number(e.target.value) : null)} placeholder="—" className={inputCls} />
+          </div>
+          <div className="sm:col-span-2 lg:col-span-2">
             <label className={labelCls}>{t.modalities}</label>
-            <div className="flex gap-2 pt-1">
+            <div className="flex gap-2">
               {MODALITIES.map((m) => (
                 <button
                   key={m}
                   onClick={() => toggleModality(m)}
-                  className={`px-3.5 py-1.5 rounded-full text-[12px] font-semibold border transition-colors ${
+                  className={`px-3.5 py-2.5 rounded-xl text-[12px] font-semibold border transition-colors ${
                     p.modalities.includes(m)
                       ? 'bg-green-500 text-black border-green-500'
                       : 'border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:border-green-400'
@@ -362,28 +362,30 @@ export default function JobAgentTab({ lang }: { lang: 'es' | 'en' }) {
             </div>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="sm:col-span-2 lg:col-span-4">
             <label className={labelCls}>{t.tech}</label>
             <TagInput values={p.technologies} onChange={(v) => set('technologies', v)} placeholder={t.techPh} />
           </div>
-          <div>
+
+          <div className="sm:col-span-2 lg:col-span-2">
             <label className={labelCls}>{t.locations}</label>
             <TagInput values={p.locations} onChange={(v) => set('locations', v)} placeholder={t.locationsPh} />
           </div>
-          <div>
+          <div className="sm:col-span-2 lg:col-span-2">
             <label className={labelCls}>{t.languages}</label>
             <TagInput values={p.languages} onChange={(v) => set('languages', v)} placeholder={t.languagesPh} />
           </div>
-          <div>
+
+          <div className="sm:col-span-2 lg:col-span-2">
             <label className={labelCls}>⛔ {t.dealBreakers}</label>
             <TagInput values={p.deal_breakers} onChange={(v) => set('deal_breakers', v)} placeholder={t.dealBreakersPh} danger />
           </div>
-          <div>
+          <div className="sm:col-span-2 lg:col-span-2">
             <label className={labelCls}>⛔ {t.blocked}</label>
             <TagInput values={p.blocked_companies} onChange={(v) => set('blocked_companies', v)} placeholder={t.blockedPh} danger />
           </div>
 
-          <div className="md:col-span-2 flex flex-wrap items-center gap-5 pt-1">
+          <div className="sm:col-span-2 lg:col-span-4 flex flex-wrap items-center gap-5 pt-1">
             <label className="inline-flex items-center gap-2 text-[13px] font-medium text-zinc-600 dark:text-zinc-300 cursor-pointer">
               <input type="checkbox" checked={p.open_to_relocate} onChange={(e) => set('open_to_relocate', e.target.checked)} className="accent-green-500 w-4 h-4" />
               {t.relocate}
