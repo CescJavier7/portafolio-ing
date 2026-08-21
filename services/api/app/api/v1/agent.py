@@ -26,11 +26,12 @@ from app.schemas.agent import (
     EvaluateRequest,
     FirewallRequest,
     FirewallResult,
+    InsightsOut,
     ScoreBreakdown,
     SearchProfileIn,
     SearchProfileOut,
 )
-from app.services import application_firewall, application_scoring, cv_service
+from app.services import application_firewall, application_scoring, cv_service, search_insights
 from app.services.text_guard import assert_readable
 
 settings = get_settings()
@@ -252,3 +253,27 @@ async def delete_captured_offer(
     await db.commit()
     if result.rowcount == 0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Oferta no encontrada.")
+
+
+# ── Learning Loop: diagnóstico de la búsqueda (FASE 4) ──
+
+
+@router.get("/insights", response_model=InsightsOut)
+@limiter.limit("30/minute")
+async def search_diagnostics(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Diagnóstico DETERMINISTA de la búsqueda: embudo, tasas de conversión y
+    observaciones accionables sobre las postulaciones del usuario. Solo sesión
+    (mínimo privilegio: no se expone el embudo a una API key). Anti-IDOR: agrega
+    únicamente las postulaciones del propio usuario. Devuelve solo agregados.
+    """
+    rows = await db.execute(
+        select(JobApplication.status, JobApplication.score, JobApplication.created_at)
+        .where(JobApplication.user_id == current_user.id)
+    )
+    apps = [{"status": st, "score": sc, "created_at": ca} for st, sc, ca in rows.all()]
+    return InsightsOut(**search_insights.compute_insights(apps))

@@ -1016,6 +1016,31 @@ export async function sentraDeleteCapturedOffer(id: string): Promise<void> {
   await request(`/api/v1/agent/inbox/${id}`, { method: 'DELETE' }, true);
 }
 
+// Learning Loop: diagnóstico de la búsqueda (embudo + tasas + observaciones).
+export interface SentraInsight {
+  code: string;
+  level: 'good' | 'warn' | 'info';
+  value: number;
+}
+export interface SentraInsights {
+  total: number;
+  funnel: { saved: number; applied: number; interview: number; offer: number; rejected: number };
+  applied: number;
+  response_rate: number;
+  interview_rate: number;
+  offer_rate: number;
+  avg_score: number | null;
+  avg_score_positive: number | null;
+  avg_score_rejected: number | null;
+  applied_last_7d: number;
+  applied_last_30d: number;
+  last_activity_days: number | null;
+  insights: SentraInsight[];
+}
+export async function sentraGetInsights(): Promise<SentraInsights> {
+  return request('/api/v1/agent/insights', { method: 'GET' }, true);
+}
+
 // Regeneración interactiva con IA: reescribe el CV para subir el match.
 // CONSUME 1 crédito y devuelve una versión NUEVA (el original queda en historial).
 export async function sentraImproveCV(id: string, content: CVContent): Promise<SentraCVDocument> {

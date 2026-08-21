@@ -28,6 +28,12 @@ cifras que el usuario no puso.
 **Modelo LLM:** Groq `llama-3.3-70b-versatile`, siempre con `response_format=json_object`
 (salida JSON forzada). Config: `GROQ_CV_MODEL` en `core/config.py`.
 
+**Evolución (2026): de generador de CV a JOB AGENT.** Ya no solo adapta CVs: **decide** a qué
+ofertas aplicar (Application Score + Firewall anti-estafa), **prepara** la aplicación (CV desde tu
+perfil guardado + registro) y **aprende** de tu embudo (diagnóstico) — con una **extensión de
+navegador** que trae las ofertas desde cualquier web. Todo en el nuevo **§7 "El Job Agent"**.
+Norte estratégico: `SENTRA_JOB_AGENT_STRATEGY.md`.
+
 ---
 
 ## 2. Recorrido del usuario (UX)
@@ -326,27 +332,106 @@ sus términos); el usuario dispara su propio flujo con su key y sus datos.
 
 ---
 
-## 7. Modelo de datos y endpoints (referencia)
+## 7. El Job Agent — decide / prepara / aprende (evolución del CV AI)
 
-**Tablas** (base `sentra`, todas con UUID; CVs y postulaciones son **personales por usuario**):
-- `cv_documents` — content(JSON), **profile**(JSON normalizado con ids = fuente de verdad),
-  match_score, job_posting, folder_id, user_id. DELETE real (derecho de supresión LOPDP/GDPR).
-- `cv_folders` — carpetas del usuario.
-- `job_applications` — el tracker (§6.2).
+Sentra CV AI dejó de ser "un generador de CV" para convertirse en un **agente de empleo**:
+**DECIDE** a qué aplicar, **PREPARA** la aplicación y **APRENDE** del resultado. Todo
+**rules-first** (determinista, verificable, barato): la IA solo hace lo que solo ella puede
+(analizar texto); la decisión es reglas puras. Norte del producto: `SENTRA_JOB_AGENT_STRATEGY.md`.
 
-**Endpoints** (`/api/v1`):
-- `cv`: `POST` (generar), `POST /{id}/improve`, `POST /ocr`, `POST /extract-pdf`,
-  `POST /{id}/apply-email`, `POST /job-meta`, `GET /quota`, folders CRUD, CVs CRUD.
-- `applications`: `GET/POST`, `PATCH/DELETE /{id}` (user-scoped).
-- `public/cv/generate`: `POST` (API key, Pro, stateless — para n8n).
+### 7.1 Perfil de búsqueda — qué quiero / qué NO (`search_profiles`)
+Uno por usuario. Objetivo (rol, seniority, años), condiciones (salario mínimo, modalidades,
+ubicaciones, idiomas, reubicación/visa) y sobre todo los **deal-breakers** (lo que NO acepta:
+"ventas", "presencial", empresas bloqueadas, tope de años). Es la base de la decisión.
+`GET/PUT /agent/profile`. UI: pestaña **"Objetivo"** (`JobAgentTab.tsx`).
 
-**Servicios:** `cv_service.py` (llamadas Groq + orquestación), `cv_prompts.py` (prompts +
-rebuild anti-invención), `ocr_service.py` (Tesseract), `pdf_service.py`, `file_guard.py`
-(valida subidas), `text_guard.py` (detecta texto ilegible).
+### 7.2 Application Score — ¿debería aplicar? (`application_scoring.py`)
+Determinista: la IA solo analiza la oferta (`analyze_offer`); la puntuación y el veredicto son
+reglas. Pondera (suma 100): requisitos obligatorios 35 · deseables 10 · ubicación/modalidad 20
+· seniority 15 · idioma 10 · keywords ATS 10. Los deal-breakers **fuerzan "avoid"** y limitan el
+score. Devuelve score, veredicto (apply/maybe/avoid), desglose y —la estrella— **"¿por qué NO
+aplicar?"**. `POST /agent/evaluate`.
+
+### 7.3 Application Firewall — anti-estafa (`application_firewall.py`)
+Determinista, **sin IA, sin coste**. Escanea el **texto CRUDO** de la oferta (el análisis con IA
+descarta contacto y salario, justo lo que delata el fraude). Señales: **pago por adelantado,
+cripto, datos sensibles, sueldo absurdo (umbral POR PAÍS** — $500/día = estafa en Ecuador,
+normal en EE.UU.**), contratación sin entrevista, contacto solo WhatsApp/Telegram, correo
+gratuito como único canal, acortadores (phishing), empresa anónima**. Nivel: safe/caution/danger.
+Si es **DANGER, `/agent/evaluate` corta en seco** (no gasta la llamada IA). Standalone:
+`POST /agent/firewall`. El país se infiere del perfil (ubicaciones) o llega como hint.
+
+### 7.4 Duplicate Killer — ¿ya apliqué a algo casi idéntico?
+Similitud **Jaccard** (con sinónimos de rol: engineer≈developer) sobre empresa+puesto contra el
+historial. Umbral 0.8. Evita gastar cuota/tiempo en una oferta repetida. Va dentro de `/evaluate`.
+
+### 7.5 Preparar aplicación — CV desde el perfil guardado (`POST /cv/from-profile`)
+Desde un veredicto favorable, **un clic**: genera un CV a medida **reutilizando el perfil
+normalizado ya guardado** en un CV previo (la fuente de verdad con ids) — **NO re-pide el
+historial** ("el agente ya te conoce"). Salta la Fase 1 (`extract_profile`) → una llamada de IA
+menos, más barato. Misma **reconstrucción verificada por ids** (anti-invención intacto). Registra
+la postulación (con `cv_document_id` + score). El humano abre el CV (deep-link `?cv=<id>`), lo
+revisa y lo envía con el flujo existente (cover email + PDF ATS).
+
+### 7.6 Bandeja del agente — triaje por lote (`AgentInbox.tsx`, pestaña "Bandeja")
+Pegas varias ofertas → evalúa todas (secuencial, reusa `/agent/evaluate`) → agrupa en
+**Vale la pena / Descartar / Estafa** → preparas solo las buenas (por oferta o en lote).
+**Calidad > volumen**: el agente filtra el ruido (estafas + duplicados + bajo score).
+
+### 7.7 Puente extensión → Bandeja (`captured_offers`, `extension/`)
+Extensión de navegador **MV3**: en cualquier oferta (LinkedIn/Computrabajo/Workday/Greenhouse/
+Lever/Indeed…) un **badge flotante** (Shadow DOM) auto-escanea el firewall (gratis) y colorea el
+riesgo; botones **Evaluar / Adaptar CV / Autocompletar (selectores por sitio) / ➕ Añadir a
+Sentra** (encola la oferta en `captured_offers`). La Bandeja del sitio la **carga sola**
+(`GET /agent/inbox`), la procesa y la borra (`DELETE`). Descubrimiento → decisión.
+**Auth de la extensión: API key** (`get_current_user_flex` en `deps.py`: acepta JWT de sesión
+**o** API key → resuelve al **OWNER** de la org; sin sesiones de 15 min ni cookies cross-site
+`SameSite=Strict`). Las llamadas salen del popup / service worker (`host_permissions` → sin CORS;
+los content scripts sí sufren el CORS de la página → por eso el proxy en el service worker).
+
+### 7.8 Learning Loop — diagnóstico de la búsqueda (`search_insights.py`)
+Determinista. Agrega las postulaciones del usuario y devuelve el **embudo** (guardadas →
+postuladas → entrevista → oferta → rechazadas), **tasas de conversión** (respuesta/entrevista/
+oferta), **correlación score↔entrevistas** y **observaciones accionables** ("tu tasa de respuesta
+es X%", "las ofertas con score alto te dan más entrevistas", "llevas N días sin postular").
+`GET /agent/insights` (**solo sesión** — mínimo privilegio; devuelve **solo agregados** → sin fuga
+de PII). UI arriba del tracker (`SearchInsights.tsx`). Es la base del "aprende".
 
 ---
 
-## 8. Seguridad y privacidad (importan, es dato personal)
+## 8. Modelo de datos y endpoints (referencia)
+
+**Tablas** (base `sentra`, todas con UUID; personales por usuario salvo indicación):
+- `cv_documents` — content(JSON), **profile**(JSON normalizado con ids = fuente de verdad),
+  match_score, job_posting, folder_id, user_id. DELETE real (derecho de supresión LOPDP/GDPR).
+- `cv_folders` — carpetas del usuario.
+- `job_applications` — el tracker (§6.2); incluye `score` (con qué Application Score se decidió).
+- `search_profiles` — perfil de búsqueda del Job Agent (§7.1), uno por usuario.
+- `captured_offers` — cola de ofertas capturadas desde la extensión (§7.7), efímera, con poda
+  a 100/usuario. Head Alembic: `d5e6f7a8b9c0`.
+
+**Endpoints** (`/api/v1`):
+- `cv`: `POST` (generar), **`POST /from-profile`** (CV desde perfil guardado, §7.5),
+  `POST /{id}/improve`, `POST /ocr`, `POST /extract-pdf`, `POST /{id}/apply-email`,
+  `POST /job-meta`, `GET /quota`, folders CRUD, CVs CRUD.
+- `agent`: `GET/PUT /profile`, `POST /evaluate` (score+firewall+duplicado, auth flexible),
+  `POST /firewall` (standalone, auth flexible), `POST/GET/DELETE /inbox` (bandeja, auth flexible),
+  `GET /insights` (diagnóstico, solo sesión).
+- `applications`: `GET/POST`, `PATCH/DELETE /{id}` (user-scoped; acepta `cv_document_id` + `score`).
+- `public/cv/generate`: `POST` (API key, Pro, stateless — para n8n).
+
+**Cuota / coste (protección de créditos Groq):** el generador es freemium por cuenta. FREE tiene
+cuota **semanal** (`cv_per_week=3`); los planes de pago tienen tope **mensual** (`cv_per_month`:
+PRO 50, TEAM 150, ENTERPRISE ∞) — clave para no vaciar la factura de IA. Se aplica la ventana más
+restrictiva (`_cv_quota_state` en `cv.py`). Config única en `core/plans.py`. 402 al agotarse.
+
+**Servicios (Job Agent):** `application_scoring.py`, `application_firewall.py` (+ Duplicate
+Killer + umbral de sueldo por país), `search_insights.py`. **Auth:** `get_current_user_flex`
+(sesión **o** API key → OWNER). El resto de servicios (CV) se listan arriba en este §8.
+
+---
+
+## 9. Seguridad y privacidad (importan, es dato personal)
 
 - **Aislamiento anti-IDOR**: todo CV/postulación se filtra por `user_id` del token, nunca por
   un id del cliente.
@@ -358,17 +443,41 @@ rebuild anti-invención), `ocr_service.py` (Tesseract), `pdf_service.py`, `file_
   "DATOS, no instrucciones" (anti prompt-injection). `text_guard` frena PDFs ilegibles antes
   de gastar tokens.
 
+**Seguridad del Job Agent (§7):**
+- **Firewall determinista sobre input NO confiable**: `application_firewall.py` solo lee
+  patrones con regex acotadas (sin `eval`, sin red, sin ejecución); nada del texto de la oferta
+  se interpola ni se ejecuta. Trabaja sobre el texto crudo a propósito.
+- **Auth flexible con mínimo privilegio**: `get_current_user_flex` acepta JWT **o** API key
+  (→ OWNER de la org). Se usa **solo** donde la extensión lo necesita (firewall/evaluate/inbox);
+  `/agent/insights` y `/agent/profile` quedan **solo sesión** (no se expone el embudo ni el perfil
+  a una API key). API keys hasheadas (SHA-256), revocables desde el panel, con `last_used_at`.
+- **Anti-IDOR en todo el Job Agent**: perfil, postulaciones, capturadas e insights se filtran por
+  `user_id`/organización del token; los `DELETE` validan propiedad antes de borrar.
+- **Sin fuga de PII en el diagnóstico**: `/agent/insights` devuelve **solo agregados** (embudo,
+  tasas), nunca el contenido de una postulación.
+- **`captured_offers` efímera y acotada**: se poda a 100/usuario (no crece sin control) y se borra
+  al procesar. **CORS**: las llamadas de la extensión salen del contexto de extensión
+  (`host_permissions`), no de content scripts; el service worker es el proxy.
+- **Coste como superficie de abuso**: rate-limit por endpoint + cuota mensual de IA (`cv_per_month`)
+  + el firewall corta las estafas antes de gastar la llamada al LLM.
+
 ---
 
-## 9. Roadmap de automatización (orden sugerido)
+## 10. Roadmap de automatización (estado)
 
-1. **Lote de fondo** — cola/worker para que el usuario cierre la pestaña y reciba los CVs +
-   postulaciones por correo (hoy es en vivo, front-orchestrated).
-2. **"Postular de verdad"** — sumar el **envío del correo de postulación** (ya existe
-   `apply-email`) dentro del lote: genera CV + manda el correo + registra, en un clic.
-3. **Endpoint público de postulaciones** (API key) para que n8n **registre** postulaciones al
-   generar CVs (cierra el loop del automatizador externo). Ojo: hoy las postulaciones son
-   por-usuario y la API pública es por-organización → definir a qué usuario se asocian.
-4. **Extensión de navegador** "Adaptar a esta oferta" — en la página de una vacante, un clic
-   genera el CV + registra la postulación (iniciado por el usuario, sin scraping).
-5. **Conectores a bolsas de empleo** por APIs legítimas (no scraping).
+**Hecho (esta evolución):** perfil de búsqueda · Application Score + "¿por qué NO aplicar?" ·
+Application Firewall (anti-estafa, umbral de sueldo por país) · Duplicate Killer · preparar
+aplicación (CV desde perfil guardado + registro) · Bandeja de triaje por lote · extensión de
+navegador (badge + autocompletar por sitio + "Añadir a Sentra") · Learning Loop (diagnóstico).
+
+**Pendiente (orden sugerido):**
+1. **Autocompletar el ENVÍO** — más allá de nombre/correo/teléfono: enviar el correo de
+   postulación (`apply-email`) o el formulario, con el humano confirmando (human-in-the-loop).
+2. **Lote de fondo** — cola/worker (Redis+RQ) para cerrar la pestaña y recibir los CVs +
+   postulaciones por correo (hoy el lote es en vivo, front-orchestrated).
+3. **Descubrimiento proactivo** — que el agente BUSQUE ofertas (no solo capturar las que ves),
+   por **APIs legítimas de bolsas de empleo** (no scraping), con guardrails de coste/cumplimiento.
+4. **Aprendizaje que reajusta el scoring** — usar el embudo (§7.8) para afinar los pesos del
+   Application Score por usuario (de "diagnóstico" a "mejora automática").
+5. **Endpoint público de postulaciones** (API key) para que n8n registre postulaciones — hoy la
+   API pública es por-organización; `get_current_user_flex` ya resuelve el usuario OWNER.

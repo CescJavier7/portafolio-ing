@@ -62,6 +62,37 @@ class CapturedOfferOut(BaseModel):
     created_at: datetime
 
 
+class InsightItem(BaseModel):
+    code: str                        # good_momentum | low_response | ... (i18n en frontend)
+    level: str                       # good | warn | info
+    value: int
+
+
+class FunnelCounts(BaseModel):
+    saved: int
+    applied: int
+    interview: int
+    offer: int
+    rejected: int
+
+
+class InsightsOut(BaseModel):
+    """Diagnóstico de la búsqueda (Learning Loop). Solo agregados, sin PII."""
+    total: int
+    funnel: FunnelCounts
+    applied: int
+    response_rate: float
+    interview_rate: float
+    offer_rate: float
+    avg_score: float | None
+    avg_score_positive: float | None
+    avg_score_rejected: float | None
+    applied_last_7d: int
+    applied_last_30d: int
+    last_activity_days: int | None
+    insights: list[InsightItem]
+
+
 class ScoreBreakdown(BaseModel):
     requisitos_obligatorios: int
     requisitos_deseables: int

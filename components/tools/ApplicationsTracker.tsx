@@ -10,6 +10,7 @@ import {
   type SentraApplication,
   type SentraAppStatus,
 } from '@/lib/sentra/api';
+import SearchInsights from '@/components/tools/SearchInsights';
 
 const STATUSES: SentraAppStatus[] = ['saved', 'applied', 'interview', 'offer', 'rejected'];
 
@@ -129,7 +130,11 @@ export default function ApplicationsTracker({ lang }: { lang: 'es' | 'en' }) {
     'w-full rounded-xl bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-4 py-2.5 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-green-500/40 transition';
 
   return (
-    <div className="rounded-3xl bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 md:p-8">
+    <>
+      {/* Learning Loop: diagnóstico de la búsqueda (se pliega si no hay datos) */}
+      <SearchInsights lang={lang} />
+
+      <div className="rounded-3xl bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 md:p-8">
       {/* Cabecera + resumen */}
       <div className="flex items-start gap-3 mb-1.5">
         <span className="w-10 h-10 shrink-0 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
@@ -242,6 +247,7 @@ export default function ApplicationsTracker({ lang }: { lang: 'es' | 'en' }) {
           ))}
         </ul>
       )}
-    </div>
+      </div>
+    </>
   );
 }
