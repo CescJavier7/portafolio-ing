@@ -171,3 +171,8 @@ class ApplyEmailOut(BaseModel):
     subject: str
     body: str
     recipient: str = ""
+
+
+class CoverLetterOut(BaseModel):
+    # Carta de presentación formal de 1 página, anclada al CV (anti-invención).
+    body: str

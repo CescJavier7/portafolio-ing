@@ -20,14 +20,15 @@ import Link from 'next/link';
 import {
   Wand2, Download, Send, Plus, Trash2, ArrowLeft, ArrowRight, Mail, X, ChevronDown,
   Check, Lock, Loader2, ListChecks, Lightbulb, Cloud, Folder, FolderPlus, ExternalLink, AlertCircle,
+  FileText, Copy,
 } from 'lucide-react';
 import {
-  sentraUpdateCV, sentraImproveCV, sentraApplyEmail, sentraCVQuota,
+  sentraUpdateCV, sentraImproveCV, sentraApplyEmail, sentraCoverLetter, sentraCVQuota,
   sentraListCVFolders, sentraCreateCVFolder, SentraApiError,
   type SentraCVDocument, type SentraApplyEmail, type SentraCVQuota, type CVContent,
   type SentraCVFolder,
 } from '@/lib/sentra/api';
-import { openCVPdf } from '@/lib/sentra/cvPdf';
+import { openCVPdf, openCoverLetterPdf } from '@/lib/sentra/cvPdf';
 import { useSentraSession } from '@/lib/sentra/useSession';
 import { useCVWizard, cvWizard, cleanCVContent, CV_STEPS, type CVStep } from '@/lib/sentra/cvStore';
 import { matchColor, matchTint } from '@/lib/sentra/matchScore';
@@ -683,8 +684,128 @@ function StepBody({
         </div>
       )}
       <ApplyEmailButton cvId={cvId} cv={cv} content={content} dict={dict} lang={lang} isPaid={isPaid} disabled={!canSend} />
+      <CoverLetterButton cvId={cvId} cv={cv} content={content} lang={lang} disabled={!canSend} />
       {!canSend && (
         <p className="text-[12px] text-red-500 text-center">{dict.wizard.incompleteTitle}</p>
+      )}
+    </div>
+  );
+}
+
+// Carta de presentación: se genera BAJO DEMANDA (no al montar, para no gastar una
+// llamada de IA si el usuario no la pide). Panel editable + copiar + PDF.
+function CoverLetterButton({
+  cvId,
+  cv,
+  content,
+  lang,
+  disabled,
+}: {
+  cvId: string | null;
+  cv: SentraCVDocument;
+  content: CVContent;
+  lang: string;
+  disabled: boolean;
+}) {
+  const en = lang === 'en';
+  const L = {
+    btn: en ? 'Cover letter' : 'Carta de presentación',
+    generating: en ? 'Writing…' : 'Redactando…',
+    hint: en
+      ? 'Formal one-page letter, grounded in your CV. Review and edit before using.'
+      : 'Carta formal de una página, anclada a tu CV. Revísala y edítala antes de usarla.',
+    copy: en ? 'Copy' : 'Copiar',
+    copied: en ? 'Copied' : 'Copiado',
+    pdf: en ? 'Download PDF' : 'Descargar PDF',
+    err: en ? 'Could not generate the letter. Try again.' : 'No se pudo generar la carta. Inténtalo de nuevo.',
+  };
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [text, setText] = useState<string | null>(null);
+  const [error, setError] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  async function toggle() {
+    if (open) {
+      setOpen(false);
+      return;
+    }
+    setOpen(true);
+    if (text === null && !loading) {
+      setLoading(true);
+      setError(false);
+      try {
+        const r = await sentraCoverLetter(cvId ?? cv.id);
+        setText(r.body);
+      } catch {
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(text ?? '');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* portapapeles bloqueado */
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40">
+      <button
+        onClick={toggle}
+        disabled={disabled}
+        className="w-full flex items-center justify-between gap-2 px-5 py-3.5 text-[13px] font-bold text-zinc-700 dark:text-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        <span className="inline-flex items-center gap-2">
+          <FileText className="w-4 h-4 text-green-500" /> {L.btn}
+        </span>
+        <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="px-5 pb-5">
+          {loading ? (
+            <p className="flex items-center gap-2 text-[13px] text-zinc-500 dark:text-zinc-400 py-6 justify-center">
+              <Loader2 className="w-4 h-4 animate-spin text-green-500" /> {L.generating}
+            </p>
+          ) : error ? (
+            <div className="flex items-center justify-between gap-3 py-3">
+              <p className="text-[13px] text-red-500">{L.err}</p>
+              <button onClick={toggle} className="text-[12px] font-semibold text-green-600 dark:text-green-400 hover:underline">↻</button>
+            </div>
+          ) : (
+            <>
+              <p className="text-[12px] text-zinc-400 dark:text-zinc-500 mb-2">{L.hint}</p>
+              <textarea
+                value={text ?? ''}
+                onChange={(e) => setText(e.target.value)}
+                rows={14}
+                className="w-full rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-4 py-3 text-[13px] leading-relaxed text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500/40 resize-y"
+              />
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  onClick={copy}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-zinc-300 dark:border-zinc-700 text-[13px] font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/5 transition"
+                >
+                  {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                  {copied ? L.copied : L.copy}
+                </button>
+                <button
+                  onClick={() => openCoverLetterPdf(content, text ?? '')}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-green-500 text-black text-[13px] font-bold hover:brightness-105 active:scale-[0.98] transition"
+                >
+                  <Download className="w-4 h-4" /> {L.pdf}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       )}
     </div>
   );

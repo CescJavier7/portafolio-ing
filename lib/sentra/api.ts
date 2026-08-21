@@ -844,6 +844,14 @@ export async function sentraApplyEmail(id: string): Promise<SentraApplyEmail> {
   return request(`/api/v1/cv/${id}/apply-email`, { method: 'POST' }, true);
 }
 
+// Redacta la carta de presentación formal (IA, anclada al CV) para un CV guardado.
+export interface SentraCoverLetter {
+  body: string;
+}
+export async function sentraCoverLetter(id: string): Promise<SentraCoverLetter> {
+  return request(`/api/v1/cv/${id}/cover-letter`, { method: 'POST' }, true);
+}
+
 export async function sentraListCVs(folderId?: string): Promise<SentraCVListItem[]> {
   const qs = folderId ? `?folder_id=${encodeURIComponent(folderId)}` : '';
   return request(`/api/v1/cv${qs}`, { method: 'GET' }, true);

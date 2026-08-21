@@ -425,6 +425,7 @@ mejora automática por usuario.
 **Endpoints** (`/api/v1`):
 - `cv`: `POST` (generar), **`POST /from-profile`** (CV desde perfil guardado, §7.5),
   `POST /{id}/improve`, `POST /ocr`, `POST /extract-pdf`, `POST /{id}/apply-email`,
+  **`POST /{id}/cover-letter`** (carta de presentación formal, anclada al CV),
   `POST /job-meta`, `GET /quota`, folders CRUD, CVs CRUD.
 - `agent`: `GET/PUT /profile`, `POST /evaluate` (score+firewall+duplicado, auth flexible),
   `POST /firewall` (standalone, auth flexible), `POST/GET/DELETE /inbox` (bandeja, auth flexible),

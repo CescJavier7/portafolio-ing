@@ -40,6 +40,7 @@ from app.schemas.cv import (
     CVListItem,
     CVMoveRequest,
     CVUpdateRequest,
+    CoverLetterOut,
     JobMetaOut,
     JobMetaRequest,
     OCRResult,
@@ -451,6 +452,36 @@ async def apply_email(
         body=email["body"],
         recipient=cv_service.extract_recipient(cv.job_posting),
     )
+
+
+@router.post("/{cv_id}/cover-letter", response_model=CoverLetterOut)
+@limiter.limit("10/minute")
+async def cover_letter(
+    request: Request,
+    cv_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Carta de presentación formal de 1 página, anclada al CV (anti-invención).
+    Anti-IDOR (`_get_owned_cv`). Si la IA falla, cae a una carta determinista
+    editable (nunca 502). El usuario la revisa/edita antes de usarla.
+    """
+    if not settings.GROQ_API_KEY:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Servicio de IA no disponible.")
+
+    cv = await _get_owned_cv(cv_id, current_user, db)
+
+    from app.schemas.cv import CVContent
+    content = CVContent(**(cv.content or {}))
+
+    try:
+        letter = await run_in_threadpool(cv_service.generate_cover_letter, content, cv.job_posting)
+    except Exception as exc:  # noqa: BLE001 — degradación intencional a fallback
+        print(f"[CV] Fallo generando carta IA para cv {cv_id}, uso fallback: {exc}")
+        letter = cv_service.build_fallback_cover_letter(content, cv.job_posting)
+
+    return CoverLetterOut(body=letter["body"])
 
 
 @router.get("/quota")

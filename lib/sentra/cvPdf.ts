@@ -147,11 +147,14 @@ export function openCVPdf(cv: CVContent, labels: CVPdfLabels, opts?: { hideWater
   ${opts?.hideWatermark ? '' : `<div class="foot">${esc(labels.generatedBy)} — cescjavier.dev</div>`}
 </body></html>`;
 
-  // Imprimir desde un IFRAME OCULTO en vez de abrir una pestaña nueva. Ventajas:
-  //  · No consume un "pop-up" → no colisiona con el window.open de Gmail (el bug
-  //    del flujo de correo). Solo queda una ventana emergente: la del correo.
-  //  · No hay pestaña about:blank molesta; el diálogo de impresión sale directo.
-  //  · Sigue siendo un PDF REAL con texto seleccionable e hipervínculos (ATS).
+  printHtml(html);
+}
+
+// Imprime HTML desde un IFRAME OCULTO (no una pestaña nueva). Ventajas: no
+// consume un "pop-up" (no colisiona con el window.open de Gmail), no deja
+// about:blank, y sigue siendo un PDF REAL con texto seleccionable/hipervínculos.
+// Compartido por el CV y la carta de presentación.
+function printHtml(html: string): void {
   const iframe = document.createElement('iframe');
   iframe.setAttribute('aria-hidden', 'true');
   iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
@@ -172,7 +175,6 @@ export function openCVPdf(cv: CVContent, labels: CVPdfLabels, opts?: { hideWater
   };
   if (win) {
     win.onafterprint = cleanup; // quita el iframe al cerrar el diálogo
-    // Pequeño margen para que el layout del iframe se asiente antes de imprimir.
     setTimeout(() => {
       try {
         win.focus();
@@ -182,7 +184,46 @@ export function openCVPdf(cv: CVContent, labels: CVPdfLabels, opts?: { hideWater
       }
     }, 200);
   }
-  // Red de seguridad: si onafterprint no dispara en algún navegador, no dejamos
-  // el iframe colgado para siempre.
+  // Red de seguridad: si onafterprint no dispara, no dejamos el iframe colgado.
   setTimeout(cleanup, 120000);
+}
+
+// Carta de presentación → PDF A4 sobrio. La cabecera (nombre + contacto) sale del
+// CV; el cuerpo es el texto de la carta (respeta saltos de línea). Todo escapado
+// (el body lo generó un LLM a partir de la oferta = input no confiable).
+export function openCoverLetterPdf(cv: CVContent, body: string): void {
+  const ct = cv.contact;
+  const contactParts: string[] = [];
+  if ((ct?.location || '').trim()) contactParts.push(esc(ct.location.trim()));
+  if ((ct?.email || '').trim()) contactParts.push(esc(ct.email.trim()));
+  if ((ct?.phone || '').trim()) contactParts.push(esc(ct.phone.trim()));
+
+  const paragraphs = String(body || '')
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`)
+    .join('');
+
+  const html = `<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>${esc(cv.full_name || 'Carta')}</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; color: #111827; max-width: 800px; margin: 0 auto; padding: 48px 40px; line-height: 1.6; overflow-wrap: break-word; }
+  h1 { font-size: 22px; margin: 0 0 2px; letter-spacing: -0.02em; }
+  .headline { font-size: 13px; color: #4b5563; font-weight: 500; margin: 0 0 3px; }
+  .contact { font-size: 12px; color: #6b7280; margin: 0 0 22px; border-bottom: 1px solid #e5e7eb; padding-bottom: 14px; }
+  .contact .sep { color: #d1d5db; margin: 0 6px; }
+  p { font-size: 13.5px; color: #1f2937; margin: 0 0 12px; white-space: pre-wrap; }
+  @media print { html, body { margin: 0; } body { padding: 18mm 16mm; max-width: none; } }
+</style></head>
+<body>
+  <h1>${esc(cv.full_name || '')}</h1>
+  ${cv.headline ? `<p class="headline">${esc(cv.headline)}</p>` : ''}
+  ${contactParts.length ? `<p class="contact">${contactParts.join(' <span class="sep">|</span> ')}</p>` : ''}
+  ${paragraphs}
+</body></html>`;
+
+  printHtml(html);
 }
