@@ -167,14 +167,30 @@
     const row = el('div', { class: 'row' });
     const ev = el('button', { class: 'act primary', text: '🎯 Evaluar (IA)' });
     ev.addEventListener('click', runEvaluate);
+    const inbox = el('button', { class: 'act', text: '➕ Añadir a Sentra' });
+    inbox.addEventListener('click', () => captureToInbox(inbox));
     const cv = el('button', { class: 'act', text: '📄 Adaptar CV' });
     cv.addEventListener('click', adaptCV);
     const fill = el('button', { class: 'act', text: '⌨ Autocompletar' });
     fill.addEventListener('click', autofill);
     row.appendChild(ev);
+    row.appendChild(inbox);
     row.appendChild(cv);
     row.appendChild(fill);
     return row;
+  }
+
+  async function captureToInbox(btn) {
+    if (!lastOffer) lastOffer = SENTRA_extractOffer();
+    if (!lastOffer.text || lastOffer.text.length < 20) return;
+    if (btn) btn.textContent = '⏳ Añadiendo…';
+    const r = await sendBg('sentra-capture', {
+      jobPosting: lastOffer.text,
+      sourceUrl: lastOffer.url,
+      title: lastOffer.title,
+    });
+    if (btn) btn.textContent = r.ok ? '✓ En tu bandeja' : '✗ Error';
+    if (!r.ok) renderError(r);
   }
 
   function renderFirewall(fw) {

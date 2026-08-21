@@ -135,13 +135,30 @@ function renderEvaluation(ev, offer) {
 
 function actionsBar(offer) {
   const bar = el('div', { class: 'footlinks' });
+  const inbox = el('button', { class: 'action', text: '➕ A mi bandeja' });
+  inbox.addEventListener('click', () => captureToInbox(offer, inbox));
   const adapt = el('button', { class: 'action', text: '📄 Adaptar CV' });
   adapt.addEventListener('click', () => adaptCV(offer));
   const fill = el('button', { class: 'action', text: '⌨ Autocompletar' });
   fill.addEventListener('click', () => autofill());
+  bar.appendChild(inbox);
   bar.appendChild(adapt);
   bar.appendChild(fill);
   return bar;
+}
+
+async function captureToInbox(offer, btn) {
+  if (btn) btn.textContent = '⏳…';
+  try {
+    await apiFetch('/api/v1/agent/inbox', {
+      method: 'POST',
+      body: { text: offer.text, source_url: offer.url, title: offer.title },
+    });
+    if (btn) btn.textContent = '✓ En tu bandeja';
+  } catch (e) {
+    if (btn) btn.textContent = '➕ A mi bandeja';
+    renderError(e);
+  }
 }
 
 // ── Acciones principales ──
@@ -232,8 +249,21 @@ function mainButtons() {
   scan.addEventListener('click', doScan);
   const ev = el('button', { class: 'action', text: '🎯 Evaluar oferta (IA)', attrs: { style: 'margin-top:8px' } });
   ev.addEventListener('click', () => doEvaluate());
+  const inbox = el('button', { class: 'action', text: '➕ Añadir a mi bandeja', attrs: { style: 'margin-top:8px' } });
+  inbox.addEventListener('click', () =>
+    withBusy('Añadiendo a tu bandeja…', async () => {
+      const offer = await extractActiveTab();
+      await apiFetch('/api/v1/agent/inbox', { method: 'POST', body: { text: offer.text, source_url: offer.url, title: offer.title } });
+      clear();
+      app.appendChild(el('div', { class: 'banner safe' }, [
+        el('div', { class: 'title', text: '✓ En tu bandeja' }),
+        el('div', { class: 'hint', text: 'La oferta está en tu Bandeja del agente en cescjavier.dev, lista para evaluar y preparar.' }),
+      ]));
+    }),
+  );
   wrap.appendChild(scan);
   wrap.appendChild(ev);
+  wrap.appendChild(inbox);
   return wrap;
 }
 

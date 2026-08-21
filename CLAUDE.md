@@ -53,7 +53,7 @@ de seguridad web. Dos apps que se despliegan juntas en un VPS.
   **URL-encodeada** (`@` → `%40`) — NO se interpola en compose (el `@` crudo rompe asyncpg).
 - **Las migraciones corren SOLAS** al arrancar `sentra-api` (`entrypoint.sh` → `alembic
   upgrade head` con reintentos). Ya no hay que ejecutarlas a mano tras un cambio de modelo.
-  (Head actual: `c4d5e6f7a8b9`, add job_applications.score.)
+  (Head actual: `d5e6f7a8b9c0`, add captured_offers — Bandeja del agente.)
 
 **Seguridad (es una herramienta de seguridad — mantener el estándar):**
 - Anti-IDOR: toda query filtra por `organization_id` del token.

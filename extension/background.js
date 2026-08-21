@@ -40,6 +40,14 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           sendResponse({ ok: true, data });
           return;
         }
+        case 'sentra-capture': {
+          const data = await apiFetch('/api/v1/agent/inbox', {
+            method: 'POST',
+            body: { text: msg.jobPosting, source_url: msg.sourceUrl || null, title: msg.title || null },
+          });
+          sendResponse({ ok: true, data });
+          return;
+        }
         case 'sentra-open-cv': {
           const c = await loadConfig();
           await chrome.tabs.create({ url: `${c.appBase}/${c.lang}/herramientas/cv` });

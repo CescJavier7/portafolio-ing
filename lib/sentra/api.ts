@@ -1001,6 +1001,21 @@ export async function sentraEvaluateOffer(job_posting: string): Promise<SentraEv
   return request('/api/v1/agent/evaluate', { method: 'POST', body: JSON.stringify({ job_posting }) }, true);
 }
 
+// Bandeja del agente: ofertas capturadas desde la extensión ("Añadir a Sentra").
+export interface SentraCapturedOffer {
+  id: string;
+  text: string;
+  source_url: string | null;
+  title: string | null;
+  created_at: string;
+}
+export async function sentraListCapturedOffers(): Promise<SentraCapturedOffer[]> {
+  return request('/api/v1/agent/inbox', { method: 'GET' }, true);
+}
+export async function sentraDeleteCapturedOffer(id: string): Promise<void> {
+  await request(`/api/v1/agent/inbox/${id}`, { method: 'DELETE' }, true);
+}
+
 // Regeneración interactiva con IA: reescribe el CV para subir el match.
 // CONSUME 1 crédito y devuelve una versión NUEVA (el original queda en historial).
 export async function sentraImproveCV(id: string, content: CVContent): Promise<SentraCVDocument> {

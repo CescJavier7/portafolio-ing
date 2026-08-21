@@ -16,6 +16,9 @@ Dos formas de usarla: el **badge flotante** (aparece solo sobre la oferta) y el
 - **🎯 Evaluar (IA):** puntúa la oferta contra tu perfil de búsqueda (Application
   Score + veredicto + "¿por qué NO aplicar?") y avisa si ya te postulaste a algo
   casi idéntico (Duplicate Killer). Consume 1 crédito de tu cuota mensual.
+- **➕ Añadir a Sentra:** encola la oferta en tu **Bandeja del agente** en
+  cescjavier.dev (persistida en tu cuenta) para evaluarla y prepararla en lote
+  después — el puente descubrimiento → decisión.
 - **📄 Adaptar CV:** copia la oferta y abre el generador de CV para adaptarlo.
 - **⌨ Autocompletar:** rellena nombre/correo/teléfono en formularios, con
   **selectores por sitio** (Workday/Greenhouse/Lever/LinkedIn) y fallback genérico.

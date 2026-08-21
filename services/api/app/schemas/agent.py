@@ -45,6 +45,23 @@ class FirewallRequest(BaseModel):
     country: str = Field(default="", max_length=40)
 
 
+class CapturedOfferIn(BaseModel):
+    """Oferta capturada desde la extensión ('Añadir a Sentra')."""
+    text: str = Field(min_length=20, max_length=15000)
+    source_url: str | None = Field(default=None, max_length=500)
+    title: str | None = Field(default=None, max_length=300)
+
+
+class CapturedOfferOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    text: str
+    source_url: str | None
+    title: str | None
+    created_at: datetime
+
+
 class ScoreBreakdown(BaseModel):
     requisitos_obligatorios: int
     requisitos_deseables: int

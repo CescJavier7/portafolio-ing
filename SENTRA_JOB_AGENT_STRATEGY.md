@@ -204,8 +204,11 @@ editor + PDF ATS, tracker de postulaciones, generación por lote, API pública (
   ofertas → evalúa todas (secuencial, reusa `/agent/evaluate`) → agrupa en **Vale la pena /
   Descartar / Estafa** (firewall+duplicado+veredicto) → prepara solo las buenas (por oferta o en
   lote). Pestaña "Bandeja" en el generador (`AgentInbox.tsx`), orquesta en cliente, sin backend
-  nuevo. *Falta para autopilot pleno: descubrimiento automático de ofertas (hoy las pega la
-  persona o llegan por la extensión) y autocompletar el ENVÍO.*
+  nuevo. **Puente extensión → Bandeja (✅):** botón "Añadir a Sentra" en el badge/popup encola la
+  oferta en `captured_offers` (tabla nueva, por usuario, auth flexible API key) y la Bandeja la
+  carga sola (`GET /agent/inbox`), la procesa y la borra (`DELETE`). Así ves una vacante en la web →
+  un clic → aparece en tu Sentra lista para el triaje. *Falta para autopilot pleno: descubrimiento
+  proactivo (que el agente BUSQUE ofertas, no solo capturar las que ves) y autocompletar el ENVÍO.*
 - **FASE 4 — Learning Loop.** Aplicaciones → entrevistas → rechazos → aprendizaje → mejor
   selección/scoring. Diagnóstico de la búsqueda.
 - **FASE 5 — Stop when hired.** Estados de búsqueda + pausa automática + preparación de entrevista.

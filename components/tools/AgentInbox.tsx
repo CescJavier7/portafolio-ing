@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Inbox,
   Plus,
@@ -14,11 +14,15 @@ import {
   X,
   Play,
   Check,
+  RefreshCw,
+  Puzzle,
 } from 'lucide-react';
 import {
   sentraEvaluateOffer,
   sentraGenerateCVFromProfile,
   sentraCreateApplication,
+  sentraListCapturedOffers,
+  sentraDeleteCapturedOffer,
   SentraApiError,
   type SentraEvaluation,
   type SentraVerdict,
@@ -40,6 +44,8 @@ interface Item {
   preparing?: boolean;
   prepared?: { cvId: string; match: number };
   prepareErr?: string;
+  capturedId?: string; // id de la fila en captured_offers (si vino de la extensión)
+  sourceUrl?: string | null;
 }
 
 const T = {
@@ -72,6 +78,10 @@ const T = {
     summary: (n: number, w: number, d: number, s: number) =>
       `${n} evaluada(s) · ${w} para aplicar · ${d} descarte(s) · ${s} estafa(s)`,
     verdict: { apply: 'Aplicar', maybe: 'Aplicar solo si…', avoid: 'No aplicar' } as Record<SentraVerdict, string>,
+    refresh: 'Actualizar capturadas',
+    captured: 'de la extensión',
+    extHint: 'Con la extensión de Sentra, pulsa “Añadir a Sentra” en cualquier oferta y aparecerá aquí lista para evaluar.',
+    capturedLoaded: (n: number) => `${n} oferta(s) capturada(s) desde la extensión.`,
   },
   en: {
     title: 'Agent inbox',
@@ -100,6 +110,10 @@ const T = {
     summary: (n: number, w: number, d: number, s: number) =>
       `${n} evaluated · ${w} to apply · ${d} discard(s) · ${s} scam(s)`,
     verdict: { apply: 'Apply', maybe: 'Apply only if…', avoid: "Don't apply" } as Record<SentraVerdict, string>,
+    refresh: 'Refresh captured',
+    captured: 'from the extension',
+    extHint: 'With the Sentra extension, hit “Add to Sentra” on any posting and it will show up here ready to evaluate.',
+    capturedLoaded: (n: number) => `${n} posting(s) captured from the extension.`,
   },
 };
 
@@ -117,9 +131,41 @@ export default function AgentInbox({ lang }: { lang: 'es' | 'en' }) {
   const [draft, setDraft] = useState('');
   const [items, setItems] = useState<Item[]>([]);
   const [running, setRunning] = useState(false);
+  const [loadingCaptured, setLoadingCaptured] = useState(true);
 
   const patch = (id: string, part: Partial<Item>) =>
     setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...part } : it)));
+
+  // Carga las ofertas capturadas desde la extensión y las mezcla en la bandeja
+  // (sin duplicar por capturedId). Se llama al montar y con "Actualizar".
+  async function loadCaptured() {
+    setLoadingCaptured(true);
+    try {
+      const captured = await sentraListCapturedOffers();
+      setItems((prev) => {
+        const known = new Set(prev.map((it) => it.capturedId).filter(Boolean));
+        const fresh: Item[] = captured
+          .filter((c) => !known.has(c.id))
+          .map((c) => ({
+            id: crypto.randomUUID(),
+            text: c.text,
+            status: 'pending' as const,
+            capturedId: c.id,
+            sourceUrl: c.source_url,
+          }));
+        return [...fresh, ...prev];
+      });
+    } catch {
+      /* silencioso: la bandeja funciona sin capturadas */
+    } finally {
+      setLoadingCaptured(false);
+    }
+  }
+
+  useEffect(() => {
+    loadCaptured();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function add() {
     const text = draft.trim();
@@ -129,7 +175,11 @@ export default function AgentInbox({ lang }: { lang: 'es' | 'en' }) {
   }
 
   function remove(id: string) {
-    setItems((prev) => prev.filter((it) => it.id !== id));
+    setItems((prev) => {
+      const it = prev.find((x) => x.id === id);
+      if (it?.capturedId) sentraDeleteCapturedOffer(it.capturedId).catch(() => {});
+      return prev.filter((x) => x.id !== id);
+    });
   }
 
   async function evaluateAll() {
@@ -165,11 +215,21 @@ export default function AgentInbox({ lang }: { lang: 'es' | 'en' }) {
       } catch {
         /* registro best-effort */
       }
-      patch(id, { preparing: false, prepared: { cvId: cv.id, match: cv.match_score } });
+      // Procesada → si vino de la extensión, sácala de la cola del servidor para
+      // que no reaparezca al recargar.
+      if (it.capturedId) sentraDeleteCapturedOffer(it.capturedId).catch(() => {});
+      patch(id, { preparing: false, prepared: { cvId: cv.id, match: cv.match_score }, capturedId: undefined });
     } catch (e) {
       const msg = e instanceof SentraApiError && e.status === 409 ? t.noProfile : e instanceof SentraApiError ? e.detail : t.prepareErr;
       patch(id, { preparing: false, prepareErr: msg });
     }
+  }
+
+  function clearAll() {
+    items.forEach((it) => {
+      if (it.capturedId) sentraDeleteCapturedOffer(it.capturedId).catch(() => {});
+    });
+    setItems([]);
   }
 
   async function prepareAllWorth() {
@@ -238,12 +298,25 @@ export default function AgentInbox({ lang }: { lang: 'es' | 'en' }) {
             <Zap className="w-4 h-4" /> {t.prepareWorth} ({counts.worth})
           </button>
         )}
+        <button
+          onClick={loadCaptured}
+          disabled={loadingCaptured}
+          title={t.refresh}
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-300 dark:border-zinc-700 text-[12px] font-semibold text-zinc-600 dark:text-zinc-300 hover:border-green-400 disabled:opacity-50 transition"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${loadingCaptured ? 'animate-spin' : ''}`} /> {t.refresh}
+        </button>
         {items.length > 0 && (
-          <button onClick={() => setItems([])} className="ml-auto text-[12px] font-semibold text-zinc-400 hover:text-red-500 transition">
+          <button onClick={clearAll} className="ml-auto text-[12px] font-semibold text-zinc-400 hover:text-red-500 transition">
             {t.clearDone}
           </button>
         )}
       </div>
+
+      {/* Puente con la extensión */}
+      <p className="flex items-center gap-1.5 text-[12px] text-zinc-500 dark:text-zinc-400 mt-3">
+        <Puzzle className="w-3.5 h-3.5 shrink-0" /> {t.extHint}
+      </p>
 
       {/* Resumen */}
       {done.length > 0 && (
@@ -265,7 +338,14 @@ export default function AgentInbox({ lang }: { lang: 'es' | 'en' }) {
               ) : (
                 <span className="w-2 h-2 rounded-full bg-zinc-300 dark:bg-zinc-600 shrink-0" />
               )}
-              <span className="text-[13px] text-zinc-600 dark:text-zinc-300 truncate flex-1">{it.text.slice(0, 90)}</span>
+              <span className="text-[13px] text-zinc-600 dark:text-zinc-300 truncate flex-1">
+                {it.capturedId && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-green-600 dark:text-green-400 mr-2 align-middle">
+                    <Puzzle className="w-3 h-3" /> {t.captured}
+                  </span>
+                )}
+                {it.text.slice(0, 90)}
+              </span>
               {it.status === 'error' && <span className="text-[11px] text-red-500 shrink-0">{it.error}</span>}
               <button onClick={() => remove(it.id)} title={t.remove} className="shrink-0 p-1 rounded text-zinc-400 hover:text-red-500 transition">
                 <X className="w-3.5 h-3.5" />

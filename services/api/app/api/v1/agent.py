@@ -8,17 +8,20 @@ Job Agent — Fase 1. Perfil de BÚSQUEDA (qué quiero / qué NO) + Application 
 """
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.concurrency import run_in_threadpool
-from sqlalchemy import select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.deps import get_current_user, get_current_user_flex
 from app.core.config import get_settings
 from app.core.rate_limit import limiter
 from app.db.session import get_db
+from app.models.captured_offer import CapturedOffer
 from app.models.job_application import JobApplication
 from app.models.search_profile import SearchProfile
 from app.models.user import User
 from app.schemas.agent import (
+    CapturedOfferIn,
+    CapturedOfferOut,
     EvaluateOut,
     EvaluateRequest,
     FirewallRequest,
@@ -171,3 +174,81 @@ async def firewall_scan(
     sp = await _get_or_create(current_user, db)
     country = _infer_country(payload.country, sp)
     return FirewallResult(**application_firewall.scan_posting(payload.job_posting, country=country))
+
+
+# ── Bandeja del agente: cola de ofertas capturadas (puente extensión → web) ──
+
+_INBOX_MAX = 100  # tope por usuario; al pasarse se descartan las más viejas.
+
+
+@router.post("/inbox", response_model=CapturedOfferOut, status_code=status.HTTP_201_CREATED)
+@limiter.limit("60/minute")
+async def capture_offer(
+    request: Request,
+    payload: CapturedOfferIn,
+    current_user: User = Depends(get_current_user_flex),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Encola una oferta capturada (desde la extensión: 'Añadir a Sentra') para
+    procesarla luego en la Bandeja del agente. Auth flexible (la extensión usa
+    API key). Poda las más viejas si se supera el tope por usuario.
+    """
+    offer = CapturedOffer(
+        user_id=current_user.id,
+        text=payload.text,
+        source_url=payload.source_url,
+        title=payload.title,
+    )
+    db.add(offer)
+    await db.flush()
+
+    # Poda: conserva solo las _INBOX_MAX más recientes (evita crecimiento sin fin).
+    total = (
+        await db.execute(select(func.count()).select_from(CapturedOffer).where(CapturedOffer.user_id == current_user.id))
+    ).scalar_one()
+    if total > _INBOX_MAX:
+        overflow = total - _INBOX_MAX
+        old_ids = (
+            await db.execute(
+                select(CapturedOffer.id)
+                .where(CapturedOffer.user_id == current_user.id)
+                .order_by(CapturedOffer.created_at.asc())
+                .limit(overflow)
+            )
+        ).scalars().all()
+        if old_ids:
+            await db.execute(delete(CapturedOffer).where(CapturedOffer.id.in_(old_ids)))
+
+    await db.commit()
+    await db.refresh(offer)
+    return offer
+
+
+@router.get("/inbox", response_model=list[CapturedOfferOut])
+async def list_captured_offers(
+    current_user: User = Depends(get_current_user_flex),
+    db: AsyncSession = Depends(get_db),
+):
+    """Ofertas capturadas pendientes de procesar (más recientes primero)."""
+    rows = await db.execute(
+        select(CapturedOffer)
+        .where(CapturedOffer.user_id == current_user.id)
+        .order_by(CapturedOffer.created_at.desc())
+    )
+    return rows.scalars().all()
+
+
+@router.delete("/inbox/{offer_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_captured_offer(
+    offer_id: str,
+    current_user: User = Depends(get_current_user_flex),
+    db: AsyncSession = Depends(get_db),
+):
+    """Quita una oferta de la bandeja (tras procesarla o descartarla). Anti-IDOR."""
+    result = await db.execute(
+        delete(CapturedOffer).where(CapturedOffer.id == offer_id, CapturedOffer.user_id == current_user.id)
+    )
+    await db.commit()
+    if result.rowcount == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Oferta no encontrada.")
