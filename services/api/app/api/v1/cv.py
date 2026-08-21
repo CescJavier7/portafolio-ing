@@ -11,6 +11,7 @@ supresión = DELETE real.
 """
 import asyncio
 import json
+import uuid
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
@@ -58,13 +59,29 @@ router = APIRouter(prefix="/cv", tags=["cv"])
 
 
 async def _get_owned_cv(cv_id: str, current_user: User, db: AsyncSession) -> CVDocument:
+    # cv_id llega como string (path param o body): lo validamos como UUID para no
+    # reventar con un 500 de asyncpg ante un id malformado → 404 limpio. Central:
+    # protege a TODOS los endpoints que resuelven un CV (get/delete/apply-email/
+    # cover-letter/interview-prep/from-profile…). Anti-IDOR: filtra por user_id.
+    try:
+        cid = uuid.UUID(str(cv_id))
+    except (ValueError, AttributeError):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="CV no encontrado.")
     result = await db.execute(
-        select(CVDocument).where(CVDocument.id == cv_id, CVDocument.user_id == current_user.id)
+        select(CVDocument).where(CVDocument.id == cid, CVDocument.user_id == current_user.id)
     )
     cv = result.scalar_one_or_none()
     if cv is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="CV no encontrado.")
     return cv
+
+
+def _uuid_or_404(value: str, detail: str) -> uuid.UUID:
+    """Valida un id de la URL como UUID; 404 si es malformado (evita el 500 de asyncpg)."""
+    try:
+        return uuid.UUID(str(value))
+    except (ValueError, AttributeError):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
 
 
 async def _count_cvs_since(current_user: User, db: AsyncSession, days: int) -> int:
@@ -572,8 +589,9 @@ async def rename_folder(
     db: AsyncSession = Depends(get_db),
 ):
     """Renombra una carpeta del usuario (anti-IDOR: filtrada por user_id)."""
+    fid = _uuid_or_404(folder_id, "Carpeta no encontrada.")
     result = await db.execute(
-        select(CVFolder).where(CVFolder.id == folder_id, CVFolder.user_id == current_user.id)
+        select(CVFolder).where(CVFolder.id == fid, CVFolder.user_id == current_user.id)
     )
     folder = result.scalar_one_or_none()
     if folder is None:
@@ -591,8 +609,9 @@ async def rename_folder(
 async def delete_folder(
     folder_id: str, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
+    fid = _uuid_or_404(folder_id, "Carpeta no encontrada.")
     result = await db.execute(
-        select(CVFolder).where(CVFolder.id == folder_id, CVFolder.user_id == current_user.id)
+        select(CVFolder).where(CVFolder.id == fid, CVFolder.user_id == current_user.id)
     )
     folder = result.scalar_one_or_none()
     if folder is None:
@@ -611,8 +630,12 @@ async def list_cvs(
 ):
     query = select(CVDocument).where(CVDocument.user_id == current_user.id)
     if folder_id is not None:
-        # Filtro por carpeta (anti-IDOR implícito: sigue acotado por user_id).
-        query = query.where(CVDocument.folder_id == folder_id)
+        # Filtro por carpeta (anti-IDOR implícito: sigue acotado por user_id). Un
+        # folder_id malformado no revienta: simplemente no casa (lista vacía).
+        try:
+            query = query.where(CVDocument.folder_id == uuid.UUID(folder_id))
+        except ValueError:
+            return []
     result = await db.execute(query.order_by(CVDocument.created_at.desc()))
     return list(result.scalars().all())
 

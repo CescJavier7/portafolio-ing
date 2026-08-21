@@ -6,6 +6,8 @@ Job Agent — Fase 1. Perfil de BÚSQUEDA (qué quiero / qué NO) + Application 
 (anti-IDOR). El scoring es rules-first (ver services/application_scoring.py); la
 única llamada a IA es analizar la oferta.
 """
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import delete, func, select
@@ -84,12 +86,15 @@ async def _get_or_create(current_user: User, db: AsyncSession) -> SearchProfile:
 
 
 @router.get("/profile", response_model=SearchProfileOut)
-async def get_profile(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+@limiter.limit("60/minute")
+async def get_profile(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     return await _get_or_create(current_user, db)
 
 
 @router.put("/profile", response_model=SearchProfileOut)
+@limiter.limit("20/minute")
 async def put_profile(
+    request: Request,
     payload: SearchProfileIn,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -238,7 +243,9 @@ async def capture_offer(
 
 
 @router.get("/inbox", response_model=list[CapturedOfferOut])
+@limiter.limit("60/minute")
 async def list_captured_offers(
+    request: Request,
     current_user: User = Depends(get_current_user_flex),
     db: AsyncSession = Depends(get_db),
 ):
@@ -252,14 +259,22 @@ async def list_captured_offers(
 
 
 @router.delete("/inbox/{offer_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("30/minute")
 async def delete_captured_offer(
+    request: Request,
     offer_id: str,
     current_user: User = Depends(get_current_user_flex),
     db: AsyncSession = Depends(get_db),
 ):
     """Quita una oferta de la bandeja (tras procesarla o descartarla). Anti-IDOR."""
+    # El id llega como string en la URL: lo validamos como UUID para no reventar
+    # con un 500 de asyncpg ante un id malformado (devolvemos 404 limpio).
+    try:
+        oid = uuid.UUID(offer_id)
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Oferta no encontrada.")
     result = await db.execute(
-        delete(CapturedOffer).where(CapturedOffer.id == offer_id, CapturedOffer.user_id == current_user.id)
+        delete(CapturedOffer).where(CapturedOffer.id == oid, CapturedOffer.user_id == current_user.id)
     )
     await db.commit()
     if result.rowcount == 0:
