@@ -41,6 +41,7 @@ from app.schemas.cv import (
     CVMoveRequest,
     CVUpdateRequest,
     CoverLetterOut,
+    InterviewPrepOut,
     JobMetaOut,
     JobMetaRequest,
     OCRResult,
@@ -482,6 +483,36 @@ async def cover_letter(
         letter = cv_service.build_fallback_cover_letter(content, cv.job_posting)
 
     return CoverLetterOut(body=letter["body"])
+
+
+@router.post("/{cv_id}/interview-prep", response_model=InterviewPrepOut)
+@limiter.limit("10/minute")
+async def interview_prep(
+    request: Request,
+    cv_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Preguntas probables de la entrevista + puntos de conversación anclados al CV
+    (anti-invención). Anti-IDOR (`_get_owned_cv`). Fallback determinista si la IA
+    falla (nunca 502).
+    """
+    if not settings.GROQ_API_KEY:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Servicio de IA no disponible.")
+
+    cv = await _get_owned_cv(cv_id, current_user, db)
+
+    from app.schemas.cv import CVContent
+    content = CVContent(**(cv.content or {}))
+
+    try:
+        prep = await run_in_threadpool(cv_service.generate_interview_prep, content, cv.job_posting)
+    except Exception as exc:  # noqa: BLE001 — degradación intencional a fallback
+        print(f"[CV] Fallo generando interview-prep IA para cv {cv_id}, uso fallback: {exc}")
+        prep = cv_service.build_fallback_interview_prep(content, cv.job_posting)
+
+    return InterviewPrepOut(questions=prep["questions"])
 
 
 @router.get("/quota")

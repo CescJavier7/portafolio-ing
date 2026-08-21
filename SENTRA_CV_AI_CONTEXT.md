@@ -426,7 +426,13 @@ mejora automática por usuario.
 - `cv`: `POST` (generar), **`POST /from-profile`** (CV desde perfil guardado, §7.5),
   `POST /{id}/improve`, `POST /ocr`, `POST /extract-pdf`, `POST /{id}/apply-email`,
   **`POST /{id}/cover-letter`** (carta de presentación formal, anclada al CV),
+  **`POST /{id}/interview-prep`** (preguntas de entrevista + tips anclados al CV),
   `POST /job-meta`, `GET /quota`, folders CRUD, CVs CRUD.
+
+**Análisis del CV en el editor (cliente, determinista — `lib/sentra/cvQuality.ts`):** panel de
+**cobertura ATS** (match score + requisitos por cubrir con RE-CHEQUEO en vivo: si el usuario ya
+añadió el requisito al editar, se marca como cubierto) y **chequeos de calidad** (logros con
+métricas, largo del resumen, verbos débiles, nº de skills, correo de contacto). Sin IA, sin PII.
 - `agent`: `GET/PUT /profile`, `POST /evaluate` (score+firewall+duplicado, auth flexible),
   `POST /firewall` (standalone, auth flexible), `POST/GET/DELETE /inbox` (bandeja, auth flexible),
   `GET /insights` (diagnóstico, solo sesión).

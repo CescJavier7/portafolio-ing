@@ -20,15 +20,16 @@ import Link from 'next/link';
 import {
   Wand2, Download, Send, Plus, Trash2, ArrowLeft, ArrowRight, Mail, X, ChevronDown,
   Check, Lock, Loader2, ListChecks, Lightbulb, Cloud, Folder, FolderPlus, ExternalLink, AlertCircle,
-  FileText, Copy,
+  FileText, Copy, Gauge, MessageSquare, TrendingUp,
 } from 'lucide-react';
 import {
-  sentraUpdateCV, sentraImproveCV, sentraApplyEmail, sentraCoverLetter, sentraCVQuota,
+  sentraUpdateCV, sentraImproveCV, sentraApplyEmail, sentraCoverLetter, sentraInterviewPrep, sentraCVQuota,
   sentraListCVFolders, sentraCreateCVFolder, SentraApiError,
-  type SentraCVDocument, type SentraApplyEmail, type SentraCVQuota, type CVContent,
+  type SentraCVDocument, type SentraApplyEmail, type SentraInterviewPrep, type SentraCVQuota, type CVContent,
   type SentraCVFolder,
 } from '@/lib/sentra/api';
 import { openCVPdf, openCoverLetterPdf } from '@/lib/sentra/cvPdf';
+import { atsCoverage, cvQualityChecks, type QualityCheck } from '@/lib/sentra/cvQuality';
 import { useSentraSession } from '@/lib/sentra/useSession';
 import { useCVWizard, cvWizard, cleanCVContent, CV_STEPS, type CVStep } from '@/lib/sentra/cvStore';
 import { matchColor, matchTint } from '@/lib/sentra/matchScore';
@@ -653,38 +654,27 @@ function StepBody({
         onAssign={onAssignFolder}
         onCreate={onCreateFolder}
       />
-      {c.missing_requirements.length === 0 && suggestions.length === 0 ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">{dict.wizard.reviewClear}</p>
-      ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {c.missing_requirements.length > 0 && (
-            <div className="rounded-2xl bg-amber-500/5 border border-amber-500/20 p-5">
-              <p className="flex items-center gap-2 text-sm font-bold text-amber-600 dark:text-amber-400 mb-3">
-                <ListChecks className="w-4 h-4" /> {dict.missingTitle}
-              </p>
-              <ul className="space-y-1.5">
-                {c.missing_requirements.map((m, i) => (
-                  <li key={i} className="text-[13px] text-zinc-600 dark:text-zinc-300">• {m}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {suggestions.length > 0 && (
-            <div className="rounded-2xl bg-violet-500/5 border border-violet-500/20 p-5">
-              <p className="flex items-center gap-2 text-sm font-bold text-violet-600 dark:text-violet-400 mb-3">
-                <Lightbulb className="w-4 h-4" /> {dict.tipsTitle}
-              </p>
-              <ul className="space-y-1.5">
-                {suggestions.map((t, i) => (
-                  <li key={i} className="text-[13px] text-zinc-600 dark:text-zinc-300">• {t}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+      {/* Panel de cobertura ATS + calidad, lado a lado en desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <ATSCoveragePanel content={content} lang={lang} missingTitle={dict.missingTitle} />
+        <CVQualityPanel content={content} lang={lang} />
+      </div>
+
+      {suggestions.length > 0 && (
+        <div className="rounded-2xl bg-violet-500/5 border border-violet-500/20 p-5">
+          <p className="flex items-center gap-2 text-sm font-bold text-violet-600 dark:text-violet-400 mb-3">
+            <Lightbulb className="w-4 h-4" /> {dict.tipsTitle}
+          </p>
+          <ul className="space-y-1.5">
+            {suggestions.map((t, i) => (
+              <li key={i} className="text-[13px] text-zinc-600 dark:text-zinc-300">• {t}</li>
+            ))}
+          </ul>
         </div>
       )}
       <ApplyEmailButton cvId={cvId} cv={cv} content={content} dict={dict} lang={lang} isPaid={isPaid} disabled={!canSend} />
       <CoverLetterButton cvId={cvId} cv={cv} content={content} lang={lang} disabled={!canSend} />
+      <InterviewPrepButton cvId={cvId} cv={cv} lang={lang} disabled={!canSend} />
       {!canSend && (
         <p className="text-[12px] text-red-500 text-center">{dict.wizard.incompleteTitle}</p>
       )}
@@ -803,6 +793,188 @@ function CoverLetterButton({
                   <Download className="w-4 h-4" /> {L.pdf}
                 </button>
               </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Panel de cobertura ATS: match score + requisitos por cubrir, con RE-CHEQUEO en
+// vivo (si el usuario ya añadió el requisito al editar, se marca como cubierto).
+function ATSCoveragePanel({ content, lang, missingTitle }: { content: CVContent; lang: string; missingTitle: string }) {
+  const en = lang === 'en';
+  const items = atsCoverage(content);
+  const score = content.match_score;
+  const L = {
+    title: en ? 'ATS coverage' : 'Cobertura ATS',
+    match: 'Match',
+    allClear: en ? 'Your CV covers the offer requirements well.' : 'Tu CV cubre bien los requisitos de la oferta.',
+    coveredNote: en ? 'now covered' : 'ya cubierto',
+    hint: en ? 'Add these only if you truly have them — never invent.' : 'Añádelos solo si de verdad los tienes — nunca inventes.',
+  };
+  return (
+    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 p-5">
+      <div className="flex items-center justify-between mb-3">
+        <p className="flex items-center gap-2 text-sm font-bold text-zinc-800 dark:text-zinc-100">
+          <Gauge className="w-4 h-4 text-green-500" /> {L.title}
+        </p>
+        <div>
+          <span className="text-2xl font-black tabular-nums" style={{ color: matchColor(score) }}>{score}</span>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 ml-1">{L.match}</span>
+        </div>
+      </div>
+      <div className="h-2 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden mb-4">
+        <div className="h-full rounded-full" style={{ width: `${Math.max(4, Math.min(100, score))}%`, backgroundColor: matchColor(score) }} />
+      </div>
+      {items.length === 0 ? (
+        <p className="text-[13px] text-zinc-500 dark:text-zinc-400">{L.allClear}</p>
+      ) : (
+        <>
+          <p className="text-[12px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-2 flex items-center gap-1.5">
+            <ListChecks className="w-3.5 h-3.5" /> {missingTitle}
+          </p>
+          <ul className="space-y-1.5">
+            {items.map((it, i) => (
+              <li key={i} className="text-[13px] flex items-start gap-2">
+                {it.covered ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-green-500 mt-0.5 shrink-0" />
+                    <span className="text-zinc-400 line-through">{it.requirement}</span>
+                    <span className="text-[11px] text-green-600 dark:text-green-400 shrink-0">· {L.coveredNote}</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                    <span className="text-zinc-600 dark:text-zinc-300">{it.requirement}</span>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+          <p className="text-[11px] text-zinc-400 mt-3">{L.hint}</p>
+        </>
+      )}
+    </div>
+  );
+}
+
+// Chequeos de calidad DETERMINISTAS del CV (sin IA). Cada uno traduce code+value.
+function CVQualityPanel({ content, lang }: { content: CVContent; lang: string }) {
+  const en = lang === 'en';
+  const checks = cvQualityChecks(content);
+  const label = (c: QualityCheck): string => {
+    const v = c.value;
+    if (en)
+      return {
+        metrics: `Impact metrics in bullets: ${v}%`,
+        summary: v < 200 ? 'Summary is a bit short' : v > 700 ? 'Summary is too long' : 'Summary length is on point',
+        bullets: `${v} achievement bullet(s)`,
+        weakverbs: v === 0 ? 'Strong action verbs' : `${v} weak/passive bullet start(s)`,
+        skills: `${v} skills listed`,
+        contact: v ? 'Contact email present' : 'Missing contact email',
+      }[c.code];
+    return {
+      metrics: `Logros con métricas: ${v}%`,
+      summary: v < 200 ? 'El resumen es algo corto' : v > 700 ? 'El resumen es muy largo' : 'Largo del resumen adecuado',
+      bullets: `${v} logro(s) en experiencia`,
+      weakverbs: v === 0 ? 'Verbos de acción fuertes' : `${v} bullet(s) con arranque débil`,
+      skills: `${v} habilidades listadas`,
+      contact: v ? 'Correo de contacto presente' : 'Falta el correo de contacto',
+    }[c.code];
+  };
+  return (
+    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 p-5">
+      <p className="flex items-center gap-2 text-sm font-bold text-zinc-800 dark:text-zinc-100 mb-3">
+        <TrendingUp className="w-4 h-4 text-green-500" /> {en ? 'CV quality' : 'Calidad del CV'}
+      </p>
+      <ul className="space-y-1.5">
+        {checks.map((c) => (
+          <li key={c.code} className="text-[13px] flex items-start gap-2">
+            {c.level === 'good' ? (
+              <Check className="w-3.5 h-3.5 text-green-500 mt-0.5 shrink-0" />
+            ) : (
+              <AlertCircle className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
+            )}
+            <span className={c.level === 'good' ? 'text-zinc-600 dark:text-zinc-300' : 'text-zinc-700 dark:text-zinc-200'}>{label(c)}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+// Preparación de entrevista: preguntas probables + tips anclados al CV. Se genera
+// BAJO DEMANDA (no al montar), como la carta de presentación.
+function InterviewPrepButton({ cvId, cv, lang, disabled }: { cvId: string | null; cv: SentraCVDocument; lang: string; disabled: boolean }) {
+  const en = lang === 'en';
+  const L = {
+    btn: en ? 'Interview prep' : 'Prepárate para la entrevista',
+    generating: en ? 'Preparing…' : 'Preparando…',
+    hint: en ? 'Likely questions and how to answer using your real experience.' : 'Preguntas probables y cómo responderlas usando tu experiencia real.',
+    err: en ? 'Could not generate. Try again.' : 'No se pudo generar. Inténtalo de nuevo.',
+  };
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [prep, setPrep] = useState<SentraInterviewPrep | null>(null);
+  const [error, setError] = useState(false);
+
+  async function toggle() {
+    if (open) {
+      setOpen(false);
+      return;
+    }
+    setOpen(true);
+    if (prep === null && !loading) {
+      setLoading(true);
+      setError(false);
+      try {
+        setPrep(await sentraInterviewPrep(cvId ?? cv.id));
+      } catch {
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40">
+      <button
+        onClick={toggle}
+        disabled={disabled}
+        className="w-full flex items-center justify-between gap-2 px-5 py-3.5 text-[13px] font-bold text-zinc-700 dark:text-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        <span className="inline-flex items-center gap-2">
+          <MessageSquare className="w-4 h-4 text-green-500" /> {L.btn}
+        </span>
+        <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="px-5 pb-5">
+          {loading ? (
+            <p className="flex items-center gap-2 text-[13px] text-zinc-500 dark:text-zinc-400 py-6 justify-center">
+              <Loader2 className="w-4 h-4 animate-spin text-green-500" /> {L.generating}
+            </p>
+          ) : error ? (
+            <div className="flex items-center justify-between gap-3 py-3">
+              <p className="text-[13px] text-red-500">{L.err}</p>
+              <button onClick={toggle} className="text-[12px] font-semibold text-green-600 dark:text-green-400 hover:underline">↻</button>
+            </div>
+          ) : (
+            <>
+              <p className="text-[12px] text-zinc-400 dark:text-zinc-500 mb-3">{L.hint}</p>
+              <ol className="space-y-3">
+                {(prep?.questions ?? []).map((q, i) => (
+                  <li key={i} className="rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 p-3.5">
+                    <p className="text-[13px] font-bold text-zinc-800 dark:text-zinc-100 flex gap-2">
+                      <span className="text-green-500">{i + 1}.</span> {q.question}
+                    </p>
+                    {q.tip && <p className="text-[12.5px] text-zinc-600 dark:text-zinc-400 mt-1.5 pl-5">💡 {q.tip}</p>}
+                  </li>
+                ))}
+              </ol>
             </>
           )}
         </div>

@@ -852,6 +852,18 @@ export async function sentraCoverLetter(id: string): Promise<SentraCoverLetter> 
   return request(`/api/v1/cv/${id}/cover-letter`, { method: 'POST' }, true);
 }
 
+// Preparación de entrevista: preguntas probables + puntos de conversación (IA, anclados al CV).
+export interface SentraInterviewQuestion {
+  question: string;
+  tip: string;
+}
+export interface SentraInterviewPrep {
+  questions: SentraInterviewQuestion[];
+}
+export async function sentraInterviewPrep(id: string): Promise<SentraInterviewPrep> {
+  return request(`/api/v1/cv/${id}/interview-prep`, { method: 'POST' }, true);
+}
+
 export async function sentraListCVs(folderId?: string): Promise<SentraCVListItem[]> {
   const qs = folderId ? `?folder_id=${encodeURIComponent(folderId)}` : '';
   return request(`/api/v1/cv${qs}`, { method: 'GET' }, true);

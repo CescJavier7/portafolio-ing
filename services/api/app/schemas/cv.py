@@ -176,3 +176,13 @@ class ApplyEmailOut(BaseModel):
 class CoverLetterOut(BaseModel):
     # Carta de presentación formal de 1 página, anclada al CV (anti-invención).
     body: str
+
+
+class InterviewQuestion(BaseModel):
+    question: str
+    tip: str = ""
+
+
+class InterviewPrepOut(BaseModel):
+    # Preguntas probables de la entrevista + puntos de conversación anclados al CV.
+    questions: list[InterviewQuestion]
