@@ -71,6 +71,38 @@ def _language_score(profile: dict, analysis: dict) -> float:
     return 0.5
 
 
+_DIM_LABEL = {
+    "skills": "skills",
+    "experiencia": "experiencia",
+    "seniority": "seniority",
+    "idioma": "idioma",
+    "ubicacion": "ubicación",
+}
+
+
+def _build_explanation(skills_frac: float | None, compat: dict, risks: list[dict], deal_breakers: list, verdict: str) -> str:
+    """Explicación DETERMINISTA del veredicto (sin IA): % de obligatorios,
+    fortaleza principal y brecha principal con matiz según el veredicto."""
+    if deal_breakers:
+        return "No recomendado: " + deal_breakers[0].rstrip(".") + "."
+    base = (
+        "La oferta no lista requisitos obligatorios claros."
+        if skills_frac is None
+        else f"Cumples el {round(skills_frac * 100)}% de los requisitos obligatorios."
+    )
+    parts = [base]
+    strong = [_DIM_LABEL[k] for k, v in compat.items() if v >= 85]
+    if strong:
+        parts.append("Tu punto fuerte: " + ", ".join(strong[:3]) + ".")
+    high = [r["text"] for r in risks if r["level"] == "high"]
+    if high:
+        closing = "El encaje general es suficiente para intentarlo." if verdict != "avoid" else "La brecha es grande para este puesto."
+        parts.append(f"Brecha principal: {high[0]}. {closing}")
+    elif verdict == "apply":
+        parts.append("Buen encaje: vale la pena aplicar.")
+    return " ".join(parts)
+
+
 def score_application(profile: dict, analysis: dict) -> dict:
     techs = [_norm(t) for t in profile.get("technologies", []) if t]
     obligatorios = analysis.get("requisitos_obligatorios", []) or []
@@ -142,10 +174,52 @@ def score_application(profile: dict, analysis: dict) -> dict:
     else:
         verdict = "avoid"
 
+    # ── Compatibilidad por dimensión (0-100), riesgos y explicación ──
+    skills_frac = _covered_fraction(obligatorios, techs)  # cobertura de obligatorios
+    user_years = profile.get("user_years_experience")
+    if req_years and isinstance(user_years, int):
+        exp_pct = 100 if req_years <= 0 else min(100, round(user_years / req_years * 100))
+    else:
+        d = _covered_fraction(deseables, techs)
+        exp_pct = round((d if d is not None else 0.7) * 100)
+
+    compatibility = {
+        "skills": round((skills_frac if skills_frac is not None else 0.7) * 100),
+        "experiencia": exp_pct,
+        "seniority": round(_seniority_score(prof_sen, off_sen) * 100),
+        "idioma": round(_language_score(profile, analysis) * 100),
+        "ubicacion": round(_location_modality_score(profile, analysis) * 100),
+    }
+
+    risks: list[dict] = []
+    for it in obligatorios:
+        if not any(t and t in _norm(it) for t in techs):
+            risks.append({"text": f"{it} — requerido, no cubierto", "level": "high"})
+    if prof_sen is not None and off_sen is not None and off_sen > prof_sen:
+        risks.append({
+            "text": f"Piden seniority {analysis.get('seniority')}, tu perfil es {profile.get('seniority') or 'sin definir'}",
+            "level": "high" if off_sen - prof_sen >= 1 else "medium",
+        })
+    if req_years and isinstance(user_years, int) and user_years < req_years:
+        risks.append({
+            "text": f"Piden {req_years} años de experiencia; tienes {user_years}",
+            "level": "high" if (max_exp is not None and req_years > max_exp) else "medium",
+        })
+    if compatibility["idioma"] <= 50:
+        risks.append({"text": "El idioma de la oferta no está confirmado en tu perfil", "level": "medium"})
+    if compatibility["ubicacion"] <= 50:
+        risks.append({"text": "Ubicación/modalidad no coincide con tus preferencias", "level": "high"})
+    risks = risks[:6]
+
+    explanation = _build_explanation(skills_frac, compatibility, risks, deal_breakers, verdict)
+
     return {
         "score": max(0, min(100, round(score))),
         "verdict": verdict,
         "breakdown": breakdown,
+        "compatibility": compatibility,
+        "risks": risks,
+        "explanation": explanation,
         "deal_breakers": deal_breakers,
         "reasons_avoid": (deal_breakers + reasons_avoid)[:6],
         "reasons_apply": reasons_apply[:6],

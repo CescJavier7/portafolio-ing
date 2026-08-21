@@ -102,6 +102,20 @@ class ScoreBreakdown(BaseModel):
     keywords_ats: int
 
 
+class DimensionCompat(BaseModel):
+    """Compatibilidad por dimensión (0-100), para el desglose legible."""
+    skills: int
+    experiencia: int
+    seniority: int
+    idioma: int
+    ubicacion: int
+
+
+class Risk(BaseModel):
+    text: str
+    level: str  # high | medium
+
+
 class FirewallFlag(BaseModel):
     code: str                        # advance_fee | crypto_payment | ... (i18n en frontend)
     severity: str                    # high | medium | low
@@ -134,6 +148,9 @@ class EvaluateOut(BaseModel):
     score: int                       # 0-100
     verdict: str                     # apply | maybe | avoid
     breakdown: ScoreBreakdown
+    compatibility: DimensionCompat | None = None  # compatibilidad por dimensión (0-100)
+    risks: list[Risk] = []           # riesgos estructurados (con severidad)
+    explanation: str = ""            # explicación del veredicto en lenguaje natural
     deal_breakers: list[str]         # razones DURAS por las que no aplicar
     reasons_avoid: list[str]         # "¿por qué NO deberías aplicar?"
     reasons_apply: list[str]         # lo que sí cumples

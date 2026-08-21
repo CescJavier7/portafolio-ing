@@ -87,3 +87,30 @@ def test_breakdown_keys_present():
     r = sc.score_application(_profile(), _analysis())
     for k in ("requisitos_obligatorios", "requisitos_deseables", "ubicacion_modalidad", "seniority", "idioma", "keywords_ats"):
         assert k in r["breakdown"]
+
+
+def test_compatibility_dimensions():
+    r = sc.score_application(_profile(), _analysis())
+    for k in ("skills", "experiencia", "seniority", "idioma", "ubicacion"):
+        assert k in r["compatibility"]
+        assert 0 <= r["compatibility"][k] <= 100
+
+
+def test_uncovered_obligatorio_is_high_risk():
+    r = sc.score_application(
+        _profile(technologies=["python", "fastapi"]),
+        _analysis(requisitos_obligatorios=["Python", "Kubernetes"]),
+    )
+    high = [x for x in r["risks"] if x["level"] == "high"]
+    assert any("Kubernetes" in x["text"] for x in high)
+
+
+def test_explanation_mentions_percentage():
+    r = sc.score_application(_profile(), _analysis())
+    assert "%" in r["explanation"]
+    assert "obligatorios" in r["explanation"]
+
+
+def test_explanation_for_deal_breaker_is_not_recommended():
+    r = sc.score_application(_profile(), _analysis(modalidad="presencial"))
+    assert r["explanation"].startswith("No recomendado")

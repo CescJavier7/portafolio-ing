@@ -349,8 +349,12 @@ ubicaciones, idiomas, reubicación/visa) y sobre todo los **deal-breakers** (lo 
 Determinista: la IA solo analiza la oferta (`analyze_offer`); la puntuación y el veredicto son
 reglas. Pondera (suma 100): requisitos obligatorios 35 · deseables 10 · ubicación/modalidad 20
 · seniority 15 · idioma 10 · keywords ATS 10. Los deal-breakers **fuerzan "avoid"** y limitan el
-score. Devuelve score, veredicto (apply/maybe/avoid), desglose y —la estrella— **"¿por qué NO
-aplicar?"**. `POST /agent/evaluate`.
+score. Devuelve score y veredicto (apply/maybe/avoid) + **salida enriquecida** (rules-first, sin
+IA extra): **compatibilidad por dimensión 0-100** (skills/experiencia/seniority/idioma/ubicación,
+barras en la UI), **riesgos estructurados con severidad** (alto/medio, p. ej. «Kubernetes —
+requerido, no cubierto») y **explicación en lenguaje natural** del veredicto ("Cumples el 67% de
+los obligatorios; tu punto fuerte: experiencia, seniority; brecha: Kubernetes. El encaje general
+es suficiente para intentarlo."). `POST /agent/evaluate`.
 
 ### 7.3 Application Firewall — anti-estafa (`application_firewall.py`)
 Determinista, **sin IA, sin coste**. Escanea el **texto CRUDO** de la oferta (el análisis con IA

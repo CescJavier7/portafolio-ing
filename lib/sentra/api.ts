@@ -997,6 +997,17 @@ export interface SentraPersonalization {
   reasons: string[];
   n_outcomes: number;
 }
+export interface SentraCompatibility {
+  skills: number;
+  experiencia: number;
+  seniority: number;
+  idioma: number;
+  ubicacion: number;
+}
+export interface SentraRisk {
+  text: string;
+  level: 'high' | 'medium';
+}
 export interface SentraEvaluation {
   score: number;
   verdict: SentraVerdict;
@@ -1008,6 +1019,9 @@ export interface SentraEvaluation {
     idioma: number;
     keywords_ats: number;
   };
+  compatibility?: SentraCompatibility | null;
+  risks?: SentraRisk[];
+  explanation?: string;
   deal_breakers: string[];
   reasons_avoid: string[];
   reasons_apply: string[];

@@ -145,6 +145,7 @@ async def evaluate(
             deal_breakers=["Posible estafa detectada — revisa las señales antes de continuar."],
             reasons_avoid=[f["code"] for f in firewall["flags"]],
             reasons_apply=[],
+            explanation="No recomendado: la oferta muestra señales de posible estafa; no se evaluó la compatibilidad.",
             company="",
             role="",
             firewall=firewall,

@@ -53,6 +53,9 @@ const T = {
       requisitos_obligatorios: 'Requisitos', requisitos_deseables: 'Deseables',
       ubicacion_modalidad: 'Ubicación/modalidad', seniority: 'Seniority', idioma: 'Idioma', keywords_ats: 'Keywords ATS',
     } as Record<string, string>,
+    compatTitle: 'Compatibilidad',
+    risksTitle: 'Riesgos',
+    dims: { skills: 'Skills', experiencia: 'Experiencia', seniority: 'Seniority', idioma: 'Idioma', ubicacion: 'Ubicación' } as Record<string, string>,
     add: 'Añadir (Enter)',
     // Application Firewall
     fwDanger: 'Alto riesgo de estafa',
@@ -114,6 +117,9 @@ const T = {
       requisitos_obligatorios: 'Requirements', requisitos_deseables: 'Nice-to-have',
       ubicacion_modalidad: 'Location/modality', seniority: 'Seniority', idioma: 'Language', keywords_ats: 'ATS keywords',
     } as Record<string, string>,
+    compatTitle: 'Compatibility',
+    risksTitle: 'Risks',
+    dims: { skills: 'Skills', experiencia: 'Experience', seniority: 'Seniority', idioma: 'Language', ubicacion: 'Location' } as Record<string, string>,
     add: 'Add (Enter)',
     // Application Firewall
     fwDanger: 'High scam risk',
@@ -521,18 +527,49 @@ export default function JobAgentTab({ lang }: { lang: 'es' | 'en' }) {
               </div>
             )}
 
-            {/* Desglose */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-5">
-              {Object.entries(ev.breakdown).map(([k, v]) => (
-                <div key={k} className="rounded-lg bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 px-3 py-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 truncate">{t.labels[k] ?? k}</p>
-                  <p className="text-sm font-black text-zinc-900 dark:text-white">{v}</p>
-                </div>
-              ))}
-            </div>
+            {/* Explicación del veredicto (lenguaje natural, determinista) */}
+            {ev.explanation && (
+              <p className="text-[13.5px] text-zinc-700 dark:text-zinc-200 leading-relaxed mb-4">{ev.explanation}</p>
+            )}
 
-            {/* ¿Por qué NO aplicar? — la estrella */}
-            {ev.reasons_avoid.length > 0 && (
+            {/* Compatibilidad por dimensión */}
+            {ev.compatibility && (
+              <div className="mb-5">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-2">{t.compatTitle}</p>
+                <div className="space-y-2">
+                  {Object.entries(ev.compatibility).map(([k, v]) => (
+                    <div key={k} className="flex items-center gap-3">
+                      <span className="text-[12px] font-semibold text-zinc-600 dark:text-zinc-300 w-24 shrink-0">{t.dims[k] ?? k}</span>
+                      <div className="flex-1 h-2 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${v >= 80 ? 'bg-green-500' : v >= 55 ? 'bg-amber-500' : 'bg-red-500'}`}
+                          style={{ width: `${Math.max(4, Math.min(100, v))}%` }}
+                        />
+                      </div>
+                      <span className="text-[12px] font-black tabular-nums text-zinc-700 dark:text-zinc-200 w-10 text-right">{v}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Riesgos estructurados (con severidad) — la estrella. Fallback a
+                las razones de texto si el backend no envía `risks`. */}
+            {ev.risks && ev.risks.length > 0 ? (
+              <div className="rounded-xl border border-red-500/25 bg-red-500/5 p-4 mb-3">
+                <p className="text-[12px] font-black uppercase tracking-wider text-red-600 dark:text-red-400 mb-2 flex items-center gap-1.5">
+                  <ThumbsDown className="w-3.5 h-3.5" /> {t.risksTitle}
+                </p>
+                <ul className="space-y-1">
+                  {ev.risks.map((r, i) => (
+                    <li key={i} className="text-[13px] text-zinc-700 dark:text-zinc-200 flex items-start gap-2">
+                      <span className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${r.level === 'high' ? 'bg-red-500' : 'bg-amber-500'}`} />
+                      {r.text}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : ev.reasons_avoid.length > 0 ? (
               <div className="rounded-xl border border-red-500/25 bg-red-500/5 p-4 mb-3">
                 <p className="text-[12px] font-black uppercase tracking-wider text-red-600 dark:text-red-400 mb-2 flex items-center gap-1.5">
                   <ThumbsDown className="w-3.5 h-3.5" /> {t.whyAvoid}
@@ -545,7 +582,7 @@ export default function JobAgentTab({ lang }: { lang: 'es' | 'en' }) {
                   ))}
                 </ul>
               </div>
-            )}
+            ) : null}
             {ev.reasons_apply.length > 0 && (
               <div className="rounded-xl border border-green-500/25 bg-green-500/5 p-4">
                 <p className="text-[12px] font-black uppercase tracking-wider text-green-600 dark:text-green-400 mb-2 flex items-center gap-1.5">
