@@ -489,6 +489,8 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
             {/* HERRAMIENTA */}
             {!result && (
               <form onSubmit={handleGenerate} className="rounded-3xl bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 md:p-8 space-y-6">
+                {/* Perfil y oferta lado a lado en desktop (aprovecha el ancho) */}
+                <div className="grid lg:grid-cols-2 gap-6">
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{dict.profileLabel}</label>
@@ -543,6 +545,7 @@ export default function CVGenerator({ lang, dict }: { lang: string; dict: CVDict
                     placeholder={dict.jobPlaceholder}
                     className={`${inputBase} resize-y`}
                   />
+                </div>
                 </div>
 
                 {error && (

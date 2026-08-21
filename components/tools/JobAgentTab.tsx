@@ -44,6 +44,7 @@ const T = {
     offerPh: 'Pega aquí la descripción de la vacante…',
     evaluate: 'Evaluar oferta', evaluating: 'Analizando…',
     needProfile: 'Completa al menos tus tecnologías arriba para una evaluación útil.',
+    evalPlaceholder: 'Pega una oferta y evalúa: aquí verás el veredicto, el score y por qué SÍ o NO aplicar.',
     evErr: 'No se pudo evaluar. Inténtalo de nuevo.',
     whyApply: 'Lo que cumples', whyAvoid: '¿Por qué NO deberías aplicar?',
     breakdownTitle: 'Desglose',
@@ -104,6 +105,7 @@ const T = {
     offerPh: 'Paste the job posting here…',
     evaluate: 'Evaluate job', evaluating: 'Analyzing…',
     needProfile: 'Add at least your technologies above for a useful evaluation.',
+    evalPlaceholder: 'Paste a posting and evaluate: the verdict, score and why to apply (or not) will show here.',
     evErr: 'Could not evaluate. Please try again.',
     whyApply: 'What you meet', whyAvoid: 'Why you should NOT apply',
     breakdownTitle: 'Breakdown',
@@ -421,23 +423,28 @@ export default function JobAgentTab({ lang }: { lang: 'es' | 'en' }) {
           </div>
         </div>
 
-        <textarea value={offer} onChange={(e) => setOffer(e.target.value)} placeholder={t.offerPh} rows={4} className={`${inputCls} resize-y`} />
-        <div className="mt-3 flex items-center gap-3">
-          <button
-            onClick={evaluate}
-            disabled={evaluating || offer.trim().length < 30}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-60"
-          >
-            {evaluating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-            {evaluating ? t.evaluating : t.evaluate}
-          </button>
-          {p.technologies.length === 0 && <span className="text-[12px] text-amber-600 dark:text-amber-400">{t.needProfile}</span>}
-        </div>
-        {evErr && <p className="text-[13px] text-red-500 mt-3">{evErr}</p>}
+        {/* Split desktop: la oferta a la izquierda, el veredicto a la derecha */}
+        <div className="grid lg:grid-cols-2 gap-6 lg:items-start">
+          {/* Columna izquierda: la oferta */}
+          <div>
+            <textarea value={offer} onChange={(e) => setOffer(e.target.value)} placeholder={t.offerPh} rows={10} className={`${inputCls} resize-y lg:min-h-[300px]`} />
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <button
+                onClick={evaluate}
+                disabled={evaluating || offer.trim().length < 30}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-green-500 text-black text-sm font-bold hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-60"
+              >
+                {evaluating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                {evaluating ? t.evaluating : t.evaluate}
+              </button>
+              {p.technologies.length === 0 && <span className="text-[12px] text-amber-600 dark:text-amber-400">{t.needProfile}</span>}
+            </div>
+            {evErr && <p className="text-[13px] text-red-500 mt-3">{evErr}</p>}
+          </div>
 
-        {/* Veredicto */}
-        {ev && (
-          <div className={`mt-6 rounded-2xl border p-5 md:p-6 bg-zinc-50 dark:bg-white/[0.03] ${scam ? 'border-red-500/50 shadow-[0_0_40px_-12px_rgba(239,68,68,0.6)]' : VERDICT_STYLE[ev.verdict].ring}`}>
+          {/* Columna derecha: el veredicto (o un placeholder mientras no hay) */}
+          {ev ? (
+          <div className={`rounded-2xl border p-5 md:p-6 bg-zinc-50 dark:bg-white/[0.03] ${scam ? 'border-red-500/50 shadow-[0_0_40px_-12px_rgba(239,68,68,0.6)]' : VERDICT_STYLE[ev.verdict].ring}`}>
             {/* ── Application Firewall: aviso de estafa (lo más prominente) ── */}
             {fwLevel && fwLevel !== 'safe' && (
               <div className={`rounded-xl border p-4 mb-4 ${scam ? 'border-red-500/40 bg-red-500/10' : 'border-amber-500/30 bg-amber-500/10'}`}>
@@ -590,7 +597,12 @@ export default function JobAgentTab({ lang }: { lang: 'es' | 'en' }) {
             </>
             )}
           </div>
-        )}
+          ) : (
+            <div className="min-h-[220px] rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 flex items-center justify-center text-center p-6">
+              <p className="text-[13px] text-zinc-400 dark:text-zinc-500 max-w-xs">{t.evalPlaceholder}</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
