@@ -1,9 +1,23 @@
 // Archivo: app/[lang]/blog/page.tsx
+import type { Metadata } from 'next';
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
+import { altLangs } from '@/lib/seo';
+
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const { lang } = await params;
+  const es = lang !== 'en';
+  return {
+    title: es ? 'Blog — Ciberseguridad y Desarrollo' : 'Blog — Cybersecurity & Development',
+    description: es
+      ? 'Artículos sobre ciberseguridad aplicada, DevSecOps, desarrollo web y empleabilidad tech, por Kevin Montatixe.'
+      : 'Articles on applied cybersecurity, DevSecOps, web development and tech employability, by Kevin Montatixe.',
+    alternates: altLangs('/blog', es ? 'es' : 'en'),
+  };
+}
 
 // ─── TIPADO ───────────────────────────────────────────────────────────────────
 interface BlogIndexDictionary {

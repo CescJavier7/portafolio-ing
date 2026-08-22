@@ -28,20 +28,18 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
     creator: 'Kevin Montatixe',
     openGraph: {
       type: 'website',
-      locale: lang === 'es' ? 'es_EC' : 'en_US', 
+      locale: lang === 'es' ? 'es_EC' : 'en_US',
       url: `${baseUrl}/${lang}`,
       title: 'Kevin Montatixe | Cybersecurity Engineer',
       description: 'Arquitectura de software con seguridad implacable. Explora mi portafolio.',
       siteName: 'Kevin Montatixe Portfolio',
     },
-    alternates: {
-      canonical: `${baseUrl}/${lang}`,
-      languages: {
-        'es': `${baseUrl}/es`,
-        'en': `${baseUrl}/en`,
-        'x-default': `${baseUrl}/es`,
-      },
-    },
+    // ⚠️ SEO CRÍTICO: el layout NO debe fijar `alternates.canonical`. `generateMetadata`
+    // del layout solo conoce `lang`, NO la ruta de la página → poner aquí
+    // `canonical: /${lang}` hacía que TODAS las páginas hijas (precios, blog, legal…)
+    // heredaran la canonical de la HOME → Google las trataba como duplicados y las
+    // sacaba del índice. La canonical/hreflang se define POR PÁGINA (ver lib/seo.ts:
+    // `altLangs`). Las páginas que no la fijen auto-canonicalizan a su propia URL.
   };
 }
 
