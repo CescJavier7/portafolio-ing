@@ -34,7 +34,10 @@ export async function POST(req: Request) {
     const result = await handleIncomingMessage(parsed.data, ip, sentraUser ?? undefined);
     return NextResponse.json(result.body, { status: result.status });
   } catch (error: any) {
-    console.error("=== ERROR ROUTE /api/chat ===", error?.message || error);
-    return NextResponse.json({ error: "Error interno del servidor." }, { status: 500 });
+    const detail = error?.message ?? String(error);
+    console.error("=== ERROR ROUTE /api/chat ===", detail);
+    // 400 (no 5xx): Cloudflare borra el cuerpo de los 5xx → el cliente no podría
+    // leer el motivo. Con 4xx el JSON con `detail` sí llega.
+    return NextResponse.json({ error: "Error interno del servidor.", detail: String(detail).slice(0, 200) }, { status: 400 });
   }
 }

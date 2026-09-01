@@ -258,7 +258,11 @@ export async function handleIncomingMessage(
     const groqDetail = error?.error?.message ?? error?.message ?? String(error);
     console.error("=== ERROR GROQ CORE ===", { model: GROQ_CHAT_MODEL, status: groqStatus, detail: groqDetail });
     return {
-      status: 502,
+      // 400 (NO 5xx) A PROPÓSITO: Cloudflare intercepta los 5xx y les borra el
+      // cuerpo → el navegador/curl recibirían vacío y no podrían leer `detail`.
+      // Con 4xx el JSON con el motivo real de Groq sí llega. (Mismo criterio que
+      // payphone_billing.py.)
+      status: 400,
       body: {
         error: "Kernel panic: el asistente no está disponible.",
         // `detail` NO es secreto (nombre de modelo / motivo de Groq) y es clave
