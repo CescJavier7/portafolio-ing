@@ -10,6 +10,7 @@
 import { NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 import { verifySentraToken } from '@/lib/sentra/verifyToken.server';
+import { groqChatWithFallback } from '@/lib/groqModels';
 
 const PRO_PLANS = new Set(['PRO', 'TEAM', 'ENTERPRISE']);
 
@@ -107,12 +108,12 @@ Devuelve SOLO el objeto JSON.`;
 
   try {
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-    const completion = await groq.chat.completions.create({
+    // Modelo con FALLBACK (Groq decomisiona seguido: llama-3.3-70b devolvió 404).
+    const { completion } = await groqChatWithFallback(groq, {
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: `${dataBlock}\n\n${instructions}` },
       ],
-      model: 'llama-3.3-70b-versatile',
       temperature: 0.45,
       max_tokens: 4000,
       response_format: { type: 'json_object' },
@@ -124,8 +125,14 @@ Devuelve SOLO el objeto JSON.`;
       priorities: String(parsed.priorities ?? ''),
       technical: String(parsed.technical ?? ''),
     });
-  } catch (err) {
-    console.error('[SENTRA_REPORT] Groq error:', err);
-    return NextResponse.json({ error: 'No se pudo generar el informe. Inténtalo de nuevo.' }, { status: 502 });
+  } catch (err: any) {
+    const detail = err?.error?.message ?? err?.message ?? String(err);
+    console.error('[SENTRA_REPORT] Groq error:', detail);
+    // 400 (no 5xx): Cloudflare borra el cuerpo de los 5xx → el cliente no leería
+    // el motivo. Con 4xx el `detail` (modelo decomisionado / key) sí llega.
+    return NextResponse.json(
+      { error: 'No se pudo generar el informe. Inténtalo de nuevo.', detail: String(detail).slice(0, 200) },
+      { status: 400 },
+    );
   }
 }

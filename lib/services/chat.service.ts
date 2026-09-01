@@ -4,6 +4,7 @@ import { findOrCreateSession, markPendingReview } from "@/lib/repositories/chatS
 import { saveMessage } from "@/lib/repositories/message.repository";
 import { sendContactAlert } from "@/lib/services/notification.service";
 import { sendSmartAlert } from "@/lib/services/telegram.service"; // 🔴 FIX: Nueva integración C2
+import { groqModelChain, isModelGoneError } from "@/lib/groqModels";
 import type { ChatRequestInput } from "@/lib/validation/chat.schema";
 
 // ─── ENLACES REALES ────────────────────────────────────────────────
@@ -101,21 +102,9 @@ function actionReply(action: DetectedAction, lang: string): string {
 
 const MAX_HISTORY_MESSAGES = 12;
 
-// CADENA de modelos de Groq (fallback automático). Groq decomisiona modelos con
-// frecuencia (llama-3.1-8b-instant el 2026-08-16; llama-3.3-70b-versatile poco
-// después → 404 model_not_found). Se prueban EN ORDEN: si uno no existe, se pasa
-// al siguiente. El de `GROQ_CHAT_MODEL` (.env del VPS) manda; los demás son red
-// de seguridad para que un decomiso NO vuelva a tumbar el chat sin redeploy.
-// Lista vigente: https://console.groq.com/docs/models
-const GROQ_CHAT_MODELS: string[] = [
-  process.env.GROQ_CHAT_MODEL,
-  // Modelos REALMENTE disponibles en la cuenta (verificado con
-  // GET api.groq.com/openai/v1/models, 2026-08). Groq decomisionó llama-3.1-8b
-  // (recomendó GPT-OSS 20B como reemplazo) y llama-3.3-70b. Cadena vigente:
-  "openai/gpt-oss-120b", // mayor calidad
-  "openai/gpt-oss-20b", // reemplazo recomendado por Groq, más barato/rápido
-  "qwen/qwen3.8-27b", // último recurso
-].filter((m): m is string => !!m);
+// La cadena de modelos con fallback vive en lib/groqModels.ts (fuente única
+// compartida con el reporte IA y el sensor), para que un decomiso no deje ningún
+// camino con un modelo muerto hardcodeado.
 
 const SYSTEM_INSTRUCTION = `Eres MEKA_JAVIER_OS, el sistema de IA del portafolio de Kevin Javier Montatixe Caiza (CescJavier7).
 
@@ -245,7 +234,7 @@ export async function handleIncomingMessage(
   const conversationHistory = history.slice(-MAX_HISTORY_MESSAGES);
 
   let lastError: any = null;
-  for (const model of GROQ_CHAT_MODELS) {
+  for (const model of groqModelChain()) {
     try {
       const chatCompletion = await groq.chat.completions.create({
         messages: [
@@ -269,8 +258,7 @@ export async function handleIncomingMessage(
       console.error("=== ERROR GROQ CORE ===", { model, status, code, detail });
       // Solo probamos el SIGUIENTE modelo si ESTE no existe/está decomisionado.
       // Ante 401 (key), 429 (cupo) u otros, cambiar de modelo no ayuda → cortamos.
-      const modelGone = status === 404 || code === "model_not_found" || code === "model_decommissioned";
-      if (!modelGone) break;
+      if (!isModelGoneError(error)) break;
     }
   }
 

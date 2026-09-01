@@ -4,17 +4,9 @@
 // del error se queda en los logs del servidor.
 import { prisma } from "@/lib/prisma";
 import Groq from "groq-sdk";
+import { groqModelChain } from "@/lib/groqModels";
 
 const SENTRA_API = process.env.SENTRA_API_INTERNAL_URL || "http://sentra-api:8000";
-
-// Misma cadena que el chat (lib/services/chat.service.ts): al menos uno debe
-// existir en la cuenta Groq o el chat/IA estará caído.
-const CHAT_MODELS = [
-  process.env.GROQ_CHAT_MODEL,
-  "openai/gpt-oss-120b",
-  "openai/gpt-oss-20b",
-  "qwen/qwen3.8-27b",
-].filter(Boolean) as string[];
 
 export type HealthCheck = {
   name: string;
@@ -52,8 +44,9 @@ async function checkGroq(): Promise<string> {
   const groq = new Groq({ apiKey: process.env.GROQ_API_KEY, timeout: 8000, maxRetries: 0 });
   const list = await groq.models.list();
   const ids = new Set(list.data.map((m) => m.id));
-  const usable = CHAT_MODELS.find((m) => ids.has(m));
-  if (!usable) throw new Error(`ningún modelo de la cadena disponible: ${CHAT_MODELS.join(", ")}`);
+  const chain = groqModelChain();
+  const usable = chain.find((m) => ids.has(m));
+  if (!usable) throw new Error(`ningún modelo de la cadena disponible: ${chain.join(", ")}`);
   return `${usable} disponible`;
 }
 
