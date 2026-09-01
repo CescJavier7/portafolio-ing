@@ -102,7 +102,10 @@ de seguridad web. Dos apps que se despliegan juntas en un VPS.
 - i18n: `dictionaries/{es,en}.json`, editar preservando orden (`OrderedDict`,
   `ensure_ascii=False`). Blog: mismo slug en `content/blog/es` y `/en` (para hreflang).
 - LLM (Groq): chat y reportes usan `llama-3.3-70b-versatile` (el `llama-3.1-8b-instant`
-  se decomisionó el 2026-08-16).
+  se decomisionó el 2026-08-16). El **chatbot** toma el modelo de `GROQ_CHAT_MODEL`
+  (env, default `llama-3.3-70b-versatile`) → si Groq lo decomisiona, se cambia en el
+  `.env` SIN redeploy (`lib/services/chat.service.ts`). El `catch` del chat devuelve
+  `detail` con el error crudo de Groq (modelo decomisionado / key inválida) para depurar.
 - El usuario **ejecuta los comandos él mismo** (git push, deploy, VPS): guiar paso a
   paso, no ejecutar por él.
 

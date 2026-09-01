@@ -255,8 +255,13 @@ export default function MekaSenkuChat({ lang, dict }: ChatProps) {
         body: JSON.stringify({ message: userText, lang, history: historyForApi, sessionId }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error("Colapso de comunicación");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        // Log del motivo REAL (p. ej. modelo de Groq decomisionado o key inválida)
+        // para depurar desde la consola del navegador; el usuario ve dict.error.
+        console.error('[MekaChat] API error', res.status, data?.detail || data?.error);
+        throw new Error(data?.detail || data?.error || 'Colapso de comunicación');
+      }
 
       if (data.sessionId && data.sessionId !== sessionId) {
         setSessionId(data.sessionId);

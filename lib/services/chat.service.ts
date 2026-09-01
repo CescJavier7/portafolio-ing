@@ -101,6 +101,12 @@ function actionReply(action: DetectedAction, lang: string): string {
 
 const MAX_HISTORY_MESSAGES = 12;
 
+// Modelo de Groq CONFIGURABLE por entorno: Groq decomisiona modelos con cierta
+// frecuencia (p. ej. llama-3.1-8b-instant el 2026-08-16). Si el actual deja de
+// existir, se cambia GROQ_CHAT_MODEL en el .env del VPS SIN redeploy de código.
+// Ver la lista vigente en https://console.groq.com/docs/models
+const GROQ_CHAT_MODEL = process.env.GROQ_CHAT_MODEL || "llama-3.3-70b-versatile";
+
 const SYSTEM_INSTRUCTION = `Eres MEKA_JAVIER_OS, el sistema de IA del portafolio de Kevin Javier Montatixe Caiza (CescJavier7).
 
 [REGLAS DEL SISTEMA - PRIORIDAD ABSOLUTA]
@@ -235,10 +241,7 @@ export async function handleIncomingMessage(
         ...conversationHistory,
         { role: "user", content: message },
       ],
-      // llama-3.1-8b-instant se decomisiona el 2026-08-16 (aviso de Groq).
-      // Usamos el mismo modelo que los reportes de Sentra (ya activo en la
-      // cuenta): un solo modelo que mantener, y mejor calidad para el chat.
-      model: "llama-3.3-70b-versatile",
+      model: GROQ_CHAT_MODEL, // configurable por env (ver GROQ_CHAT_MODEL arriba)
       temperature: 0.6,
       max_tokens: 500,
     });
@@ -249,7 +252,19 @@ export async function handleIncomingMessage(
 
     return { status: 200, body: { sessionId: session.id, reply } };
   } catch (error: any) {
-    console.error("=== ERROR GROQ CORE ===", error?.message || error);
-    return { status: 500, body: { error: "Kernel panic: Llama 3 no responde." } };
+    // El SDK de Groq lanza un APIError con .status y el cuerpo en .error.message
+    // (p. ej. "The model `x` has been decommissioned" o "Invalid API Key").
+    const groqStatus = error?.status ?? error?.statusCode;
+    const groqDetail = error?.error?.message ?? error?.message ?? String(error);
+    console.error("=== ERROR GROQ CORE ===", { model: GROQ_CHAT_MODEL, status: groqStatus, detail: groqDetail });
+    return {
+      status: 502,
+      body: {
+        error: "Kernel panic: el asistente no está disponible.",
+        // `detail` NO es secreto (nombre de modelo / motivo de Groq) y es clave
+        // para depurar: dice si el modelo se decomisionó o si la key es inválida.
+        detail: `Groq(${groqStatus ?? "?"}) modelo=${GROQ_CHAT_MODEL}: ${String(groqDetail).slice(0, 200)}`,
+      },
+    };
   }
 }
