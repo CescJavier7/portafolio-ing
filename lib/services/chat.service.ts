@@ -109,9 +109,12 @@ const MAX_HISTORY_MESSAGES = 12;
 // Lista vigente: https://console.groq.com/docs/models
 const GROQ_CHAT_MODELS: string[] = [
   process.env.GROQ_CHAT_MODEL,
-  "meta-llama/llama-4-maverick-17b-128e-instruct",
-  "meta-llama/llama-4-scout-17b-16e-instruct",
-  "llama-3.3-70b-versatile",
+  // Modelos REALMENTE disponibles en la cuenta (verificado con
+  // GET api.groq.com/openai/v1/models, 2026-08). Groq decomisionó llama-3.1-8b
+  // (recomendó GPT-OSS 20B como reemplazo) y llama-3.3-70b. Cadena vigente:
+  "openai/gpt-oss-120b", // mayor calidad
+  "openai/gpt-oss-20b", // reemplazo recomendado por Groq, más barato/rápido
+  "qwen/qwen3.8-27b", // último recurso
 ].filter((m): m is string => !!m);
 
 const SYSTEM_INSTRUCTION = `Eres MEKA_JAVIER_OS, el sistema de IA del portafolio de Kevin Javier Montatixe Caiza (CescJavier7).

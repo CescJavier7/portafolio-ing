@@ -101,15 +101,17 @@ de seguridad web. Dos apps que se despliegan juntas en un VPS.
 **Convenciones:**
 - i18n: `dictionaries/{es,en}.json`, editar preservando orden (`OrderedDict`,
   `ensure_ascii=False`). Blog: mismo slug en `content/blog/es` y `/en` (para hreflang).
-- LLM (Groq): Groq DECOMISIONA modelos seguido — `llama-3.1-8b-instant` (2026-08-16) y
-  luego `llama-3.3-70b-versatile` (404 `model_not_found`, ~2026-08). Por eso:
-  · **Chatbot** (`lib/services/chat.service.ts`): CADENA de modelos con **fallback
-  automático** (`GROQ_CHAT_MODELS`) — prueba `GROQ_CHAT_MODEL` (env) y, si da 404, cae a
-  Llama 4. El `catch` devuelve `detail` con el error crudo de Groq (4xx, NO 5xx: Cloudflare
-  borra el cuerpo de los 5xx). Ver los modelos vivos: `docker logs portfolio-frontend | grep
-  "GROQ CORE"`, o `curl api.groq.com/openai/v1/models`.
-  · **Sentra (Python)**: `GROQ_CV_MODEL` (env, default `meta-llama/llama-4-maverick-17b-128e-instruct`).
-  Si Groq lo decomisiona, se cambia en el `.env` del VPS SIN redeploy. NO tiene fallback aún.
+- LLM (Groq): Groq DECOMISIONA modelos seguido — `llama-3.1-8b-instant` (2026-08-16, reemplazo
+  recomendado GPT-OSS 20B), `llama-3.3-70b-versatile` (404 `model_not_found`, ~2026-08) y
+  `groq/compound` (decom. 2026-09-21). **La cuenta NO tiene Llama 3.x/4** — solo GPT-OSS
+  (`openai/gpt-oss-120b`, `openai/gpt-oss-20b`), Qwen, guard/whisper/tts. Verifica lo vivo con
+  `curl api.groq.com/openai/v1/models -H "Authorization: Bearer $GROQ_API_KEY"`. Por eso:
+  · **Chatbot** (`lib/services/chat.service.ts`): CADENA con **fallback automático**
+  (`GROQ_CHAT_MODELS`): `GROQ_CHAT_MODEL` (env) → `openai/gpt-oss-120b` → `openai/gpt-oss-20b`
+  → `qwen/qwen3.8-27b`. Si un modelo da 404, prueba el siguiente. El `catch` devuelve `detail`
+  con el error de Groq (4xx, NO 5xx: Cloudflare borra el cuerpo de los 5xx).
+  · **Sentra (Python)**: `GROQ_CV_MODEL` (env, default `openai/gpt-oss-120b`). Sin fallback aún;
+  si Groq lo decomisiona, se cambia en el `.env` del VPS SIN redeploy.
 - El usuario **ejecuta los comandos él mismo** (git push, deploy, VPS): guiar paso a
   paso, no ejecutar por él.
 

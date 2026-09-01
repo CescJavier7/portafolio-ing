@@ -107,11 +107,11 @@ class Settings(BaseSettings):
     # aún no se configuró en el .env del VPS. El endpoint de CV valida su
     # presencia y responde 503 si falta, en vez de reventar el servicio entero.
     GROQ_API_KEY: str = ""
-    # OJO: Groq decomisiona modelos (llama-3.3-70b-versatile devolvió 404
-    # model_not_found ~2026-08). Este default apunta a un modelo vigente; si Groq
-    # lo decomisiona, cambia GROQ_CV_MODEL en el .env del VPS (sin redeploy).
-    # Modelos vigentes: https://console.groq.com/docs/models
-    GROQ_CV_MODEL: str = "meta-llama/llama-4-maverick-17b-128e-instruct"
+    # OJO: Groq decomisiona modelos (llama-3.1-8b y llama-3.3-70b devolvieron 404
+    # model_not_found ~2026-08). Este default es un modelo VERIFICADO disponible en
+    # la cuenta (GET api.groq.com/openai/v1/models); si Groq lo decomisiona, cambia
+    # GROQ_CV_MODEL en el .env del VPS (sin redeploy). Lista: console.groq.com/docs/models
+    GROQ_CV_MODEL: str = "openai/gpt-oss-120b"
 
     # ── Monitoreo continuo ──────────────────────────────────────
     # Secreto que protege el endpoint /internal/run-monitoring (lo dispara
