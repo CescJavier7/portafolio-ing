@@ -101,11 +101,18 @@ function actionReply(action: DetectedAction, lang: string): string {
 
 const MAX_HISTORY_MESSAGES = 12;
 
-// Modelo de Groq CONFIGURABLE por entorno: Groq decomisiona modelos con cierta
-// frecuencia (p. ej. llama-3.1-8b-instant el 2026-08-16). Si el actual deja de
-// existir, se cambia GROQ_CHAT_MODEL en el .env del VPS SIN redeploy de código.
-// Ver la lista vigente en https://console.groq.com/docs/models
-const GROQ_CHAT_MODEL = process.env.GROQ_CHAT_MODEL || "llama-3.3-70b-versatile";
+// CADENA de modelos de Groq (fallback automático). Groq decomisiona modelos con
+// frecuencia (llama-3.1-8b-instant el 2026-08-16; llama-3.3-70b-versatile poco
+// después → 404 model_not_found). Se prueban EN ORDEN: si uno no existe, se pasa
+// al siguiente. El de `GROQ_CHAT_MODEL` (.env del VPS) manda; los demás son red
+// de seguridad para que un decomiso NO vuelva a tumbar el chat sin redeploy.
+// Lista vigente: https://console.groq.com/docs/models
+const GROQ_CHAT_MODELS: string[] = [
+  process.env.GROQ_CHAT_MODEL,
+  "meta-llama/llama-4-maverick-17b-128e-instruct",
+  "meta-llama/llama-4-scout-17b-16e-instruct",
+  "llama-3.3-70b-versatile",
+].filter((m): m is string => !!m);
 
 const SYSTEM_INSTRUCTION = `Eres MEKA_JAVIER_OS, el sistema de IA del portafolio de Kevin Javier Montatixe Caiza (CescJavier7).
 
@@ -234,41 +241,49 @@ export async function handleIncomingMessage(
   const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
   const conversationHistory = history.slice(-MAX_HISTORY_MESSAGES);
 
-  try {
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [
-        { role: "system", content: SYSTEM_INSTRUCTION },
-        ...conversationHistory,
-        { role: "user", content: message },
-      ],
-      model: GROQ_CHAT_MODEL, // configurable por env (ver GROQ_CHAT_MODEL arriba)
-      temperature: 0.6,
-      max_tokens: 500,
-    });
+  let lastError: any = null;
+  for (const model of GROQ_CHAT_MODELS) {
+    try {
+      const chatCompletion = await groq.chat.completions.create({
+        messages: [
+          { role: "system", content: SYSTEM_INSTRUCTION },
+          ...conversationHistory,
+          { role: "user", content: message },
+        ],
+        model,
+        temperature: 0.6,
+        max_tokens: 500,
+      });
 
-    const reply = chatCompletion.choices[0]?.message?.content || "Error lógico en la red neuronal.";
-
-    await saveMessage(session.id, "AI", reply);
-
-    return { status: 200, body: { sessionId: session.id, reply } };
-  } catch (error: any) {
-    // El SDK de Groq lanza un APIError con .status y el cuerpo en .error.message
-    // (p. ej. "The model `x` has been decommissioned" o "Invalid API Key").
-    const groqStatus = error?.status ?? error?.statusCode;
-    const groqDetail = error?.error?.message ?? error?.message ?? String(error);
-    console.error("=== ERROR GROQ CORE ===", { model: GROQ_CHAT_MODEL, status: groqStatus, detail: groqDetail });
-    return {
-      // 400 (NO 5xx) A PROPÓSITO: Cloudflare intercepta los 5xx y les borra el
-      // cuerpo → el navegador/curl recibirían vacío y no podrían leer `detail`.
-      // Con 4xx el JSON con el motivo real de Groq sí llega. (Mismo criterio que
-      // payphone_billing.py.)
-      status: 400,
-      body: {
-        error: "Kernel panic: el asistente no está disponible.",
-        // `detail` NO es secreto (nombre de modelo / motivo de Groq) y es clave
-        // para depurar: dice si el modelo se decomisionó o si la key es inválida.
-        detail: `Groq(${groqStatus ?? "?"}) modelo=${GROQ_CHAT_MODEL}: ${String(groqDetail).slice(0, 200)}`,
-      },
-    };
+      const reply = chatCompletion.choices[0]?.message?.content || "Error lógico en la red neuronal.";
+      await saveMessage(session.id, "AI", reply);
+      return { status: 200, body: { sessionId: session.id, reply } };
+    } catch (error: any) {
+      lastError = error;
+      const status = error?.status ?? error?.statusCode;
+      const code = error?.error?.code ?? error?.code;
+      const detail = error?.error?.message ?? error?.message ?? String(error);
+      console.error("=== ERROR GROQ CORE ===", { model, status, code, detail });
+      // Solo probamos el SIGUIENTE modelo si ESTE no existe/está decomisionado.
+      // Ante 401 (key), 429 (cupo) u otros, cambiar de modelo no ayuda → cortamos.
+      const modelGone = status === 404 || code === "model_not_found" || code === "model_decommissioned";
+      if (!modelGone) break;
+    }
   }
+
+  // Ningún modelo funcionó.
+  const groqStatus = lastError?.status ?? lastError?.statusCode;
+  const groqDetail = lastError?.error?.message ?? lastError?.message ?? String(lastError);
+  return {
+    // 400 (NO 5xx) A PROPÓSITO: Cloudflare intercepta los 5xx y les borra el
+    // cuerpo → el navegador/curl recibirían vacío y no podrían leer `detail`.
+    // Con 4xx el JSON con el motivo real de Groq sí llega. (Igual que payphone_billing.py.)
+    status: 400,
+    body: {
+      error: "Kernel panic: el asistente no está disponible.",
+      // `detail` NO es secreto (nombre de modelo / motivo de Groq) y es clave
+      // para depurar: dice si el modelo se decomisionó o si la key es inválida.
+      detail: `Groq(${groqStatus ?? "?"}): ${String(groqDetail).slice(0, 200)}`,
+    },
+  };
 }

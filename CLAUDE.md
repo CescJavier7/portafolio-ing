@@ -101,11 +101,15 @@ de seguridad web. Dos apps que se despliegan juntas en un VPS.
 **Convenciones:**
 - i18n: `dictionaries/{es,en}.json`, editar preservando orden (`OrderedDict`,
   `ensure_ascii=False`). Blog: mismo slug en `content/blog/es` y `/en` (para hreflang).
-- LLM (Groq): chat y reportes usan `llama-3.3-70b-versatile` (el `llama-3.1-8b-instant`
-  se decomisionó el 2026-08-16). El **chatbot** toma el modelo de `GROQ_CHAT_MODEL`
-  (env, default `llama-3.3-70b-versatile`) → si Groq lo decomisiona, se cambia en el
-  `.env` SIN redeploy (`lib/services/chat.service.ts`). El `catch` del chat devuelve
-  `detail` con el error crudo de Groq (modelo decomisionado / key inválida) para depurar.
+- LLM (Groq): Groq DECOMISIONA modelos seguido — `llama-3.1-8b-instant` (2026-08-16) y
+  luego `llama-3.3-70b-versatile` (404 `model_not_found`, ~2026-08). Por eso:
+  · **Chatbot** (`lib/services/chat.service.ts`): CADENA de modelos con **fallback
+  automático** (`GROQ_CHAT_MODELS`) — prueba `GROQ_CHAT_MODEL` (env) y, si da 404, cae a
+  Llama 4. El `catch` devuelve `detail` con el error crudo de Groq (4xx, NO 5xx: Cloudflare
+  borra el cuerpo de los 5xx). Ver los modelos vivos: `docker logs portfolio-frontend | grep
+  "GROQ CORE"`, o `curl api.groq.com/openai/v1/models`.
+  · **Sentra (Python)**: `GROQ_CV_MODEL` (env, default `meta-llama/llama-4-maverick-17b-128e-instruct`).
+  Si Groq lo decomisiona, se cambia en el `.env` del VPS SIN redeploy. NO tiene fallback aún.
 - El usuario **ejecuta los comandos él mismo** (git push, deploy, VPS): guiar paso a
   paso, no ejecutar por él.
 
