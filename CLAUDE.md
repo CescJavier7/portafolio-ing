@@ -114,6 +114,13 @@ de seguridad web. Dos apps que se despliegan juntas en un VPS.
   si Groq lo decomisiona, se cambia en el `.env` del VPS SIN redeploy.
 - El usuario **ejecuta los comandos él mismo** (git push, deploy, VPS): guiar paso a
   paso, no ejecutar por él.
+- **Sensor / observabilidad** (para saber cuándo algo se rompió): health checks que sondean
+  cada integración, sanitizados (ok/down + latencia; el detalle va a logs) y con **503 solo si
+  algo CRÍTICO cae** (Cloudflare borra 5xx → ok/degraded devuelven 200). Sentra:
+  `GET /api/v1/health` (`app/api/v1/health.py` + `services/health_service.py`: BD, Redis, Groq).
+  Portafolio: `GET /api/health` (`lib/health.ts`: Prisma, Groq del chat, enlace a sentra-api).
+  Tablero visual en `/{lang}/status` (`app/[lang]/status/page.tsx`, noindex). El `/health` raíz
+  de FastAPI sigue siendo el liveness simple para Traefik. Apunta un uptime monitor a estos.
 
 ---
 
