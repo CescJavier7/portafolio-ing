@@ -121,6 +121,8 @@ const T = {
 };
 
 const ICONS = { terminal: Terminal, shield: ShieldCheck, binary: Binary };
+// Enlace de cada track a su currículo (slug real en content/academia + lib/academia.ts).
+const TRACK_SLUG: Record<string, string> = { terminal: 'fullstack', shield: 'ciberseguridad', binary: 'fundamentos' };
 const PRINCIPLE_ICONS = { compass: Compass, git: GitBranch, layers: Layers };
 
 // Papel técnico (blueprint): cuadrícula sutil de fondo, la firma visual de la
@@ -196,8 +198,9 @@ export default function AcademyPage({ lang }: { lang: 'es' | 'en' }) {
             {t.tracks.map((tr) => {
               const Icon = ICONS[tr.icon as keyof typeof ICONS];
               return (
-                <div
+                <Link
                   key={tr.code}
+                  href={`/${lang}/academia/${TRACK_SLUG[tr.icon] ?? ''}`}
                   className="group relative rounded-2xl bg-white dark:bg-[#0b1020] border border-slate-200 dark:border-white/10 p-6 hover:border-indigo-400/60 dark:hover:border-indigo-400/40 transition-colors"
                 >
                   {/* barra técnica superior */}
@@ -219,7 +222,10 @@ export default function AcademyPage({ lang }: { lang: 'es' | 'en' }) {
                       </span>
                     ))}
                   </div>
-                </div>
+                  <span className="mt-5 inline-flex items-center gap-1 text-[12px] font-bold text-indigo-600 dark:text-indigo-400 group-hover:gap-2 transition-all">
+                    {lang === 'en' ? 'View lessons' : 'Ver lecciones'} <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
+                </Link>
               );
             })}
           </div>

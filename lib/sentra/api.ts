@@ -1082,6 +1082,17 @@ export async function sentraGetInsights(): Promise<SentraInsights> {
   return request('/api/v1/agent/insights', { method: 'GET' }, true);
 }
 
+// Academia: progreso de lecciones (una fila = lección completada). Slug = "<track>/<lesson>".
+export interface SentraAcademyProgress {
+  completed: string[];
+}
+export async function sentraGetAcademyProgress(): Promise<SentraAcademyProgress> {
+  return request('/api/v1/academy/progress', { method: 'GET' }, true);
+}
+export async function sentraSetLessonProgress(lessonSlug: string, completed: boolean): Promise<SentraAcademyProgress> {
+  return request('/api/v1/academy/progress', { method: 'PUT', body: JSON.stringify({ lesson_slug: lessonSlug, completed }) }, true);
+}
+
 // Regeneración interactiva con IA: reescribe el CV para subir el match.
 // CONSUME 1 crédito y devuelve una versión NUEVA (el original queda en historial).
 export async function sentraImproveCV(id: string, content: CVContent): Promise<SentraCVDocument> {

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { MetadataRoute } from 'next';
+import { TRACKS, getTrackLessons } from '@/lib/academia';
 
 const BASE = 'https://cescjavier.dev';
 
@@ -73,6 +74,41 @@ export default function sitemap(): MetadataRoute.Sitemap {
           },
         },
       });
+    }
+  }
+
+  // Academia: páginas de track + lecciones GRATIS (las Pro están gated, no se indexan).
+  for (const track of TRACKS) {
+    for (const lang of ['es', 'en']) {
+      entries.push({
+        url: `${BASE}/${lang}/academia/${track.slug}`,
+        lastModified: now,
+        changeFrequency: 'weekly',
+        priority: 0.6,
+        alternates: {
+          languages: {
+            es: `${BASE}/es/academia/${track.slug}`,
+            en: `${BASE}/en/academia/${track.slug}`,
+          },
+        },
+      });
+    }
+    for (const lesson of getTrackLessons(track.slug, 'es')) {
+      if (lesson.access !== 'free') continue;
+      for (const lang of ['es', 'en']) {
+        entries.push({
+          url: `${BASE}/${lang}/academia/${track.slug}/${lesson.slug}`,
+          lastModified: now,
+          changeFrequency: 'monthly',
+          priority: 0.5,
+          alternates: {
+            languages: {
+              es: `${BASE}/es/academia/${track.slug}/${lesson.slug}`,
+              en: `${BASE}/en/academia/${track.slug}/${lesson.slug}`,
+            },
+          },
+        });
+      }
     }
   }
 
