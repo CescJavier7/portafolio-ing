@@ -19,6 +19,7 @@ import {
 import TargetsCard, { type TargetsDict } from '@/components/sentra/TargetsCard';
 import UpgradeModal, { type UpgradeDict } from '@/components/sentra/UpgradeModal';
 import FounderPayments from '@/components/sentra/FounderPayments';
+import FounderMetrics from '@/components/sentra/FounderMetrics';
 import ProAvatar from '@/components/sentra/ProAvatar';
 import OverviewSection, { type OverviewDict } from '@/components/sentra/panel/OverviewSection';
 import ReportsSection, { type ReportsDict } from '@/components/sentra/panel/ReportsSection';
@@ -534,7 +535,8 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
             >
               {active === 'overview' && (
                 <div className="space-y-6">
-                  {/* Solo visible para el fundador (se auto-oculta si /pending da 403) */}
+                  {/* Solo visible para el fundador (se auto-ocultan si dan 403) */}
+                  <FounderMetrics lang={lang as 'es' | 'en'} />
                   <FounderPayments />
                   <OverviewSection dict={dict.dashboard.overview} />
                 </div>

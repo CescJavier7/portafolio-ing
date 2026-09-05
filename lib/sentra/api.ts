@@ -1093,6 +1093,18 @@ export async function sentraSetLessonProgress(lessonSlug: string, completed: boo
   return request('/api/v1/academy/progress', { method: 'PUT', body: JSON.stringify({ lesson_slug: lessonSlug, completed }) }, true);
 }
 
+// Panel del fundador: métricas de negocio de toda la plataforma. 403 si no eres fundador.
+export interface SentraFounderMetrics {
+  orgs: { total: number; by_plan: Record<string, number>; paid_active: number };
+  users: { total: number; new_7d: number; new_30d: number };
+  revenue: { mrr_estimate_usd: number; pending_payments: number; approved_payments: number };
+  activity: { targets: number; scans: number; cvs: number; applications: number; captured_offers: number };
+  recent_signups: { email: string; created_at: string | null; plan: string }[];
+}
+export async function sentraFounderMetrics(): Promise<SentraFounderMetrics> {
+  return request('/api/v1/founder/metrics', { method: 'GET' }, true);
+}
+
 // Regeneración interactiva con IA: reescribe el CV para subir el match.
 // CONSUME 1 crédito y devuelve una versión NUEVA (el original queda en historial).
 export async function sentraImproveCV(id: string, content: CVContent): Promise<SentraCVDocument> {

@@ -21,6 +21,7 @@ from app.api.v1.manual_billing import router as manual_billing_router
 from app.api.v1.payphone_billing import router as payphone_billing_router
 from app.api.v1.health import router as health_router
 from app.api.v1.academy import router as academy_router
+from app.api.v1.founder import router as founder_router
 from app.core.config import get_settings
 from app.core.rate_limit import limiter
 
@@ -63,6 +64,7 @@ app.include_router(manual_billing_router, prefix="/api/v1")
 app.include_router(payphone_billing_router, prefix="/api/v1")
 app.include_router(health_router, prefix="/api/v1")
 app.include_router(academy_router, prefix="/api/v1")
+app.include_router(founder_router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["health"])
