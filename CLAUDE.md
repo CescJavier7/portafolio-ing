@@ -152,7 +152,11 @@ con `docker compose down --remove-orphans` o `docker rm -f <nombre>`).
    transferencia siguen como cobro manual (aprobación del fundador). Lemon Squeezy/Kushki
    DESCARTADOS (rechazaron la cuenta).
 2. **Google Search Console** (enviar sitemap) — activa el SEO ya hecho.
-3. **Onboarding** pulido + **panel del fundador** (métricas) + **cosecha del motor de
-   datos** (benchmarks "compárate con tu sector").
+3. **Onboarding** ✅ (checklist de activación en el overview del panel: dominio → verificar
+   DNS → primer escaneo; deriva el estado de datos reales, se auto-oculta al activarse;
+   `components/sentra/OnboardingChecklist.tsx`) + **panel del fundador** ✅ (métricas de negocio:
+   MRR/planes/altas/pagos pendientes/actividad; `GET /api/v1/founder/metrics` founder-gated +
+   `components/sentra/FounderMetrics.tsx`). Falta: **cosecha del motor de datos**
+   (benchmarks "compárate con tu sector") sobre `scan_observations`.
 4. Limpieza: `services/api/venv/` y `get-pip.py` commiteados — sacarlos del repo.
 5. DMARC en Cloudflare (entregabilidad de correo).

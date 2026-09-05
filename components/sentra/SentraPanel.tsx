@@ -20,6 +20,7 @@ import TargetsCard, { type TargetsDict } from '@/components/sentra/TargetsCard';
 import UpgradeModal, { type UpgradeDict } from '@/components/sentra/UpgradeModal';
 import FounderPayments from '@/components/sentra/FounderPayments';
 import FounderMetrics from '@/components/sentra/FounderMetrics';
+import OnboardingChecklist from '@/components/sentra/OnboardingChecklist';
 import ProAvatar from '@/components/sentra/ProAvatar';
 import OverviewSection, { type OverviewDict } from '@/components/sentra/panel/OverviewSection';
 import ReportsSection, { type ReportsDict } from '@/components/sentra/panel/ReportsSection';
@@ -535,6 +536,8 @@ export default function SentraPanel({ lang, dict }: { lang: string; dict: Dict }
             >
               {active === 'overview' && (
                 <div className="space-y-6">
+                  {/* Onboarding: guía al usuario nuevo (se auto-oculta al activarse o al descartarlo) */}
+                  <OnboardingChecklist lang={lang} onNavigate={setActive} />
                   {/* Solo visible para el fundador (se auto-ocultan si dan 403) */}
                   <FounderMetrics lang={lang as 'es' | 'en'} />
                   <FounderPayments />
