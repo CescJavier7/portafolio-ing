@@ -24,7 +24,10 @@ El SaaS se vende como una **suite todo-en-uno a USD 10/mes** (plan Pro único):
 - **Sentra** — auditoría y monitoreo continuo de seguridad web (escaneo pasivo → Security
   Score → informes IA → alertas).
 - **Sentra CV AI** — generador/adaptador de CV con IA (ATS) + automatización por API (n8n).
-- **Academia** — cursos de ingeniería de software y ciberseguridad (en desarrollo).
+- **Academia** — cursos de ingeniería de software y ciberseguridad: lecciones en Markdown
+  (`content/academia/{lang}/{track}/NN-slug.md`), gating free/pro, progreso por usuario,
+  **quiz al final de cada lección** y **certificado firmado (HMAC) al completar una ruta**.
+  Ver §8-bis.
 
 Cobro: **tarjeta automático (PayPhone)** + manual verificado (De Una/QR/transferencia).
 Suscripción mensual; cancelar mantiene acceso hasta fin de período. Ver `SENTRA_CONTEXT.md`.
@@ -377,6 +380,47 @@ docker compose logs -f sentra-api --tail=40
 - Cambios **solo frontend** → basta `portfolio-app`.
 - Cambios **backend** → `sentra-api` (+ migración si aplica).
 - Secretos (`.env` raíz y `services/api/.env`) viven SOLO en el VPS, nunca en git.
+
+---
+
+## 8-bis. Academia (contenido, gating, quizzes y certificados)
+
+**Contenido = archivos.** Cada lección es un Markdown en
+`content/academia/{es|en}/{track}/NN-slug.md`. El prefijo `NN-` da el orden y **no** forma
+parte del slug de la URL. Añadir un `.md` añade la lección al currículo, al sitemap y al
+cálculo del certificado: **no se toca código**. Lector: `lib/academia.ts`.
+
+Frontmatter: `title`, `module`, `order`, `duration`, `access: free|pro`, `description` y
+un `quiz` opcional (lista de `{q, options[], answer, explain}`; `answer` es el índice
+0-based — `parseQuiz` descarta las mal formadas en vez de romper la página).
+
+**Gating del contenido Pro (importante).** El cuerpo de una lección `pro` **nunca** se
+renderiza en el HTML público: la página sirve solo metadatos y el cliente pide el cuerpo a
+`GET /api/academia/lesson` con el token de Sentra (`verifySentraToken` → `/auth/me`
+por la red interna de Docker). Sin sesión → 401; sin plan Pro → 403. El quiz viaja con
+el cuerpo, así que también queda detrás del muro.
+
+**Progreso.** `GET/PUT /api/v1/academy/progress` en el backend (tabla `lesson_progress`,
+anti-IDOR por `user_id`). Aprobar el quiz (≥70%) marca la lección completada y avisa al
+botón de progreso con un `CustomEvent` (`LESSON_COMPLETED_EVENT`), sin acoplar componentes.
+La corrección del quiz es en cliente **a propósito**: es formativo, no un examen.
+
+**Certificado (sin base de datos).** Al completar el 100% de una ruta aparece el CTA en el
+currículo → `/{lang}/academia/{track}/certificado`.
+- `POST /api/academia/certificate` **emite**: cruza el currículo real (los `.md` del disco)
+  con el progreso real (API de Sentra, con el token del usuario). El cliente **no** manda la
+  lista de lecciones, así que no puede mentir sobre lo que completó.
+- El código es autocontenido: `base64url(payload).HMAC-SHA256(payload)` truncado a 144 bits
+  (`lib/academiaCert.server.ts`, secreto `ACADEMY_CERT_SECRET` o `AUTH_SECRET`). **Privacidad:**
+  el payload es público (se comparte), así que lleva un hash opaco del usuario, nunca su id
+  ni su correo.
+- `GET /api/academia/certificate?code=…` **verifica** en público (recomputa el HMAC,
+  comparación en tiempo constante). La misma página hace de verificador si trae `?code=`;
+  va `noindex` y fuera del sitemap.
+- PDF A4 horizontal con `lib/academiaCertPdf.ts` (reutiliza `printHtml`/`esc` de `cvPdf.ts`).
+
+Tests: `lib/academia.test.ts` (lector + quiz) y `lib/academiaCert.test.ts` (firma,
+manipulación, secreto distinto, basura, fallo cerrado sin secreto).
 
 ---
 

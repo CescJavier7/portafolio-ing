@@ -30,5 +30,10 @@ export async function GET(req: Request) {
     }
   }
 
-  return NextResponse.json({ title: lesson.title, access: lesson.access, content: lesson.content });
+  return NextResponse.json({
+    title: lesson.title,
+    access: lesson.access,
+    content: lesson.content,
+    quiz: lesson.quiz,
+  });
 }

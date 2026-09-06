@@ -5,6 +5,23 @@ order: 1
 duration: "16 min"
 access: "free"
 description: "Las 10 categorías de riesgo web más críticas según OWASP, con ejemplos que reconocerás en tu propio código."
+quiz:
+  - q: "Un endpoint devuelve una factura por id sin comprobar quién es su dueño. ¿Qué categoría OWASP es?"
+    options: ["A01 Broken Access Control", "A03 Injection", "A05 Security Misconfiguration", "A09 Logging Failures"]
+    answer: 0
+    explain: "Es un IDOR: acceso a un recurso que no te corresponde. Se arregla filtrando SIEMPRE por el dueño del token."
+  - q: "¿Por qué OWASP habla de CATEGORÍAS de riesgo y no de vulnerabilidades concretas?"
+    options:
+      - "Porque son más fáciles de memorizar"
+      - "Porque una categoría no envejece: el patrón de error se repite aunque el CVE se parchee"
+      - "Porque los CVE son información secreta"
+      - "Porque así siempre hay exactamente 10"
+    answer: 1
+    explain: "Un CVE se parchea y desaparece; el patrón (mezclar datos con código, no validar el dueño…) sigue vivo."
+  - q: "Al pedir un recurso que existe pero es de otro usuario, ¿qué conviene devolver?"
+    options: ["403, para ser explícito", "404, para no revelar que existe", "200 con cuerpo vacío", "500"]
+    answer: 1
+    explain: "Un 403 confirma la existencia del recurso. El 404 no filtra esa información."
 ---
 
 La mayoría de las brechas no vienen de un hacker genial con un 0-day. Vienen de errores **conocidos, documentados y repetidos**. El **OWASP Top 10** es la lista de esos errores: las 10 categorías de riesgo más críticas en aplicaciones web, mantenida por miles de profesionales de seguridad.

@@ -33,7 +33,8 @@ export function defaultPdfLabels(lang: string): CVPdfLabels {
   };
 }
 
-function esc(s: string): string {
+/** Escapa texto para interpolarlo en HTML (reutilizado por otros PDFs). */
+export function esc(s: string): string {
   return String(s ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -169,7 +170,8 @@ export function openCVPdf(cv: CVContent, labels: CVPdfLabels, opts?: { hideWater
 // consume un "pop-up" (no colisiona con el window.open de Gmail), no deja
 // about:blank, y sigue siendo un PDF REAL con texto seleccionable/hipervínculos.
 // Compartido por el CV y la carta de presentación.
-function printHtml(html: string): void {
+/** Imprime un HTML autocontenido en un iframe oculto (→ "Guardar como PDF"). */
+export function printHtml(html: string): void {
   const iframe = document.createElement('iframe');
   iframe.setAttribute('aria-hidden', 'true');
   iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';

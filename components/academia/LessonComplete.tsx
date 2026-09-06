@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Check, Circle, Loader2 } from 'lucide-react';
 import { sentraGetAccessToken, sentraGetAcademyProgress, sentraSetLessonProgress } from '@/lib/sentra/api';
+import { LESSON_COMPLETED_EVENT } from '@/components/academia/LessonQuiz';
 
 // Botón de progreso: marca/desmarca la lección como completada (guardado en la
 // cuenta del usuario). Sin sesión no se muestra.
@@ -19,6 +20,13 @@ export default function LessonComplete({ slug, lang }: { slug: string; lang: str
     sentraGetAcademyProgress()
       .then((p) => setDone(p.completed.includes(slug)))
       .catch(() => {});
+
+    // Aprobar el quiz completa la lección: reflejarlo aquí sin recargar.
+    const onQuizPassed = (e: Event) => {
+      if ((e as CustomEvent).detail === slug) setDone(true);
+    };
+    window.addEventListener(LESSON_COMPLETED_EVENT, onQuizPassed);
+    return () => window.removeEventListener(LESSON_COMPLETED_EVENT, onQuizPassed);
   }, [slug]);
 
   async function toggle() {

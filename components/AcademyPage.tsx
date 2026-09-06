@@ -32,7 +32,8 @@ const T = {
       { icon: 'layers', title: 'Del concepto al deploy', desc: 'Cierras el ciclo completo: diseño, código, pruebas, contenedores y CI/CD.' },
     ],
     curriculumTitle: 'El currículo',
-    curriculumNote: 'Tres tracks que se cursan en paralelo. Cada módulo termina en algo que funciona.',
+    curriculumNote:
+      'Tres tracks que se cursan en paralelo. Cada lección cierra con un quiz, y completar una ruta emite un certificado verificable.',
     tracks: [
       {
         code: 'TRACK 01',
@@ -82,7 +83,8 @@ const T = {
       { icon: 'layers', title: 'Concept to deploy', desc: 'You close the full loop: design, code, tests, containers and CI/CD.' },
     ],
     curriculumTitle: 'The curriculum',
-    curriculumNote: 'Three tracks taken in parallel. Every module ends in something that works.',
+    curriculumNote:
+      'Three tracks taken in parallel. Every lesson ends with a quiz, and finishing a track issues a verifiable certificate.',
     tracks: [
       {
         code: 'TRACK 01',

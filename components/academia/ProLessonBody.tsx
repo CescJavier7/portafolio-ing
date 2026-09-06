@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Lock, Loader2, LogIn, Sparkles } from 'lucide-react';
 import LessonMarkdown from '@/components/academia/LessonMarkdown';
+import LessonQuiz from '@/components/academia/LessonQuiz';
+import type { QuizQuestion } from '@/lib/academia';
 import { sentraGetAccessToken } from '@/lib/sentra/api';
 
 // Cuerpo de una lección PRO: lo pide autenticado a /api/academia/lesson (el
@@ -12,14 +14,17 @@ export default function ProLessonBody({
   track,
   lesson,
   lang,
+  slug,
 }: {
   track: string;
   lesson: string;
   lang: string;
+  slug: string;
 }) {
   const en = lang === 'en';
   const [state, setState] = useState<'loading' | 'ok' | 'auth' | 'pro' | 'error'>('loading');
   const [content, setContent] = useState('');
+  const [quiz, setQuiz] = useState<QuizQuestion[]>([]);
 
   useEffect(() => {
     let alive = true;
@@ -36,6 +41,7 @@ export default function ProLessonBody({
         if (!res.ok) return setState('error');
         const data = await res.json();
         setContent(String(data.content ?? ''));
+        setQuiz(Array.isArray(data.quiz) ? data.quiz : []);
         setState('ok');
       } catch {
         if (alive) setState('error');
@@ -54,7 +60,14 @@ export default function ProLessonBody({
     );
   }
 
-  if (state === 'ok') return <LessonMarkdown content={content} />;
+  if (state === 'ok') {
+    return (
+      <>
+        <LessonMarkdown content={content} />
+        <LessonQuiz questions={quiz} slug={slug} lang={lang} />
+      </>
+    );
+  }
 
   if (state === 'error') {
     return <p className="text-red-500 py-10">{en ? 'Could not load the lesson.' : 'No se pudo cargar la lección.'}</p>;

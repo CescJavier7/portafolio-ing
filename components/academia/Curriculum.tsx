@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Check, Lock, PlayCircle, Clock } from 'lucide-react';
+import { Check, Lock, PlayCircle, Clock, Award } from 'lucide-react';
 import { sentraGetAccessToken, sentraGetAcademyProgress } from '@/lib/sentra/api';
 import type { LessonMeta } from '@/lib/academia';
 
@@ -55,6 +55,27 @@ export default function Curriculum({
           {doneCount}/{allLessons.length} · {pct}%
         </span>
       </div>
+
+      {/* Ruta completa → certificado. Solo aparece al 100% (lo que implica sesión). */}
+      {allLessons.length > 0 && doneCount === allLessons.length && (
+        <Link
+          href={`/${lang}/academia/${trackSlug}/certificado`}
+          className="flex items-center gap-4 rounded-3xl border border-green-500/40 bg-gradient-to-r from-green-500/10 to-transparent p-5 mb-10 hover:border-green-500 transition-colors"
+        >
+          <span className="w-11 h-11 shrink-0 rounded-2xl bg-green-500/15 border border-green-500/30 flex items-center justify-center">
+            <Award className="w-5 h-5 text-green-600 dark:text-green-400" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[15px] font-black text-zinc-900 dark:text-white">
+              {en ? 'Track completed — get your certificate' : 'Ruta completada — obtén tu certificado'}
+            </p>
+            <p className="text-[12.5px] text-zinc-500 dark:text-zinc-400">
+              {en ? 'Verifiable, signed, ready to share.' : 'Verificable, firmado y listo para compartir.'}
+            </p>
+          </div>
+          <span className="text-green-600 dark:text-green-400 shrink-0">→</span>
+        </Link>
+      )}
 
       {modules.length === 0 ? (
         <p className="text-zinc-500 dark:text-zinc-400">{en ? 'Content coming soon.' : 'Contenido en producción.'}</p>

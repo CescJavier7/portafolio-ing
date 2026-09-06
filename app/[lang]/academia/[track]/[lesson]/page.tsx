@@ -12,6 +12,7 @@ import {
 import LessonMarkdown from '@/components/academia/LessonMarkdown';
 import ProLessonBody from '@/components/academia/ProLessonBody';
 import LessonComplete from '@/components/academia/LessonComplete';
+import LessonQuiz from '@/components/academia/LessonQuiz';
 import { altLangs } from '@/lib/seo';
 
 export function generateStaticParams() {
@@ -78,9 +79,13 @@ export default async function LessonPage({
 
         {/* Cuerpo: free se renderiza en el servidor (SEO); pro se pide autenticado. */}
         {data.access === 'free' ? (
-          <LessonMarkdown content={data.content} />
+          <>
+            <LessonMarkdown content={data.content} />
+            <LessonQuiz questions={data.quiz} slug={slug} lang={l} />
+          </>
         ) : (
-          <ProLessonBody track={track} lesson={lesson} lang={l} />
+          // El quiz de una lección Pro llega con su cuerpo por la API autenticada.
+          <ProLessonBody track={track} lesson={lesson} lang={l} slug={slug} />
         )}
 
         <div className="mt-14 pt-8 border-t border-zinc-200 dark:border-zinc-800">

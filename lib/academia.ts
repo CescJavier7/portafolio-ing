@@ -64,8 +64,34 @@ export interface LessonMeta {
   description: string;
 }
 
+// Pregunta de quiz declarada en el frontmatter de la lección:
+//   quiz:
+//     - q: "¿...?"
+//       options: ["A", "B", "C"]
+//       answer: 1          # índice (0-based) de la correcta
+//       explain: "por qué"
+export interface QuizQuestion {
+  q: string;
+  options: string[];
+  answer: number;
+  explain?: string;
+}
+
 export interface Lesson extends LessonMeta {
   content: string;
+  quiz: QuizQuestion[];
+}
+
+function parseQuiz(raw: unknown): QuizQuestion[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item: any) => ({
+      q: String(item?.q ?? '').trim(),
+      options: Array.isArray(item?.options) ? item.options.map((o: any) => String(o)) : [],
+      answer: Number.isInteger(item?.answer) ? Number(item.answer) : -1,
+      explain: item?.explain ? String(item.explain) : undefined,
+    }))
+    .filter((x) => x.q && x.options.length >= 2 && x.answer >= 0 && x.answer < x.options.length);
 }
 
 const ROOT = path.join(process.cwd(), 'content', 'academia');
@@ -138,7 +164,12 @@ export function getLesson(trackSlug: string, lessonSlug: string, lang: Lang): Le
   const raw = fs.readFileSync(path.join(dir, file), 'utf8');
   const { data, content } = matter(raw);
   const meta = parseMeta(dir, file, trackSlug);
-  return { ...meta, content, description: String(data.description ?? meta.description) };
+  return {
+    ...meta,
+    content,
+    description: String(data.description ?? meta.description),
+    quiz: parseQuiz(data.quiz),
+  };
 }
 
 /** Lección anterior/siguiente dentro del track (para la navegación). */

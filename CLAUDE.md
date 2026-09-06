@@ -34,6 +34,10 @@ de seguridad web. Dos apps que se despliegan juntas en un VPS.
 - **Suite todo-en-uno ($10/mes):** un plan Pro único que incluye Sentra (seguridad) +
   Sentra CV AI (empleabilidad) + Academia (aprendizaje). El navbar agrupa los SaaS en un
   dropdown "Suite"; la Academia es pestaña propia.
+- **Academia:** lecciones en Markdown (`content/academia/{lang}/{track}/NN-slug.md`), gating
+  free/pro server-side, progreso por usuario, **quiz por lección** (frontmatter) y
+  **certificado firmado con HMAC** al completar una ruta (sin BD, verificable en público).
+  Detalle en `CODEBASE_OVERVIEW.md` §8-bis. Añadir un `.md` añade la lección: no se toca código.
 - **Academia (plataforma de lecciones, MVP):** lecciones en **Markdown** (como el blog) en
   `content/academia/{lang}/{track}/{NN-slug}.md` con frontmatter (title, module, order, duration,
   `access: free|pro`, description). Lector en `lib/academia.ts` (3 tracks: fullstack/ciberseguridad/

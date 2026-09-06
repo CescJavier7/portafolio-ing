@@ -14,6 +14,7 @@ export interface VerifiedSentraUser {
   userId: string;
   email: string;
   plan: string;
+  name: string | null;
 }
 
 // Best-effort: si el token es inválido/expiró o la API no responde,
@@ -36,7 +37,12 @@ export async function verifySentraToken(
     const user = await res.json();
     if (typeof user?.id !== 'string' || typeof user?.email !== 'string') return null;
 
-    return { userId: user.id, email: user.email, plan: user.plan ?? 'FREE' };
+    return {
+      userId: user.id,
+      email: user.email,
+      plan: user.plan ?? 'FREE',
+      name: typeof user.name === 'string' && user.name.trim() ? user.name.trim() : null,
+    };
   } catch {
     return null;
   }
