@@ -27,7 +27,9 @@ import {
   SentraApiError,
   type SentraEvaluation,
   type SentraVerdict,
+  type CVContent,
 } from '@/lib/sentra/api';
+import SendApplicationButton from '@/components/tools/SendApplicationButton';
 
 // Bandeja del agente (FASE 3): pega varias ofertas → evalúa todas (firewall +
 // score, reusa /agent/evaluate) → agrupa en Estafas / Descartes / Vale la pena →
@@ -43,7 +45,7 @@ interface Item {
   ev?: SentraEvaluation;
   error?: string;
   preparing?: boolean;
-  prepared?: { cvId: string; match: number };
+  prepared?: { cvId: string; match: number; applicationId: string | null; content: CVContent; role: string };
   prepareErr?: string;
   capturedId?: string; // id de la fila en captured_offers (si vino de la extensión)
   sourceUrl?: string | null;
@@ -205,21 +207,33 @@ export default function AgentInbox({ lang }: { lang: 'es' | 'en' }) {
     patch(id, { preparing: true, prepareErr: undefined });
     try {
       const cv = await sentraGenerateCVFromProfile({ job_posting: it.text, title: it.ev.role || undefined });
+      let applicationId: string | null = null;
       try {
-        await sentraCreateApplication({
+        const app = await sentraCreateApplication({
           company: it.ev.company || '—',
           role: it.ev.role || cv.title,
           cv_document_id: cv.id,
           score: it.ev.score,
           status: 'saved',
         });
+        applicationId = app.id; // para marcarla "postulada" al enviar
       } catch {
         /* registro best-effort */
       }
       // Procesada → si vino de la extensión, sácala de la cola del servidor para
       // que no reaparezca al recargar.
       if (it.capturedId) sentraDeleteCapturedOffer(it.capturedId).catch(() => {});
-      patch(id, { preparing: false, prepared: { cvId: cv.id, match: cv.match_score }, capturedId: undefined });
+      patch(id, {
+        preparing: false,
+        prepared: {
+          cvId: cv.id,
+          match: cv.match_score,
+          applicationId,
+          content: cv.content as CVContent,
+          role: it.ev.role || cv.title,
+        },
+        capturedId: undefined,
+      });
     } catch (e) {
       const msg = e instanceof SentraApiError && e.status === 409 ? t.noProfile : e instanceof SentraApiError ? e.detail : t.prepareErr;
       patch(id, { preparing: false, prepareErr: msg });
@@ -435,13 +449,21 @@ function BucketSection({
               {bucket === 'worth' && (
                 <div className="mt-3">
                   {it.prepared ? (
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="space-y-2">
                       <span className="inline-flex items-center gap-1.5 text-[12px] font-bold text-green-600 dark:text-green-400">
                         <Check className="w-4 h-4" /> {t.preparedOk} · {t.match}: {it.prepared.match}
                       </span>
+                      {/* Cierra el ciclo: correo listo + PDF y marca "Postulado" */}
+                      <SendApplicationButton
+                        cvId={it.prepared.cvId}
+                        cvContent={it.prepared.content}
+                        applicationId={it.prepared.applicationId}
+                        lang={lang}
+                        fallbackRole={it.prepared.role}
+                      />
                       <a
                         href={`/${lang}/herramientas/cv?cv=${it.prepared.cvId}`}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500 text-black text-[12px] font-bold hover:brightness-105 transition"
+                        className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-zinc-600 dark:text-zinc-300 hover:text-green-600 dark:hover:text-green-400 transition"
                       >
                         <FileText className="w-3.5 h-3.5" /> {t.openCV}
                       </a>

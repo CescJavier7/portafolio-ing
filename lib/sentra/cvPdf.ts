@@ -18,6 +18,21 @@ export interface CVPdfLabels {
   generatedBy: string;
 }
 
+// Etiquetas por defecto del PDF, para llamadores que NO tienen el diccionario del
+// wizard (p. ej. el flujo del Job Agent al enviar una postulación).
+export function defaultPdfLabels(lang: string): CVPdfLabels {
+  const en = lang === 'en';
+  return {
+    summary: en ? 'Summary' : 'Resumen',
+    experience: en ? 'Experience' : 'Experiencia',
+    education: en ? 'Education' : 'Formación',
+    certifications: en ? 'Certifications' : 'Certificaciones',
+    skills: en ? 'Skills' : 'Habilidades',
+    languages: en ? 'Languages' : 'Idiomas',
+    generatedBy: en ? 'Built with the CV assistant of' : 'Generado con el asistente de CV de',
+  };
+}
+
 function esc(s: string): string {
   return String(s ?? '')
     .replace(/&/g, '&amp;')

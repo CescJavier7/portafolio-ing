@@ -505,9 +505,16 @@ aplicación (CV desde perfil guardado + registro) · Bandeja de triaje por lote 
 navegador (badge + autocompletar por sitio + "Añadir a Sentra") · Learning Loop **completo**
 (diagnóstico `GET /agent/insights` + **personalización del score** por historial, §7.8).
 
+**Enviar la postulación (✅):** `SendApplicationButton` cierra el ciclo desde el agente
+(pestañas Objetivo y Bandeja): **pre-genera** el correo (`apply-email`, para que el clic no lo
+bloquee el navegador), abre **Gmail** con destinatario/asunto/cuerpo, descarga el **CV en PDF**
+para adjuntar y marca la postulación como **"Postulado"** en el tracker
+(`PATCH /applications/{id}`). Human-in-the-loop: el usuario revisa y pulsa Enviar en su correo —
+Sentra nunca envía por su cuenta. Etiquetas del PDF vía `defaultPdfLabels(lang)` (cvPdf.ts).
+
 **Pendiente (orden sugerido):**
-1. **Autocompletar el ENVÍO** — más allá de nombre/correo/teléfono: enviar el correo de
-   postulación (`apply-email`) o el formulario, con el humano confirmando (human-in-the-loop).
+1. **Autofill del FORMULARIO** — completar formularios de postulación en sitios (Workday/
+   Greenhouse) más allá de nombre/correo/teléfono; necesita Application Memory (§ plan Career Agent).
 2. **Lote de fondo** — cola/worker (Redis+RQ) para cerrar la pestaña y recibir los CVs +
    postulaciones por correo (hoy el lote es en vivo, front-orchestrated).
 3. **Descubrimiento proactivo** — que el agente BUSQUE ofertas (no solo capturar las que ves),

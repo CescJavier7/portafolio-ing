@@ -12,7 +12,9 @@ import {
   type SentraSearchProfileInput,
   type SentraEvaluation,
   type SentraVerdict,
+  type CVContent,
 } from '@/lib/sentra/api';
+import SendApplicationButton from '@/components/tools/SendApplicationButton';
 
 const EMPTY: SentraSearchProfileInput = {
   target_role: '', seniority: '', user_years_experience: 0, min_salary: null, salary_currency: 'USD',
@@ -220,7 +222,13 @@ export default function JobAgentTab({ lang }: { lang: 'es' | 'en' }) {
 
   // FASE 3 — Preparar aplicación
   const [preparing, setPreparing] = useState(false);
-  const [prepared, setPrepared] = useState<{ cvId: string; match: number } | null>(null);
+  const [prepared, setPrepared] = useState<{
+    cvId: string;
+    match: number;
+    applicationId: string | null;
+    content: CVContent;
+    role: string;
+  } | null>(null);
   const [prepareErr, setPrepareErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -280,18 +288,26 @@ export default function JobAgentTab({ lang }: { lang: 'es' | 'en' }) {
     setPrepared(null);
     try {
       const cv = await sentraGenerateCVFromProfile({ job_posting: evaluatedOffer, title: ev.role || undefined });
+      let applicationId: string | null = null;
       try {
-        await sentraCreateApplication({
+        const app = await sentraCreateApplication({
           company: ev.company || '—',
           role: ev.role || cv.title,
           cv_document_id: cv.id,
           score: ev.score,
           status: 'saved',
         });
+        applicationId = app.id; // lo guardamos para poder marcarla "postulada" al enviar
       } catch {
         /* el registro es best-effort: si falla, igual tenemos el CV */
       }
-      setPrepared({ cvId: cv.id, match: cv.match_score });
+      setPrepared({
+        cvId: cv.id,
+        match: cv.match_score,
+        applicationId,
+        content: cv.content as CVContent,
+        role: ev.role || cv.title,
+      });
     } catch (e) {
       if (e instanceof SentraApiError && e.status === 409) setPrepareErr(t.prepareNoProfile);
       else setPrepareErr(e instanceof SentraApiError ? e.detail : t.prepareErr);
@@ -608,11 +624,23 @@ export default function JobAgentTab({ lang }: { lang: 'es' | 'en' }) {
                       <span className="ml-auto text-[12px] font-bold text-zinc-500">{t.prepareMatch}: {prepared.match}</span>
                     </p>
                     <p className="text-[12.5px] text-zinc-600 dark:text-zinc-300 mb-3">{t.prepareOkSub}</p>
+
+                    {/* Cierra el ciclo: abre el correo listo + PDF y marca "Postulado" */}
+                    <div className="mb-3">
+                      <SendApplicationButton
+                        cvId={prepared.cvId}
+                        cvContent={prepared.content}
+                        applicationId={prepared.applicationId}
+                        lang={lang}
+                        fallbackRole={prepared.role}
+                      />
+                    </div>
+
                     <a
                       href={`/${lang}/herramientas/cv?cv=${prepared.cvId}`}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-green-500 text-black text-[13px] font-bold hover:brightness-105 active:scale-[0.98] transition"
+                      className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-zinc-600 dark:text-zinc-300 hover:text-green-600 dark:hover:text-green-400 transition"
                     >
-                      <FileText className="w-4 h-4" /> {t.openCV}
+                      <FileText className="w-3.5 h-3.5" /> {t.openCV}
                     </a>
                   </div>
                 ) : (
