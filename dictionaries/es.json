@@ -183,100 +183,142 @@
     "visitLabel": "Visitar plataforma",
     "requestApkLabel": "Solicitar APK",
     "downloadApkLabel": "Descargar APK",
-    "apkNote": "La APK se comparte de forma privada mientras NEXO está en beta.",
+    "apkNote": "NEXO no está en Google Play: se instala con su APK firmada, que comparto directamente.",
     "statusTitle": "Estado real",
     "statusLabels": {
       "done": "Funciona",
       "partial": "Limitado",
-      "pending": "Pendiente"
+      "pending": "Pendiente",
+      "info": "Distribución"
     },
     "badges": {
       "production": "En producción",
       "client": "Proyecto para cliente",
-      "android": "Android · Beta"
+      "android": "Android"
     },
+    "readMoreLabel": "Leer más",
+    "closeLabel": "Cerrar",
+    "prevLabel": "Proyecto anterior",
+    "nextLabel": "Proyecto siguiente",
+    "featuresTitle": "Funcionalidades principales",
+    "techTitle": "Tecnologías",
+    "aboutTitle": "Sobre el proyecto",
     "items": [
       {
         "title": "Sentra",
         "category": "SaaS / Ciberseguridad & Monitoreo Continuo",
+        "summary": "Auditoría y monitoreo continuo de seguridad web: Security Score, informes con IA y alertas. En producción.",
         "description": "Plataforma de auditoría y monitoreo continuo de seguridad web. Verificas un dominio por DNS y obtienes un Security Score, informes con IA, monitoreo con alertas, API pública y equipos con RBAC. 100% pasivo por diseño. Multi-tenant end-to-end en producción."
       },
       {
         "title": "Simuladores de Admisión",
         "category": "EdTech · Proyecto para cliente",
-        "description": "Plataforma de simulacros del examen de admisión universitaria (EPN, UCE, ESPE y Policía Nacional) desarrollada para la academia Cambridge de Latacunga, en producción. El servidor manda: la respuesta correcta nunca llega al navegador durante un intento, el tiempo lo fija el servidor y cada respuesta se guarda aunque falle la señal. Los docentes importan bancos de preguntas desde Excel, Google Sheets, Word, PDF o fotos; una revisión de calidad con reglas, un motor matemático e IA marca lo crítico antes de publicar, y un asistente crea simuladores solo con confirmación explícita. Incluye pagos con PayPhone o transferencia, aislamiento por institución, verificación en dos pasos para la administración y registro de auditoría inmutable."
+        "summary": "Simulacros del examen de admisión universitaria para la academia Cambridge, con revisión de calidad asistida por IA.",
+        "description": "Plataforma de simulacros del examen de admisión universitaria (EPN, UCE, ESPE y Policía Nacional) desarrollada para la academia Cambridge de Latacunga, en producción. El servidor manda: la respuesta correcta nunca llega al navegador durante un intento, el tiempo lo fija el servidor y cada respuesta se guarda aunque falle la señal. Los docentes importan bancos de preguntas desde Excel, Google Sheets, Word, PDF o fotos; una revisión de calidad con reglas, un motor matemático e IA marca lo crítico antes de publicar, y un asistente crea simuladores solo con confirmación explícita. Incluye pagos con PayPhone o transferencia, aislamiento por institución, verificación en dos pasos para la administración y registro de auditoría inmutable.",
+        "features": [
+          "Intentos cronometrados por el servidor, que se cierran y califican solos al vencer.",
+          "Importación de bancos de preguntas desde Excel, Google Sheets, Word, PDF o fotos, con validación fila por fila.",
+          "Revisión de calidad con reglas, motor matemático, comprobación de imágenes e IA por lotes; solo lo crítico bloquea la publicación.",
+          "Asistente para docentes con permisos por nivel: nada destructivo sin doble confirmación.",
+          "Panel del estudiante con nivel por materia, repaso espaciado y misiones semanales basadas en métodos de estudio con evidencia.",
+          "Pagos con PayPhone o por transferencia con comprobante revisado por la administración.",
+          "Aislamiento por institución, verificación en dos pasos (TOTP), auditoría de solo inserción y copias de seguridad."
+        ]
       },
       {
         "title": "AI ATS-Resume Builder",
         "category": "IA Aplicada / Herramienta de Empleabilidad",
+        "summary": "Adapta tu CV a cada oferta con IA sin inventar datos, con match ATS honesto y exportación a PDF.",
         "description": "Adapta tu perfil a cada oferta con IA, anclado por identificadores para no inventar datos: nombre, empresas y fechas se copian de tu perfil, no del modelo. Calcula un match score honesto por cobertura de palabras clave ATS, agrupa tus habilidades por categoría, edita en vivo con vista previa A4 y exporta a PDF listo para filtros ATS. Incluye una automatización (n8n + Notion): busca ofertas nuevas cada día, puntúa el match de cada una con IA, genera el CV adaptado a la vacante y registra el pipeline en Notion, con aviso por Telegram de las que valen la pena."
       },
       {
         "title": "DartShannon — Ficha Viva",
         "category": "Producto · Seguridad de datos",
+        "summary": "Fichas vivas para casos de personas desaparecidas, con privacidad por diseño y revisión humana.",
         "description": "URL con estado para cada caso de persona desaparecida: el enlace que ya circula por WhatsApp se actualiza solo y su miniatura pasa de «se busca» a «apareció con vida». Privacidad por diseño: la coordenada exacta nunca se persiste —se agrega a una celda H3 y se descarta en el mismo INSERT—; el mapa publica bandas, sin fechas ni conteos, con publicación monótona (una celda nunca baja de clase) contra el ataque temporal de Sweeney; y nada se publica sin revisión humana. Go sin framework (2 dependencias), cifrado AES-256-GCM en el proceso y un verificador JWT propio de 80 líneas (solo HS256, sin negociación de algoritmo). PostgreSQL + PostGIS + TimescaleDB + H3; frontend React 19 PWA. Operativo de extremo a extremo en desarrollo; falta habilitar la facturación de Google Cloud para el mapa."
       },
       {
         "title": "NEXO",
         "category": "App Android · Proyecto personal",
-        "description": "Un espacio personal para descubrir intereses, entender la actualidad con fuentes verificables y aprender con métodos activos. Local-first: perfiles con PIN, noticias reales por RSS con prioridad explicable («¿por qué lo veo?»), traducción de noticias en el propio móvil, biblioteca, tarjetas con repaso espaciado, cuestionarios y método Feynman. Las funciones con IA (explicar, tutor socrático) pasan por un servidor propio en FastAPI: las claves nunca viajan dentro de la APK.",
+        "summary": "App Android para descubrir intereses, entender la actualidad y aprender, con servidor propio e IA.",
+        "description": "Un espacio personal para descubrir intereses, entender la actualidad con fuentes verificables y aprender con métodos activos. Combina una app local-first (perfiles con PIN, noticias reales por RSS con prioridad explicable, traducción en el propio móvil, biblioteca y repaso espaciado) con su propio servidor en FastAPI y PostgreSQL, desplegado en mi VPS, que gestiona cuentas, inicio de sesión con Google y las funciones de IA. Las claves nunca viajan dentro de la APK.",
+        "features": [
+          "Cuestionario inicial de intereses (13 categorías) que adapta el inicio y el estilo de lectura.",
+          "Noticias reales por RSS con imágenes, prioridad explicable y alertas importantes opcionales.",
+          "Traducción de noticias en el propio dispositivo (ML Kit), con acceso al texto original.",
+          "Aprender: tarjetas con repaso espaciado, cuestionarios, método Feynman y tutor socrático con IA.",
+          "IA en cada artículo: explicar, resumen en 30 segundos, por qué importa y argumentos a favor y en contra.",
+          "Perfiles aislados con PIN y borrado completo, incluida su identidad en el servidor."
+        ],
         "status": [
           {
             "kind": "done",
-            "text": "Sin servidor: noticias RSS, traducción en el dispositivo, repaso espaciado y alertas locales."
+            "text": "Servidor propio desplegado en mi VPS (FastAPI + PostgreSQL): cuentas, inicio de sesión con Google, noticias e IA."
           },
           {
             "kind": "done",
-            "text": "APK firmada (v0.4.0) que se actualiza conservando los datos, probada en emulador Android 15."
+            "text": "La app también funciona sin conexión: perfiles, fuentes RSS, traducción en el dispositivo y repaso espaciado."
+          },
+          {
+            "kind": "done",
+            "text": "APK firmada (v0.4.0) probada en Android; cada versión se instala encima conservando los datos."
           },
           {
             "kind": "partial",
-            "text": "IA a través de un servidor privado en nivel gratuito, con cupo diario limitado."
+            "text": "La IA funciona en el nivel gratuito del proveedor, con un cupo diario de consultas."
           },
           {
-            "kind": "pending",
-            "text": "Inicio de sesión con Google, distribución pública de la APK y pruebas en un móvil físico."
+            "kind": "info",
+            "text": "Se instala con su APK firmada; no está publicada en Google Play."
           }
         ]
       },
       {
         "title": "SentinelX",
         "category": "Ciberseguridad / DevSecOps & SOAR Architecture",
+        "summary": "Detección y respuesta autónoma (SIEM/SOAR) con Suricata, telemetría de host y mitigación Zero-Trust.",
         "description": "Plataforma End-to-End de Detección y Respuesta Autónoma (SIEM/SOAR). Arquitectura orientada a eventos que integra análisis de tráfico de red (Suricata NIDS), telemetría de host y un motor de mitigación Zero-Trust asíncrono."
       },
       {
         "title": "NexusTopUp",
         "category": "Ingeniería de Software / E-commerce Seguro",
+        "summary": "Plataforma de recargas digitales con Security by Design: rate limiting y validación en servidor.",
         "description": "Plataforma de transacciones digitales diseñada con enfoque en Security by Design. Se implementó una arquitectura resistente a ataques automatizados mediante Rate Limiting estricto, validación de carga en servidor y un flujo asíncrono que protege la integridad de las credenciales de usuario."
       },
       {
         "title": "ElliotWave EA",
         "category": "Ingeniería Financiera / Algorithmic Trading",
+        "summary": "Asesor experto para MetaTrader 4 basado en Ondas de Elliott, Fibonacci y control de volatilidad.",
         "description": "Desarrollo de un Asesor Experto (EA) adaptativo para MetaTrader 4. El algoritmo emplea lógica multi-estrategia fundamentada en modelos matemáticos (Ondas de Elliott y retrocesos de Fibonacci), integrando un motor de evaluación de volatilidad en tiempo real para optimizar la gestión de riesgo."
       },
       {
         "title": "Defensa Activa y Observabilidad: Laboratorio NIDS/IPS",
         "category": "Ciberseguridad / DevSecOps & Blue Team",
+        "summary": "Laboratorio defensivo que detecta y bloquea intrusiones en menos de 5 segundos, con observabilidad forense.",
         "description": "Implementación de una arquitectura defensiva capaz de identificar y mitigar intrusiones en menos de 5 segundos. El ecosistema correlaciona eventos de detección (Snort) con respuestas de firewall automatizadas (Fail2ban), soportado por un pipeline de observabilidad forense (Promtail, Loki, Grafana)."
       },
       {
         "title": "OWASP Web Security Audit",
         "category": "Ciberseguridad / Pentesting Web",
+        "summary": "Auditoría ofensiva OWASP Top 10: bypass de autenticación por SQLi y DOM XSS, con propuestas de remediación.",
         "description": "Auditoría de seguridad ofensiva sobre una arquitectura web moderna (Node.js/Angular). Se explotaron y documentaron vulnerabilidades críticas del OWASP Top 10, logrando un Authentication Bypass vía Inyección SQL (Lógica Booleana) y ejecución de código del lado del cliente (DOM XSS). Incluye análisis forense de tráfico de APIs REST y propuestas de remediación arquitectónica."
       },
       {
         "title": "Agromix",
         "category": "AgriTech / Herramienta de Software",
+        "summary": "Herramienta para Ingeniería Agronómica (UCE) que valida la compatibilidad química de insumos agrícolas.",
         "description": "Software técnico desarrollado para la carrera de Ingeniería Agronómica de la UCE. Incorpora un algoritmo de validación de compatibilidad química para insumos agrícolas, previniendo reacciones adversas y optimizando el manejo integrado de cultivos."
       },
       {
         "title": "Fashion & Beauty Catalog",
         "category": "E-Commerce / Integración de Negocios",
+        "summary": "Catálogo digital orientado a la conversión, con pedidos directos por WhatsApp Business.",
         "description": "Catálogo digital optimizado para la conversión. El diseño se centra en una experiencia de usuario (UX) fluida y una arquitectura de la información clara, culminando en una integración directa y eficiente con la API de WhatsApp Business para la gestión de ventas."
       },
       {
         "title": "D' Robys Band Official",
         "category": "Web Development / Plataforma de Entretenimiento",
+        "summary": "Sitio oficial de la banda con una narrativa visual basada en animaciones de scroll.",
         "description": "Plataforma oficial desarrollada para la agrupación D' Robys Band. El proyecto integra animaciones fluidas basadas en scroll para crear una narrativa visual inmersiva que resalta la trayectoria internacional de la banda, optimizando el rendimiento y la accesibilidad."
       }
     ]
