@@ -3,22 +3,35 @@
 import { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { SiGithub } from 'react-icons/si';
-import { ExternalLink, TerminalSquare, ChevronLeft, ChevronRight, X, MousePointerClick } from 'lucide-react';
+import { ExternalLink, TerminalSquare, ChevronLeft, ChevronRight, X, MousePointerClick, Smartphone, Download, Mail } from 'lucide-react';
 // Imágenes EMPAQUETADAS (no dependen de /public): Next las emite a _next/static,
 // que siempre se copia al contenedor y se sirve. Fin del bug de "no cargan".
 import sentraPreview from '@/public/sentra-preview.png';
 import cvPreview from '@/public/cv-builder-preview.png';
 import dartPreview from '@/public/dartshannon-preview.png';
+// Captura real de la portada en producción y capturas reales de la APK 0.4.0
+// (emulador Android 15) sobre el degradado del propio icono de NEXO.
+import simuladoresPreview from '@/public/simuladores-preview.jpg';
+import nexoPreview from '@/public/nexo-preview.jpg';
 
 // ─── METADATA DE PROYECTOS (NO TRADUCIBLE) ───────────────────────────────────
 // Assets, links y stack tecnológico no cambian entre idiomas. El orden es
 // fijo y debe coincidir 1:1 con `dict.items`.
+//  · badges: insignias discretas en la barra superior de la tarjeta.
+//  · device: 'phone' cambia la barra de navegador por la de una app móvil.
+//  · demoKind: 'visit' rotula el enlace como plataforma real, no como demo.
+//  · apk: URL pública de descarga. Vacía → «Solicitar APK» (lleva a contacto).
+type ProjectBadge = 'production' | 'client' | 'android';
 const projectMeta: {
   techs: string[];
   image: string;
   github: string;
   demo: string;
   comingSoon?: boolean;
+  badges?: ProjectBadge[];
+  device?: 'phone';
+  demoKind?: 'visit';
+  apk?: string;
 }[] = [
   {
     // Sentra — SaaS insignia de seguridad web.
@@ -26,6 +39,16 @@ const projectMeta: {
     image: sentraPreview.src,
     github: "",
     demo: "https://cescjavier.dev/es/sentinel"
+  },
+  {
+    // Simuladores de admisión — proyecto para cliente (academia Cambridge).
+    // Sin repositorio público: solo el enlace a producción.
+    techs: ["Next.js 16", "React 19", "TypeScript", "PostgreSQL 16", "Drizzle ORM", "Better Auth", "Groq LLM", "PayPhone", "Docker · Traefik", "Playwright"],
+    image: simuladoresPreview.src,
+    github: "",
+    demo: "https://simuladores.cescjavier.dev/",
+    badges: ["production", "client"],
+    demoKind: "visit"
   },
   {
     // AI ATS-Resume Builder — el generador de CV actual.
@@ -41,6 +64,17 @@ const projectMeta: {
     github: "",
     demo: "",
     comingSoon: true
+  },
+  {
+    // NEXO — app Android personal (Expo). La APK se comparte en privado:
+    // cuando exista una URL pública estable, ponerla en `apk`.
+    techs: ["React Native 0.86", "Expo SDK 57", "TypeScript", "Expo Router", "SQLite", "ML Kit (on-device)", "FastAPI", "PostgreSQL 16"],
+    image: nexoPreview.src,
+    github: "",
+    demo: "",
+    badges: ["android"],
+    device: "phone",
+    apk: ""
   },
   {
     techs: ["FastAPI", "ReactFlow (WebSockets)", "Elasticsearch", "Docker", "Suricata (NIDS)", "Zero-Trust SSH", "Redis"],
@@ -95,10 +129,15 @@ const projectMeta: {
 ];
 
 // ─── TIPADO DEL DICCIONARIO ───────────────────────────────────────────────────
+type ProjectStatusKind = 'done' | 'partial' | 'pending';
+
 interface ProjectItemDictionary {
   title: string;
   category: string;
   description: string;
+  // Estado honesto por funcionalidad (qué funciona, qué es limitado, qué falta).
+  // `kind` llega como string desde el JSON: se normaliza al renderizar.
+  status?: { kind: string; text: string }[];
 }
 
 interface ProjectsDictionary {
@@ -109,6 +148,13 @@ interface ProjectsDictionary {
   viewCodeLabel: string;
   demoLabel: string;
   comingSoon?: string;
+  visitLabel?: string;
+  requestApkLabel?: string;
+  downloadApkLabel?: string;
+  apkNote?: string;
+  statusTitle?: string;
+  statusLabels?: Record<ProjectStatusKind, string>;
+  badges?: Record<ProjectBadge, string>;
   items: ProjectItemDictionary[];
 }
 
@@ -377,9 +423,16 @@ export default function ProjectsApple({ dict }: ProjectsAppleProps) {
               {/* 1. DISEÑO SAFARI INMERSIVO FULL-WIDTH */}
               <div className="absolute inset-0 pt-8 flex items-end">
                 <div className="absolute top-0 inset-x-0 h-8 bg-zinc-100 dark:bg-black/80 border-b border-zinc-200 dark:border-white/10 flex items-center px-4 gap-1.5 z-20">
-                   <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]"></div>
-                   <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]"></div>
-                   <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]"></div>
+                   {project.device === 'phone' ? (
+                     <Smartphone size={14} className="text-zinc-500" aria-hidden />
+                   ) : (
+                     <>
+                       <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]"></div>
+                       <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]"></div>
+                       <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]"></div>
+                     </>
+                   )}
+                   <ProjectBadges badges={project.badges} labels={dict.badges} />
                 </div>
 
                 <div className="relative w-full h-full overflow-hidden">
@@ -393,7 +446,7 @@ export default function ProjectsApple({ dict }: ProjectsAppleProps) {
                       className="w-full h-full object-cover transition-transform duration-[2s] md:group-hover:scale-105"
                     />
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/100 via-black/40 to-black/20" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black from-20% via-black/70 via-45% to-black/10" />
                 </div>
               </div>
 
@@ -422,6 +475,7 @@ export default function ProjectsApple({ dict }: ProjectsAppleProps) {
                  <p className="text-zinc-300 text-[14px] leading-relaxed mb-5 text-balance">
                    {project.description}
                  </p>
+                 <ProjectStatus status={project.status} title={dict.statusTitle} labels={dict.statusLabels} tone="dark" />
                  <div className="flex flex-wrap gap-2 mb-6">
                    {project.techs.map(tech => (
                      <span key={tech} className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white/10 text-zinc-200 border border-white/10">
@@ -429,7 +483,7 @@ export default function ProjectsApple({ dict }: ProjectsAppleProps) {
                      </span>
                    ))}
                  </div>
-                 <div className="flex items-center gap-4 pt-1">
+                 <div className="flex flex-wrap items-center gap-4 pt-1">
                    {project.comingSoon ? (
                      <span className="px-5 py-2.5 rounded-full bg-white/10 border border-white/20 text-white text-sm font-semibold">
                        {dict.comingSoon ?? 'Próximamente'}
@@ -442,13 +496,19 @@ export default function ProjectsApple({ dict }: ProjectsAppleProps) {
                          </a>
                        )}
                        {project.demo && (
-                         <a href={project.demo} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-6 py-3.5 rounded-full text-white border border-white/20 hover:bg-white/10 transition-all text-sm font-semibold">
-                           <ExternalLink size={16} /> {dict.demoLabel}
+                         <a href={project.demo} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 px-6 py-3.5 rounded-full text-sm font-semibold transition-all ${!project.github ? 'bg-white text-black hover:scale-105' : 'text-white border border-white/20 hover:bg-white/10'}`}>
+                           <ExternalLink size={16} /> {demoLabelFor(project, dict)}
                          </a>
+                       )}
+                       {project.device === 'phone' && (
+                         <ApkAction project={project} dict={dict} className="flex items-center gap-2 px-6 py-3.5 rounded-full bg-white text-black font-semibold hover:scale-105 transition-transform text-sm" />
                        )}
                      </>
                    )}
                  </div>
+                 {project.device === 'phone' && !project.apk && dict.apkNote && (
+                   <p className="mt-4 text-xs text-zinc-400">{dict.apkNote}</p>
+                 )}
               </div>
               )}
 
@@ -511,9 +571,11 @@ export default function ProjectsApple({ dict }: ProjectsAppleProps) {
                   )}
                 </div>
 
+                <ProjectBadges badges={activeProject.badges} labels={dict.badges} className="mb-4 ml-0" />
                 <p className="text-zinc-600 dark:text-zinc-300 text-base md:text-lg leading-relaxed mb-8">
                   {activeProject.description}
                 </p>
+                <ProjectStatus status={activeProject.status} title={dict.statusTitle} labels={dict.statusLabels} tone="light" />
 
                 <div className="flex flex-wrap gap-2 mb-10">
                   {activeProject.techs.map(tech => (
@@ -536,13 +598,19 @@ export default function ProjectsApple({ dict }: ProjectsAppleProps) {
                         </a>
                       )}
                       {activeProject.demo && (
-                        <a href={activeProject.demo} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full px-6 py-3.5 rounded-full text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 active:bg-zinc-100 dark:active:bg-zinc-800 transition-colors text-sm font-semibold">
-                          <ExternalLink className="w-4 h-4" /> {dict.demoLabel}
+                        <a href={activeProject.demo} target="_blank" rel="noopener noreferrer" className={`flex items-center justify-center gap-2 w-full px-6 py-3.5 rounded-full transition-colors text-sm font-semibold ${!activeProject.github ? 'bg-zinc-900 text-white dark:bg-white dark:text-black active:scale-95' : 'text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 active:bg-zinc-100 dark:active:bg-zinc-800'}`}>
+                          <ExternalLink className="w-4 h-4" /> {demoLabelFor(activeProject, dict)}
                         </a>
+                      )}
+                      {activeProject.device === 'phone' && (
+                        <ApkAction project={activeProject} dict={dict} onNavigate={() => setActiveProject(null)} className="flex items-center justify-center gap-2 w-full px-6 py-3.5 rounded-full bg-zinc-900 text-white dark:bg-white dark:text-black font-semibold active:scale-95 transition-transform text-sm" />
                       )}
                     </>
                   )}
                 </div>
+                {activeProject.device === 'phone' && !activeProject.apk && dict.apkNote && (
+                  <p className="mt-4 text-xs text-center text-zinc-500 dark:text-zinc-400">{dict.apkNote}</p>
+                )}
               </div>
 
             </motion.div>
@@ -566,5 +634,105 @@ function ProjectPlaceholder({ title }: { title: string }) {
       <TerminalSquare className="relative w-14 h-14 text-apple-blue/70" strokeWidth={1.5} />
       <p className="relative font-mono text-sm text-zinc-400 tracking-wide px-6 text-center">{title}</p>
     </div>
+  );
+}
+// Rótulo del enlace principal: «Visitar plataforma» para productos reales en
+// producción; «Live Demo» para el resto.
+function demoLabelFor(project: Project, dict: ProjectsDictionary) {
+  return project.demoKind === 'visit' ? (dict.visitLabel ?? dict.demoLabel) : dict.demoLabel;
+}
+
+// Insignias discretas (En producción, Proyecto para cliente, Android · Beta).
+function ProjectBadges({
+  badges,
+  labels,
+  className = 'ml-auto',
+}: {
+  badges?: ProjectBadge[];
+  labels?: Record<ProjectBadge, string>;
+  className?: string;
+}) {
+  if (!badges?.length || !labels) return null;
+  return (
+    <div className={`flex flex-wrap items-center gap-1.5 ${className}`}>
+      {badges.map((b) => (
+        <span
+          key={b}
+          className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide text-zinc-600 dark:text-zinc-300 bg-zinc-200/70 dark:bg-white/10"
+        >
+          {b === 'production' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" aria-hidden />}
+          {labels[b]}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+const STATUS_DOT: Record<ProjectStatusKind, string> = {
+  done: 'bg-emerald-500',
+  partial: 'bg-amber-400',
+  pending: 'bg-zinc-400',
+};
+
+// Lista de estado real: distingue lo que funciona, lo limitado y lo pendiente.
+function ProjectStatus({
+  status,
+  title,
+  labels,
+  tone,
+}: {
+  status?: ProjectItemDictionary['status'];
+  title?: string;
+  labels?: Record<ProjectStatusKind, string>;
+  tone: 'dark' | 'light';
+}) {
+  if (!status?.length) return null;
+  const muted = tone === 'dark' ? 'text-zinc-400' : 'text-zinc-500 dark:text-zinc-400';
+  const text = tone === 'dark' ? 'text-zinc-200' : 'text-zinc-700 dark:text-zinc-200';
+  return (
+    <div className="mb-6">
+      {title && <p className={`text-[11px] font-semibold uppercase tracking-widest mb-2 ${muted}`}>{title}</p>}
+      <ul className="space-y-1.5">
+        {status.map((s) => {
+          const kind: ProjectStatusKind = s.kind in STATUS_DOT ? (s.kind as ProjectStatusKind) : 'pending';
+          return (
+          <li key={s.text} className={`flex gap-2.5 text-[13px] leading-snug ${text}`}>
+            <span className={`mt-1.5 w-1.5 h-1.5 shrink-0 rounded-full ${STATUS_DOT[kind]}`} aria-hidden />
+            <span>
+              {labels && <span className={`font-semibold ${muted}`}>{labels[kind]} · </span>}
+              {s.text}
+            </span>
+          </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+// Acción de la APK: descarga directa si hay URL pública; si no, lleva a contacto.
+function ApkAction({
+  project,
+  dict,
+  className,
+  onNavigate,
+}: {
+  project: Project;
+  dict: ProjectsDictionary;
+  className: string;
+  onNavigate?: () => void;
+}) {
+  if (project.apk) {
+    return (
+      <a href={project.apk} download className={className}>
+        <Download size={16} /> {dict.downloadApkLabel ?? 'APK'}
+      </a>
+    );
+  }
+  if (!dict.requestApkLabel) return null;
+  return (
+    <a href="#contacto" onClick={onNavigate} className={className}>
+      <Mail size={16} /> {dict.requestApkLabel}
+    </a>
   );
 }

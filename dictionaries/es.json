@@ -180,11 +180,31 @@
     "viewCodeLabel": "Ver Código",
     "demoLabel": "Live Demo",
     "comingSoon": "Próximamente",
+    "visitLabel": "Visitar plataforma",
+    "requestApkLabel": "Solicitar APK",
+    "downloadApkLabel": "Descargar APK",
+    "apkNote": "La APK se comparte de forma privada mientras NEXO está en beta.",
+    "statusTitle": "Estado real",
+    "statusLabels": {
+      "done": "Funciona",
+      "partial": "Limitado",
+      "pending": "Pendiente"
+    },
+    "badges": {
+      "production": "En producción",
+      "client": "Proyecto para cliente",
+      "android": "Android · Beta"
+    },
     "items": [
       {
         "title": "Sentra",
         "category": "SaaS / Ciberseguridad & Monitoreo Continuo",
         "description": "Plataforma de auditoría y monitoreo continuo de seguridad web. Verificas un dominio por DNS y obtienes un Security Score, informes con IA, monitoreo con alertas, API pública y equipos con RBAC. 100% pasivo por diseño. Multi-tenant end-to-end en producción."
+      },
+      {
+        "title": "Simuladores de Admisión",
+        "category": "EdTech · Proyecto para cliente",
+        "description": "Plataforma de simulacros del examen de admisión universitaria (EPN, UCE, ESPE y Policía Nacional) desarrollada para la academia Cambridge de Latacunga, en producción. El servidor manda: la respuesta correcta nunca llega al navegador durante un intento, el tiempo lo fija el servidor y cada respuesta se guarda aunque falle la señal. Los docentes importan bancos de preguntas desde Excel, Google Sheets, Word, PDF o fotos; una revisión de calidad con reglas, un motor matemático e IA marca lo crítico antes de publicar, y un asistente crea simuladores solo con confirmación explícita. Incluye pagos con PayPhone o transferencia, aislamiento por institución, verificación en dos pasos para la administración y registro de auditoría inmutable."
       },
       {
         "title": "AI ATS-Resume Builder",
@@ -195,6 +215,29 @@
         "title": "DartShannon — Ficha Viva",
         "category": "Producto · Seguridad de datos",
         "description": "URL con estado para cada caso de persona desaparecida: el enlace que ya circula por WhatsApp se actualiza solo y su miniatura pasa de «se busca» a «apareció con vida». Privacidad por diseño: la coordenada exacta nunca se persiste —se agrega a una celda H3 y se descarta en el mismo INSERT—; el mapa publica bandas, sin fechas ni conteos, con publicación monótona (una celda nunca baja de clase) contra el ataque temporal de Sweeney; y nada se publica sin revisión humana. Go sin framework (2 dependencias), cifrado AES-256-GCM en el proceso y un verificador JWT propio de 80 líneas (solo HS256, sin negociación de algoritmo). PostgreSQL + PostGIS + TimescaleDB + H3; frontend React 19 PWA. Operativo de extremo a extremo en desarrollo; falta habilitar la facturación de Google Cloud para el mapa."
+      },
+      {
+        "title": "NEXO",
+        "category": "App Android · Proyecto personal",
+        "description": "Un espacio personal para descubrir intereses, entender la actualidad con fuentes verificables y aprender con métodos activos. Local-first: perfiles con PIN, noticias reales por RSS con prioridad explicable («¿por qué lo veo?»), traducción de noticias en el propio móvil, biblioteca, tarjetas con repaso espaciado, cuestionarios y método Feynman. Las funciones con IA (explicar, tutor socrático) pasan por un servidor propio en FastAPI: las claves nunca viajan dentro de la APK.",
+        "status": [
+          {
+            "kind": "done",
+            "text": "Sin servidor: noticias RSS, traducción en el dispositivo, repaso espaciado y alertas locales."
+          },
+          {
+            "kind": "done",
+            "text": "APK firmada (v0.4.0) que se actualiza conservando los datos, probada en emulador Android 15."
+          },
+          {
+            "kind": "partial",
+            "text": "IA a través de un servidor privado en nivel gratuito, con cupo diario limitado."
+          },
+          {
+            "kind": "pending",
+            "text": "Inicio de sesión con Google, distribución pública de la APK y pruebas en un móvil físico."
+          }
+        ]
       },
       {
         "title": "SentinelX",
@@ -242,68 +285,111 @@
     "tag": "Validación Técnica y Académica",
     "title": "Certificaciones y Logros.",
     "description": "Evidencia formal de mi trayectoria continua y competencias multidisciplinarias en ciberseguridad, infraestructura tecnológica, desarrollo con inteligencia artificial y ciencias de la educación.",
+    "filtersLabel": "Filtrar por área",
+    "all": "Todas",
+    "countSingular": "credencial",
+    "countPlural": "credenciales",
+    "areasWord": "áreas",
+    "sinceWord": "desde",
+    "showing": "Mostrando {n} de {total}",
+    "empty": "Todavía no hay credenciales en esta área.",
+    "featured": "Destacada",
+    "openDetails": "Ver detalles de",
+    "close": "Cerrar",
+    "issuerLabel": "Emisor",
+    "dateLabel": "Fecha",
+    "typeLabel": "Tipo",
+    "viewFull": "Ver certificado completo",
+    "verify": "Verificar credencial",
+    "areas": {
+      "cyber": "Ciberseguridad",
+      "ai": "IA y desarrollo",
+      "education": "Docencia y educación",
+      "languages": "Idiomas"
+    },
+    "kinds": {
+      "participation": "Certificado de participación",
+      "attendance": "Certificado de asistencia",
+      "proficiency": "Certificado de suficiencia",
+      "completion": "Certificado de finalización",
+      "badge": "Insignia verificada",
+      "webinar": "Webinar",
+      "course": "Curso aprobado",
+      "program": "Programa de formación"
+    },
     "items": [
       {
+        "id": "cisco-cyber-games-2026",
         "title": "Cisco Cyber Games Americas 2026",
         "issuer": "Cisco Networking Academy",
         "date": "Junio 2026",
         "description": "Participación en el Desafío Capture The Flag Cisco Cyber Games Américas 2026 de Cisco Networking Academy, una competencia de 3 horas entre estudiantes del Continente Americano sobre el curso de Hacker Ético."
       },
       {
+        "id": "big-hacking-etico",
         "title": "Ciberseguridad y Hacking Ético",
         "issuer": "BIG school",
         "date": "Abril 2026",
         "description": "Certificado de asistencia a las jornadas sobre técnicas de detección de vulnerabilidades y defensa digital con una duración de 6 horas."
       },
       {
+        "id": "english-itsup",
         "title": "English Certificate (A1, A2, B1)",
         "issuer": "Instituto Superior Tecnológico Portoviejo (ITSUP)",
         "date": "2025 - Mayo 2026",
         "description": "Aprobación de los niveles de suficiencia A1, A2 y B1 de acuerdo con el Marco Común Europeo de Referencia."
       },
       {
+        "id": "prompters-10000",
         "title": "10,000 Prompters: Ingeniería de Prompts para IA",
         "issuer": "Dubai Future Foundation & Gobierno del Ecuador",
         "date": "2026",
         "description": "Programa impulsado por el Gobierno del Ecuador en alianza con los Emiratos Árabes Unidos para fortalecer competencias en ingeniería de prompts para sistemas de inteligencia artificial."
       },
       {
+        "id": "cisco-ethical-hacker",
         "title": "Ethical Hacker (Verified Badge)",
         "issuer": "Cisco Networking Academy",
         "date": "2026",
         "description": "Credencial verificada que avala las competencias y conocimientos técnicos en metodologías de Hacking Ético."
       },
       {
+        "id": "puce-neurociencias",
         "title": "Comprendiendo el Cerebro para Transformar el Aprendizaje",
         "issuer": "PUCE Virtual",
         "date": "Octubre 2025",
         "description": "Webinar organizado por la Coordinación de la Maestría Virtual en Educación con mención en Neurociencias aplicadas a la educación."
       },
       {
+        "id": "big-desarrollo-ia",
         "title": "Iniciación al Desarrollo con IA",
         "issuer": "BIG school",
         "date": "Octubre 2025",
         "description": "Certificado de asistencia a las jornadas formativas de Desarrollo con IA, con una duración de 6 horas."
       },
       {
+        "id": "progenios-proteccion-datos",
         "title": "Ley de Protección de Datos Personales",
         "issuer": "Academia ProGenios",
         "date": "Junio 2025",
         "description": "Curso gratuito de 6 horas de capacitación, habiendo aprobado la evaluación de conocimientos sobre la normativa y cumplimiento de privacidad."
       },
       {
+        "id": "telefonica-intro-ciber",
         "title": "Introducción a Ciberseguridad",
         "issuer": "Fundación Telefónica Movistar",
         "date": "Marzo 2025",
         "description": "Certificado de superación que acredita la culminación del curso de 20 horas en fundamentos de ciberseguridad."
       },
       {
+        "id": "cisco-intro-cybersecurity",
         "title": "Introduction to Cybersecurity (Verified Badge)",
         "issuer": "Cisco Networking Academy",
         "date": "2025",
         "description": "Credencial verificada que demuestra los conocimientos fundamentales sobre el panorama de amenazas y principios básicos de defensa digital."
       },
       {
+        "id": "ubicua-abp",
         "title": "Aprendizaje Basado en Proyectos",
         "issuer": "Ubicua (Conecta Empleo)",
         "date": "Enero 2024",

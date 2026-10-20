@@ -93,7 +93,7 @@ export default async function Home({
       </div>
       <SkillsApple dict={dict.skills} />
       <ProjectsApple dict={dict.projects} />
-      <CertificationsApple dict={dict.certifications} />
+      <CertificationsApple dict={dict.certifications} lang={lang} />
       <WorkExperienceApple dict={dict.experience} />
       <ContactApple dict={dict.contact} />
     </main>

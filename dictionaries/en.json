@@ -180,11 +180,31 @@
     "viewCodeLabel": "View Code",
     "demoLabel": "Live Demo",
     "comingSoon": "Coming soon",
+    "visitLabel": "Visit platform",
+    "requestApkLabel": "Request the APK",
+    "downloadApkLabel": "Download APK",
+    "apkNote": "The APK is shared privately while NEXO is in beta.",
+    "statusTitle": "Actual status",
+    "statusLabels": {
+      "done": "Working",
+      "partial": "Limited",
+      "pending": "Pending"
+    },
+    "badges": {
+      "production": "In production",
+      "client": "Client project",
+      "android": "Android · Beta"
+    },
     "items": [
       {
         "title": "Sentra",
         "category": "SaaS / Cybersecurity & Continuous Monitoring",
         "description": "Web security auditing and continuous monitoring platform. Verify a domain via DNS and get a Security Score, AI reports, monitoring with alerts, a public API and RBAC teams. 100% passive by design. Full multi-tenant, in production."
+      },
+      {
+        "title": "University Admission Simulators",
+        "category": "EdTech · Client project",
+        "description": "Mock-exam platform for university admission tests (EPN, UCE, ESPE and the National Police) built for the Cambridge academy in Latacunga, Ecuador, and running in production. The server is in charge: the correct answer never reaches the browser during an attempt, the server owns the clock, and every answer is saved even when the connection drops. Teachers import question banks from Excel, Google Sheets, Word, PDF or photos; a quality review combining rules, a math engine and AI flags critical issues before publishing, and an assistant builds simulators only with explicit confirmation. It also includes PayPhone or bank-transfer payments, per-institution isolation, two-step verification for administrators and an immutable audit log."
       },
       {
         "title": "AI ATS-Resume Builder",
@@ -195,6 +215,29 @@
         "title": "DartShannon — Ficha Viva",
         "category": "Product · Data security",
         "description": "A stateful URL for every missing-person case: the link already circulating on WhatsApp updates itself and its thumbnail changes from 'missing' to 'found safe'. Privacy by design: the exact coordinate is never persisted —it is aggregated into an H3 cell and discarded in the same INSERT—; the map publishes bands, no dates or counts, with monotonic publishing (a cell never drops a class) against Sweeney's temporal attack; and nothing is published without human review. Go with no framework (2 dependencies), AES-256-GCM encryption in-process and an 80-line homegrown JWT verifier (HS256 only, no algorithm negotiation). PostgreSQL + PostGIS + TimescaleDB + H3; React 19 PWA frontend. Working end to end in development; only Google Cloud billing for the map is pending."
+      },
+      {
+        "title": "NEXO",
+        "category": "Android app · Personal project",
+        "description": "A personal space to discover interests, understand current events through verifiable sources and learn with active methods. Local-first: PIN-protected profiles, real RSS news with explainable priority (\"why am I seeing this?\"), on-device news translation, a library, spaced-repetition flashcards, quizzes and the Feynman technique. AI features (explain, Socratic tutor) go through its own FastAPI server: keys never ship inside the APK.",
+        "status": [
+          {
+            "kind": "done",
+            "text": "No server needed: RSS news, on-device translation, spaced repetition and local alerts."
+          },
+          {
+            "kind": "done",
+            "text": "Signed APK (v0.4.0) that updates in place keeping user data, tested on an Android 15 emulator."
+          },
+          {
+            "kind": "partial",
+            "text": "AI through a private server on a free tier, with a limited daily quota."
+          },
+          {
+            "kind": "pending",
+            "text": "Google sign-in, public APK distribution and testing on a physical device."
+          }
+        ]
       },
       {
         "title": "SentinelX",
@@ -242,68 +285,111 @@
     "tag": "Technical & Academic Validation",
     "title": "Certifications & Achievements.",
     "description": "Formal evidence of my continuous track record and multidisciplinary skills in cybersecurity, technology infrastructure, AI-driven development, and educational sciences.",
+    "filtersLabel": "Filter by area",
+    "all": "All",
+    "countSingular": "credential",
+    "countPlural": "credentials",
+    "areasWord": "areas",
+    "sinceWord": "since",
+    "showing": "Showing {n} of {total}",
+    "empty": "There are no credentials in this area yet.",
+    "featured": "Featured",
+    "openDetails": "View details for",
+    "close": "Close",
+    "issuerLabel": "Issuer",
+    "dateLabel": "Date",
+    "typeLabel": "Type",
+    "viewFull": "View full certificate",
+    "verify": "Verify credential",
+    "areas": {
+      "cyber": "Cybersecurity",
+      "ai": "AI & development",
+      "education": "Teaching & education",
+      "languages": "Languages"
+    },
+    "kinds": {
+      "participation": "Certificate of participation",
+      "attendance": "Certificate of attendance",
+      "proficiency": "Proficiency certificate",
+      "completion": "Certificate of completion",
+      "badge": "Verified badge",
+      "webinar": "Webinar",
+      "course": "Course passed",
+      "program": "Training program"
+    },
     "items": [
       {
+        "id": "cisco-cyber-games-2026",
         "title": "Cisco Cyber Games Americas 2026",
         "issuer": "Cisco Networking Academy",
         "date": "June 2026",
         "description": "Participation in the Cisco Cyber Games Americas 2026 Capture The Flag Challenge by Cisco Networking Academy, a 3-hour competition among students across the Americas based on the Ethical Hacker course."
       },
       {
+        "id": "big-hacking-etico",
         "title": "Cybersecurity and Ethical Hacking",
         "issuer": "BIG school",
         "date": "April 2026",
         "description": "Attendance certificate for a 6-hour workshop on vulnerability detection techniques and digital defense."
       },
       {
+        "id": "english-itsup",
         "title": "English Certificate (A1, A2, B1)",
         "issuer": "Instituto Superior Tecnológico Portoviejo (ITSUP)",
         "date": "2025 - May 2026",
         "description": "Passed proficiency levels A1, A2, and B1 according to the Common European Framework of Reference."
       },
       {
+        "id": "prompters-10000",
         "title": "10,000 Prompters: AI Prompt Engineering",
         "issuer": "Dubai Future Foundation & Government of Ecuador",
         "date": "2026",
         "description": "Program led by the Government of Ecuador in partnership with the United Arab Emirates to strengthen prompt engineering skills for AI systems."
       },
       {
+        "id": "cisco-ethical-hacker",
         "title": "Ethical Hacker (Verified Badge)",
         "issuer": "Cisco Networking Academy",
         "date": "2026",
         "description": "Verified credential certifying technical knowledge and skills in Ethical Hacking methodologies."
       },
       {
+        "id": "puce-neurociencias",
         "title": "Understanding the Brain to Transform Learning",
         "issuer": "PUCE Virtual",
         "date": "October 2025",
         "description": "Webinar organized by the Virtual Master's Program Coordination in Education, with a focus on neuroscience applied to education."
       },
       {
+        "id": "big-desarrollo-ia",
         "title": "Introduction to AI Development",
         "issuer": "BIG school",
         "date": "October 2025",
         "description": "Attendance certificate for a 6-hour AI development training workshop."
       },
       {
+        "id": "progenios-proteccion-datos",
         "title": "Personal Data Protection Law",
         "issuer": "Academia ProGenios",
         "date": "June 2025",
         "description": "Free 6-hour training course, having passed the knowledge assessment on privacy regulation and compliance."
       },
       {
+        "id": "telefonica-intro-ciber",
         "title": "Introduction to Cybersecurity",
         "issuer": "Fundación Telefónica Movistar",
         "date": "March 2025",
         "description": "Completion certificate for a 20-hour course on cybersecurity fundamentals."
       },
       {
+        "id": "cisco-intro-cybersecurity",
         "title": "Introduction to Cybersecurity (Verified Badge)",
         "issuer": "Cisco Networking Academy",
         "date": "2025",
         "description": "Verified credential demonstrating foundational knowledge of the threat landscape and basic digital defense principles."
       },
       {
+        "id": "ubicua-abp",
         "title": "Project-Based Learning",
         "issuer": "Ubicua (Conecta Empleo)",
         "date": "January 2024",
