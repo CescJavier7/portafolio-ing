@@ -2,13 +2,14 @@
 import { motion } from 'framer-motion';
 import { 
   ShieldCheck, Server, Database, Cpu, 
-  Layers, LineChart, Users, LayoutTemplate, Code2, Cloud, Zap
+  Layers, LineChart, Users, LayoutTemplate, Code2, Cloud, Zap, Smartphone, Sparkles
 } from 'lucide-react';
 import { 
   SiReact, SiNodedotjs, SiKalilinux, SiPython, 
   SiDocker, SiPostgresql, SiMysql, SiCplusplus, SiLinux, SiGrafana,
   SiNextdotjs, SiTypescript, SiTailwindcss, SiPrisma, SiRedis, SiFastapi,
-  SiCloudflare, SiFigma, SiSwift, SiPhp, SiTraefikmesh
+  SiCloudflare, SiFigma, SiSwift, SiPhp, SiTraefikmesh, SiGo, SiExpo, SiCapacitor,
+  SiAndroid, SiDrizzle, SiGithubactions
 } from 'react-icons/si';
 import { FaJava } from 'react-icons/fa'; // Solución al problema de compilación de SiJava
 
@@ -22,8 +23,10 @@ interface SkillsProps {
       cyber: { title: string; desc: string; };
       cloud: { title: string; desc: string; };
       fullstack: { title: string; desc: string; };
+      mobile: { title: string; desc: string; };
       languages: { title: string; desc: string; };
       data: { title: string; desc: string; };
+      ai: { title: string; desc: string; };
       quant: { title: string; desc: string; };
       uiux: { title: string; desc: string; };
       soft: { title: string; desc: string; tag: string; };
@@ -57,7 +60,7 @@ export default function SkillsApple({ dict }: SkillsProps) {
         </motion.div>
 
         {/* BENTO GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 auto-rows-[minmax(280px,_auto)]">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 grid-flow-row-dense gap-4 md:gap-6 auto-rows-[minmax(280px,_auto)]">
 
           {/* 1. DEVSECOPS & CIBERSEGURIDAD (2 Columnas) */}
           <motion.div 
@@ -81,7 +84,7 @@ export default function SkillsApple({ dict }: SkillsProps) {
                   {dict.cards.cyber.desc}
                 </p>
                 <div className="flex flex-wrap gap-2 mt-auto">
-                  {['Metasploit', 'Nmap', 'Iptables', 'OWASP Top 10', 'Wi-Fi Auditing', 'Zero-Trust'].map(tag => (
+                  {['OWASP Top 10', 'Burp Suite', 'Nmap', 'Metasploit', 'Suricata / Snort', 'AES-256-GCM', 'CSP', '2FA TOTP', 'Zero-Trust'].map(tag => (
                     <span key={tag} className="px-3 py-1 text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider rounded-lg bg-green-500/10 text-green-400 border border-green-500/20">
                       {tag}
                     </span>
@@ -121,6 +124,9 @@ export default function SkillsApple({ dict }: SkillsProps) {
               <div className="flex items-center gap-2 px-3 py-2 bg-black/20 rounded-lg backdrop-blur-sm border border-white/10">
                 <SiCloudflare className="w-4 h-4" /> <span className="text-xs font-bold">Cloudflare</span>
               </div>
+              <div className="flex items-center gap-2 px-3 py-2 bg-black/20 rounded-lg backdrop-blur-sm border border-white/10">
+                <SiGithubactions className="w-4 h-4" /> <span className="text-xs font-bold">GitHub Actions</span>
+              </div>
             </div>
           </motion.div>
 
@@ -150,13 +156,34 @@ export default function SkillsApple({ dict }: SkillsProps) {
                   <SiReact className="w-6 h-6 text-zinc-400 hover:text-blue-500 transition-colors" />
                   <SiTailwindcss className="w-6 h-6 text-zinc-400 hover:text-cyan-400 transition-colors" />
                   <SiNodedotjs className="w-6 h-6 text-zinc-400 hover:text-green-500 transition-colors" />
+                  <SiGo className="w-7 h-7 text-zinc-400 hover:text-cyan-500 transition-colors" />
                 </div>
               </div>
             </div>
             <Layers className="absolute -bottom-10 -right-10 w-64 h-64 text-zinc-100 dark:text-zinc-800/30 group-hover:rotate-12 transition-transform duration-700 pointer-events-none" />
           </motion.div>
 
-          {/* 4. CORE LANGUAGES & MOBILE (1 Columna) */}
+          {/* 4. DESARROLLO MÓVIL (1 Columna) */}
+          <motion.div 
+            whileHover={{ scale: 0.98 }}
+            className="rounded-3xl bg-white dark:bg-zinc-900/40 p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between"
+          >
+            <div>
+              <Smartphone className="w-8 h-8 text-lime-500 mb-5" />
+              <h3 className="text-xl font-bold mb-3 text-zinc-900 dark:text-white">{dict.cards.mobile.title}</h3>
+              <p className="text-zinc-500 dark:text-zinc-400 text-xs sm:text-sm leading-relaxed mb-6">
+                {dict.cards.mobile.desc}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <SiAndroid className="w-6 h-6 text-zinc-400 hover:text-lime-500 transition-colors" />
+              <SiReact className="w-6 h-6 text-zinc-400 hover:text-blue-500 transition-colors" />
+              <SiExpo className="w-6 h-6 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors" />
+              <SiCapacitor className="w-6 h-6 text-zinc-400 hover:text-sky-500 transition-colors" />
+            </div>
+          </motion.div>
+
+          {/* 5. CORE LANGUAGES (1 Columna) */}
           <motion.div 
             whileHover={{ scale: 0.98 }}
             className="rounded-3xl bg-white dark:bg-zinc-900/40 p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between"
@@ -169,6 +196,8 @@ export default function SkillsApple({ dict }: SkillsProps) {
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
+              <SiGo className="w-7 h-7 text-zinc-400 hover:text-cyan-500 transition-colors" />
+              <SiTypescript className="w-6 h-6 text-zinc-400 hover:text-blue-600 transition-colors" />
               <SiCplusplus className="w-6 h-6 text-zinc-400 hover:text-blue-600 transition-colors" />
               <FaJava className="w-6 h-6 text-zinc-400 hover:text-red-500 transition-colors" />
               <SiSwift className="w-6 h-6 text-zinc-400 hover:text-orange-500 transition-colors" />
@@ -177,7 +206,7 @@ export default function SkillsApple({ dict }: SkillsProps) {
             </div>
           </motion.div>
 
-          {/* 5. DATABASES & ORMs (1 Columna) */}
+          {/* 6. DATABASES & ORMs (1 Columna) */}
           <motion.div 
             whileHover={{ scale: 0.98 }}
             className="rounded-3xl bg-white dark:bg-zinc-900/40 p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between"
@@ -193,11 +222,35 @@ export default function SkillsApple({ dict }: SkillsProps) {
               <SiPostgresql className="w-6 h-6 text-zinc-400 hover:text-blue-400 transition-colors" />
               <SiMysql className="w-7 h-7 text-zinc-400 hover:text-blue-500 transition-colors" />
               <SiPrisma className="w-6 h-6 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors" />
+              <SiDrizzle className="w-6 h-6 text-zinc-400 hover:text-lime-500 transition-colors" />
               <SiRedis className="w-6 h-6 text-zinc-400 hover:text-red-500 transition-colors" />
             </div>
           </motion.div>
 
-          {/* 6. ALGORITMIA & FINANZAS QUANTITATIVAS (1 Columna) */}
+          {/* 7. IA APLICADA (2 Columnas) */}
+          <motion.div 
+            whileHover={{ scale: 0.99 }}
+            className="md:col-span-2 relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-50 to-indigo-100/50 dark:from-violet-950/30 dark:to-zinc-900/40 p-8 md:p-10 border border-violet-200/60 dark:border-violet-900/30 shadow-sm flex flex-col justify-between"
+          >
+            <div>
+              <div className="w-12 h-12 bg-violet-500/10 border border-violet-500/20 rounded-xl flex items-center justify-center mb-6">
+                <Sparkles className="w-6 h-6 text-violet-600 dark:text-violet-400" />
+              </div>
+              <h3 className="text-2xl md:text-3xl font-bold tracking-tight text-zinc-900 dark:text-white mb-3">{dict.cards.ai.title}</h3>
+              <p className="text-zinc-600 dark:text-zinc-400 text-sm md:text-base leading-relaxed mb-6 max-w-md">
+                {dict.cards.ai.desc}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {['Groq · GPT-OSS', 'JSON Schema', 'Model fallback', 'n8n', 'Tesseract OCR', 'ML Kit'].map(tag => (
+                <span key={tag} className="px-3 py-1 text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider rounded-lg bg-violet-500/10 text-violet-700 dark:text-violet-300 border border-violet-500/20">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* 8. ALGORITMIA & FINANZAS QUANTITATIVAS (1 Columna) */}
           <motion.div 
             whileHover={{ scale: 0.98 }}
             className="rounded-3xl bg-zinc-900 dark:bg-black p-8 text-white border border-zinc-800 shadow-xl flex flex-col justify-between relative overflow-hidden"
@@ -219,10 +272,10 @@ export default function SkillsApple({ dict }: SkillsProps) {
             </div>
           </motion.div>
 
-          {/* 7. UX/UI & OBSERVABILIDAD (2 Columnas) */}
+          {/* 9. UX/UI & OBSERVABILIDAD (2 Columnas) */}
           <motion.div 
             whileHover={{ scale: 0.99 }}
-            className="md:col-span-2 rounded-3xl bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/20 dark:to-zinc-900/40 p-8 md:p-10 flex flex-col md:flex-row gap-8 items-center border border-orange-200/50 dark:border-orange-900/30 shadow-sm"
+            className="md:col-span-3 lg:col-span-2 rounded-3xl bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/20 dark:to-zinc-900/40 p-8 md:p-10 flex flex-col md:flex-row gap-8 items-center border border-orange-200/50 dark:border-orange-900/30 shadow-sm"
           >
             <div className="md:w-1/2">
               <div className="flex items-center gap-3 mb-5">
@@ -247,10 +300,10 @@ export default function SkillsApple({ dict }: SkillsProps) {
             </div>
           </motion.div>
 
-          {/* 8. MENTORÍA & SOFT SKILLS (1 Columna) */}
+          {/* 10. DOCENCIA & SOFT SKILLS (2 Columnas: cierra la última fila) */}
           <motion.div 
             whileHover={{ scale: 0.98 }}
-            className="rounded-3xl bg-white dark:bg-zinc-900/40 p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between"
+            className="md:col-span-3 lg:col-span-2 rounded-3xl bg-white dark:bg-zinc-900/40 p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between"
           >
             <div>
               <Users className="w-8 h-8 text-emerald-500 mb-5" />

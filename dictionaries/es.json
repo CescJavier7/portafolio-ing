@@ -114,28 +114,36 @@
   "skills": {
     "tag": "Tech Stack",
     "title": "Arsenal Tecnológico",
-    "subtitle": "Fullstack, Infraestructura & Ciberseguridad",
-    "description": "Un ecosistema de herramientas dominadas a través de la práctica real. Desde la arquitectura en el frontend hasta el despliegue seguro en servidores privados, priorizando el rendimiento y la seguridad.",
+    "subtitle": "Fullstack, Móvil, Infraestructura & Ciberseguridad",
+    "description": "Las herramientas que uso en productos reales en producción: del backend y la base de datos a la app móvil, el despliegue seguro en mi propio VPS y la IA aplicada.",
     "cards": {
       "cyber": {
         "title": "Ciberseguridad & DevSecOps",
-        "desc": "Auditoría de redes, pentesting y arquitecturas Zero-Trust. Experiencia desplegando escáneres perimetrales y protegiendo infraestructura crítica."
+        "desc": "Seguridad por diseño en todo lo que construyo: autenticación propia (Argon2id, JWT rotativo, TOTP), RBAC y anti-IDOR, CSP estricta, cifrado AES-256-GCM, pentesting web y detección de intrusiones."
       },
       "cloud": {
         "title": "Cloud & DevOps",
-        "desc": "Gestión absoluta de servidores VPS Linux. Orquestación con Docker, proxy inverso con Traefik y gestión de zonas DNS en Cloudflare."
+        "desc": "Opero mi propio VPS Linux con Docker Compose y Traefik (TLS y cabeceras de seguridad), donde viven varios proyectos en producción. CI/CD con GitHub Actions, health checks y copias de seguridad."
       },
       "fullstack": {
         "title": "Fullstack Moderno",
-        "desc": "Desarrollo de interfaces reactivas y APIs de alto rendimiento con renderizado híbrido, tipado estricto y diseño utilitario."
+        "desc": "Interfaces y APIs tipadas de extremo a extremo: Next.js 16 y React 19 en el frontend; FastAPI, Go sin framework y Node en el backend."
+      },
+      "mobile": {
+        "title": "Desarrollo Móvil",
+        "desc": "Apps Android distribuidas como APK firmadas: React Native + Expo (NEXO) y Capacitor sobre React (Kustodía OS), con modo sin conexión."
       },
       "languages": {
-        "title": "Core Languages & Mobile",
-        "desc": "Dominio de lenguajes fuertemente tipados, programación orientada a objetos y desarrollo nativo."
+        "title": "Core Languages",
+        "desc": "Go, TypeScript y Python en producción, con bases en C++, Java, Swift y PHP."
       },
       "data": {
         "title": "Data & Arquitectura",
-        "desc": "Modelado relacional, ORMs modernos y bases de datos en memoria para caché de latencia ultra baja."
+        "desc": "PostgreSQL como base de todo, con PostGIS, TimescaleDB e índices geoespaciales H3. Drizzle y Prisma, migraciones escritas a mano y Redis."
+      },
+      "ai": {
+        "title": "IA Aplicada",
+        "desc": "LLMs integrados con control: salida JSON validada con esquemas, pipelines que no inventan datos, presupuesto de consumo y modelos de respaldo. Automatización con n8n, OCR y traducción en el dispositivo."
       },
       "quant": {
         "title": "Algoritmia & Finanzas",
@@ -143,11 +151,11 @@
       },
       "uiux": {
         "title": "UX/UI & Observabilidad",
-        "desc": "Diseño de interfaces centradas en el usuario (Figma) y monitorización de sistemas en tiempo real (Grafana/Loki)."
+        "desc": "Interfaces accesibles de inspiración Apple (Figma, Tailwind, Framer Motion) y observabilidad: health checks, páginas de estado y paneles con Grafana y Loki."
       },
       "soft": {
-        "title": "Mentoría STEM",
-        "desc": "Liderazgo técnico, transferencia de conocimiento y consultoría académica de alto nivel.",
+        "title": "Docencia & Mentoría STEM",
+        "desc": "Experiencia docente en matemáticas y programación, en la universidad y en el colegio, y hoy una Academia propia con rutas de aprendizaje y certificados verificables.",
         "tag": "Soft Skills"
       }
     }
@@ -232,10 +240,37 @@
         "description": "Adapta tu perfil a cada oferta con IA, anclado por identificadores para no inventar datos: nombre, empresas y fechas se copian de tu perfil, no del modelo. Calcula un match score honesto por cobertura de palabras clave ATS, agrupa tus habilidades por categoría, edita en vivo con vista previa A4 y exporta a PDF listo para filtros ATS. Incluye una automatización (n8n + Notion): busca ofertas nuevas cada día, puntúa el match de cada una con IA, genera el CV adaptado a la vacante y registra el pipeline en Notion, con aviso por Telegram de las que valen la pena."
       },
       {
-        "title": "DartShannon — Ficha Viva",
-        "category": "Producto · Seguridad de datos",
-        "summary": "Fichas vivas para casos de personas desaparecidas, con privacidad por diseño y revisión humana.",
-        "description": "URL con estado para cada caso de persona desaparecida: el enlace que ya circula por WhatsApp se actualiza solo y su miniatura pasa de «se busca» a «apareció con vida». Privacidad por diseño: la coordenada exacta nunca se persiste —se agrega a una celda H3 y se descarta en el mismo INSERT—; el mapa publica bandas, sin fechas ni conteos, con publicación monótona (una celda nunca baja de clase) contra el ataque temporal de Sweeney; y nada se publica sin revisión humana. Go sin framework (2 dependencias), cifrado AES-256-GCM en el proceso y un verificador JWT propio de 80 líneas (solo HS256, sin negociación de algoritmo). PostgreSQL + PostGIS + TimescaleDB + H3; frontend React 19 PWA. Operativo de extremo a extremo en desarrollo; falta habilitar la facturación de Google Cloud para el mapa."
+        "title": "Kustodía OS — DartShannon",
+        "category": "Tecnología cívica · En producción",
+        "summary": "Plataforma cívica para casos de personas y animales desaparecidos en Ecuador, con mapa, triaje humano y app Android.",
+        "description": "Kustodía OS, de DartShannon, da a cada caso de persona o animal desaparecido una URL canónica con estado: el enlace que ya circula por WhatsApp se actualiza solo y deja de pedir ayuda cuando el caso se cierra. Suma un mapa ciudadano con zonas agregadas en celdas H3, denuncias que no se publican hasta que una persona las tría, rutas propias sobre OpenStreetMap, modo baliza y «Estoy en peligro», cuyo punto exacto solo llega al panel que coordina el rescate. Privacidad por diseño: al público solo llega información agregada por zonas, las coordenadas sensibles se guardan cifradas con AES-256-GCM en el proceso Go y caducan, y la base separa roles con permisos por columna. Go sin framework, React 19 y una app Android con Capacitor.",
+        "features": [
+          "URL con estado por caso: la ficha compartida por WhatsApp muestra si la persona apareció y deja de pedir difusión.",
+          "Mapa ciudadano con zonas agregadas en celdas H3, por bandas, sin fechas ni conteos exactos.",
+          "Denuncias en 14 categorías sin exigir cuenta; nada se publica hasta que un operador lo tría.",
+          "Rutas a pie y en carro con un A* propio sobre las calles de OpenStreetMap, sin depender de Google.",
+          "Modo baliza y «Estoy en peligro»: el punto exacto solo llega al panel que coordina el rescate.",
+          "Panel con roles ciudadano, operador y admin: triaje, casos, rescate animal, boletines y métricas.",
+          "Mapa dual: Google Maps cuando está disponible y MapLibre con teselas propias como respaldo automático."
+        ],
+        "status": [
+          {
+            "kind": "done",
+            "text": "En producción en kustodia.cescjavier.dev, con TLS, tareas de mantenimiento programadas y copias de seguridad."
+          },
+          {
+            "kind": "done",
+            "text": "App Android 2.0 (Capacitor) firmada, descargable desde Google Drive."
+          },
+          {
+            "kind": "done",
+            "text": "Cuentas con contraseña (bcrypt) o Google OAuth, sesiones revocables y JWT propio."
+          },
+          {
+            "kind": "info",
+            "text": "Complementa la denuncia oficial: no la reemplaza ni está conectada al ECU-911."
+          }
+        ]
       },
       {
         "title": "NEXO",
@@ -445,10 +480,52 @@
     "description": "Un historial de resolución de problemas complejos, liderazgo técnico y transferencia de conocimiento.",
     "items": [
       {
+        "title": "Fundador y Desarrollador Full-Stack · Sentra",
+        "company": "Suite SaaS propia · cescjavier.dev",
+        "period": "Jul 2026 - Actualidad",
+        "description": "Diseño, desarrollo y operación de una suite SaaS en producción: Sentra (auditoría y monitoreo continuo de seguridad web con verificación DNS, Security Score e informes con IA), Sentra CV AI y una Academia con certificados firmados. Autenticación propia con Argon2id y JWT rotativo, RBAC y anti-IDOR, cobros con PayPhone y API pública con webhooks HMAC.",
+        "tags": [
+          "FastAPI",
+          "Next.js 16",
+          "PostgreSQL",
+          "Redis",
+          "Groq LLM",
+          "PayPhone"
+        ]
+      },
+      {
+        "title": "Fundador Técnico · Kustodía OS",
+        "company": "DartShannon · Tecnología cívica",
+        "period": "Ago 2026 - Actualidad",
+        "description": "Arquitectura y desarrollo de una plataforma cívica en producción para casos de personas y animales desaparecidos: backend en Go sin framework, PostgreSQL con PostGIS, TimescaleDB y H3, cifrado AES-256-GCM, triaje humano de denuncias y app Android con Capacitor.",
+        "tags": [
+          "Go",
+          "React 19",
+          "PostGIS",
+          "H3",
+          "Capacitor",
+          "Privacy by Design"
+        ]
+      },
+      {
+        "title": "Desarrollador Full-Stack · Plataforma de Simuladores",
+        "company": "Academia Cambridge, Latacunga (cliente)",
+        "period": "Sep 2026 - Oct 2026",
+        "description": "Desarrollo de extremo a extremo de una plataforma de simulacros de admisión universitaria, hoy en producción: Next.js 16 y PostgreSQL, pagos con PayPhone, revisión de calidad con IA por lotes, aislamiento por institución, verificación en dos pasos y CI/CD con pruebas contra PostgreSQL real.",
+        "tags": [
+          "Next.js 16",
+          "Drizzle ORM",
+          "Better Auth",
+          "Playwright",
+          "CI/CD",
+          "EdTech"
+        ]
+      },
+      {
         "title": "Desarrollador de Sistemas e Infraestructura IT",
         "company": "Independiente",
         "period": "Ene 2024 - Actualidad",
-        "description": "Desarrollo web integral y soluciones ecommerce. Optimización de bases de datos SQL (mejora del 40% en consultas) y creación de bots de trading automatizados con análisis técnico de baja latencia.",
+        "description": "Desarrollo web integral y soluciones ecommerce. Optimización de bases de datos SQL (mejora del 40% en consultas), bots de trading automatizados y apps Android propias (NEXO, con React Native y Expo). Administro el VPS con Docker y Traefik donde se despliegan mis proyectos.",
         "tags": [
           "SQL",
           "Trading Bots",

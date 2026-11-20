@@ -1,11 +1,14 @@
 'use client';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Code2, Database, Network, Server, GraduationCap, Briefcase, Calendar, Building2, type LucideIcon } from 'lucide-react';
+import { ChevronDown, Code2, Database, Network, Server, GraduationCap, Briefcase, Calendar, Building2, ShieldCheck, MapPin, type LucideIcon } from 'lucide-react';
 
 // ─── METADATA VISUAL (NO TRADUCIBLE) ─────────────────────────────────────────
 // El orden de este array debe coincidir 1:1 con `dict.items`.
 const experienceIcons: LucideIcon[] = [
+  ShieldCheck, // Sentra
+  MapPin, // Kustodía OS
+  Building2, // Simuladores (cliente)
   Code2,
   Database,
   Network,

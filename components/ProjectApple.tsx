@@ -9,7 +9,7 @@ import { ExternalLink, TerminalSquare, ChevronLeft, ChevronRight, X, MousePointe
 // que siempre se copia al contenedor y se sirve. Fin del bug de "no cargan".
 import sentraPreview from '@/public/sentra-preview.png';
 import cvPreview from '@/public/cv-builder-preview.png';
-import dartPreview from '@/public/dartshannon-preview.png';
+import kustodiaPreview from '@/public/kustodia-preview.jpg';
 // Captura real de la portada en producción y capturas reales de la APK 0.4.0
 // (emulador Android 15) sobre el degradado del propio icono de NEXO.
 import simuladoresPreview from '@/public/simuladores-preview.jpg';
@@ -21,7 +21,8 @@ import nexoPreview from '@/public/nexo-preview.jpg';
 //  · badges: insignias discretas en la barra superior de la tarjeta.
 //  · device: 'phone' cambia la barra de navegador por la de una app móvil.
 //  · demoKind: 'visit' rotula el enlace como plataforma real, no como demo.
-//  · apk: URL pública de descarga. Vacía → «Solicitar APK» (lleva a contacto).
+//  · apk: URL pública de descarga (archivo o carpeta de Drive). Vacía en una
+//    app solo móvil → «Solicitar APK» (lleva a contacto).
 type ProjectBadge = 'production' | 'client' | 'android';
 const projectMeta: {
   techs: string[];
@@ -59,12 +60,16 @@ const projectMeta: {
     demo: "https://cescjavier.dev/es/herramientas/cv"
   },
   {
-    // DartShannon (Ficha Viva) — proyecto estrella. Funciona; no desplegado.
-    techs: ["Go 1.26 (sin framework)", "PostgreSQL + PostGIS", "H3 · TimescaleDB", "React 19 · Vite", "AES-256-GCM", "JWT propio (80 líneas)", "PWA"],
-    image: dartPreview.src,
+    // Kustodía OS (DartShannon) — en producción, con app Android (Capacitor).
+    // `apk` apunta a la CARPETA pública de Drive: sigue valiendo al subir
+    // versiones nuevas del APK.
+    techs: ["Go 1.26 (sin framework)", "React 19 · Vite 7 · TS", "Capacitor 8 (Android)", "PostgreSQL 16 + PostGIS", "TimescaleDB · H3", "MapLibre + PMTiles", "AES-256-GCM", "JWT propio + Google OAuth", "PWA"],
+    image: kustodiaPreview.src,
     github: "",
-    demo: "",
-    comingSoon: true
+    demo: "https://kustodia.cescjavier.dev/",
+    badges: ["production", "android"],
+    demoKind: "visit",
+    apk: "https://drive.google.com/drive/folders/1R1vpl9PKHny3BpTUE45aA_KTFALw7FXY"
   },
   {
     // NEXO — app Android (Expo) con servidor propio desplegado en el VPS. No
@@ -873,11 +878,11 @@ function ProjectActions({
       </a>
     );
   }
-  if (project.device === 'phone') {
+  if (project.device === 'phone' || project.apk) {
     const cls = `${base} ${links.length ? secondary : primary}`;
     if (project.apk) {
       links.push(
-        <a key="apk" href={project.apk} download className={cls}>
+        <a key="apk" href={project.apk} target="_blank" rel="noopener noreferrer" className={cls}>
           <Download size={16} /> {dict.downloadApkLabel ?? 'APK'}
         </a>
       );
